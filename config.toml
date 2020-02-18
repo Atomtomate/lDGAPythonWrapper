@@ -1,7 +1,8 @@
 [general]
 
 name = "full_calc_test_automated"
-codeDir = "./codes"
+codeDir = "../codes"
+
 
 [parameters]
 beta    = 15.0     # inverse temperature

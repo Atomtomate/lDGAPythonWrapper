@@ -1,4 +1,5 @@
 In order to run this script, Python 3 with pathlib and toml must be present.
+
 Example:
     module load anaconda3
     # create and activate a conda environment, if you do not want to install globally
