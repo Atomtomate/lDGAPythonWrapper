@@ -1,0 +1,33 @@
+[general]
+
+name = "full_calc_test_automated"
+codeDir = "./codes"
+
+[parameters]
+beta    = 15.0     # inverse temperature
+U       = 5.0      # Hubbard U
+t       = 0.204    # hopping
+mu      = 1.0      # chemical potential
+ns      = 5        # Number of sites including imurity
+
+[ED]
+w_min       = -12
+w_max       = 12
+deltino     = 0.01
+imaxmu      = 0
+deltamu     = 0.0
+iterations  = 250
+conv_param  = 1e-13
+
+#ifix(0,1), <n>,   inew, iauto 
+#th0 , iexp (insignificant)
+#nmin, nmax
+#lambda, w0, nph
+
+#initial anderson parameters here?
+
+[Vertex]
+
+[Susc]
+
+[Trilex]
