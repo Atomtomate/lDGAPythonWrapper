@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 #import pathlib
 import toml
@@ -14,23 +15,31 @@ config['general']['codeDir'] = os.path.abspath(os.path.expanduser(config['genera
 # TODO: check for consistency of parameters
 
 # -------------------------- create directories -----------------------------
-dirName = config['general']['name']
-if not os.path.exists(dirName):
-    os.mkdir(dirName)
-    print("Directory " , dirName ,  " Created ")
+runDir = config['general']['runDir']
+if not os.path.exists(runDir):
+    os.mkdir(runDir)
+    print("Directory " , runDir ,  " Created ")
 else:
-    reset_flag = query_yn("Directory " + dirName +  " already exists. Should everything be reset?", "no")
+    reset_flag = query_yn("Directory " + runDir +  " already exists. Should everything be reset?", "no")
     if reset_flag:
-        reset_dir(dirName)
+        reset_dir(runDir)
 
 # ---------------------- copy/edit/compile ed_dmft --------------------------
-subDirName = dirName + "/ed_dmft"
+subRunDir = runDir + "/ed_dmft"
+subCodeDir = config['general']['codeDir'] + "/ED_dmft"
 files_list = ["tpri.dat", "init.h", "hubb.dat", "hubb.andpar"]
-if not os.path.exists(subDirName):
-    os.mkdir(subDirName)
-create_and_populate_files(subDirName, files_list, config)
+src_files  = ["ed_dmft_parallel_frequencies.f"]
+
+if not os.path.exists(subRunDir):
+    os.mkdir(subRunDir)
+create_and_populate_files(subRunDir, files_list, config)
+
+for src_file in src_files:
+    shutil.copyfile(subCodeDir + "/" + src_file, subRunDir + "/" + src_file)
+#TODO: edit parameters in file or change code in order to include as external
+compile_command = "mpif90 " + ' '.join(src_files) + " -o ed_dmft.x -llapack -lblas " + config['general']['CFLAGS']
+compile(compile_command, cwd=subRunDir ,verbose=config['general']['verbose'])
  
-    
 
 # copy code, generate hubb.dat and hubb.andpar
 

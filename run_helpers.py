@@ -7,6 +7,11 @@ from scipy.special import comb
 
 
 # =========================================================================== 
+# =                        Job File Templates                               =
+# =========================================================================== 
+
+
+# =========================================================================== 
 # =                          File Templates                                 =
 # =========================================================================== 
 
@@ -17,7 +22,7 @@ def tpri_dat(config):
 def init_h(config):
     ns = config['parameters']['ns']
     nmaxx = int(comb(ns, int(ns/2)) ** 2)
-    return "parameter (nmaxx = {})".format(nmaxx)
+    return "      parameter (nmaxx = {})\n".format(nmaxx)
 
 def hubb_dat(config):
     out = '''c  U,   hmag
@@ -64,7 +69,7 @@ c ifix(0,1), <n>,   inew, iauto'''
         0.166899195169290
         0.311680378997208
         0.166899195169290
-        1.00000000000000          #chemical potential
+        {4}                      #chemical potential
     '''
     out.format(
         config['parameters']['beta'], config['ED']['conv_param'],
@@ -116,3 +121,15 @@ def create_and_populate_files(dirName, flist, config):
         with open(fp, 'w') as f:
             f.write(globals()[fn.replace(".","_")](config))
 
+def compile(command, cwd, verbose=False):
+    if verbose:
+        print("running command:\n" + command)
+    print("running command:")
+    print(command.split())
+    process = subprocess.run(command, cwd=cwd, shell=True, capture_output=True)
+    if not (process.returncode == 0):
+        print("Compilation did not work as expected:")
+        print(process.stdout.decode("utf-8"))
+        print(process.stderr.decode("utf-8"))
+        return False
+    return True

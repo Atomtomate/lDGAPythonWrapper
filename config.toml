@@ -1,7 +1,10 @@
 [general]
 
-name = "full_calc_test_automated"
+runDir = "../full_calc_test_automated"
 codeDir = "../codes"
+CFLAGS = "-O3"
+verbose = false
+clusterType = "berlin" # local|berlin|goettingen|physnet| TODO: this is very hacky right now
 
 
 [parameters]
@@ -12,8 +15,10 @@ mu      = 1.0      # chemical potential
 ns      = 5        # Number of sites including imurity
 
 [ED]
-w_min       = -12
-w_max       = 12
+nFermiFreq  = 80   # number of positive fermionic matsubara Frequencies, nBose will be nFermi-1
+nBoseFreq   = 79
+w_min       = -12.0
+w_max       = 12.0
 deltino     = 0.01
 imaxmu      = 0
 deltamu     = 0.0
