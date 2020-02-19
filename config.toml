@@ -12,7 +12,7 @@ beta    = 25.0     # inverse temperature
 U       = 12.0      # Hubbard U
 t       = 0.20     # hopping
 mu      = 1.0      # chemical potential
-ns      = 6        # Number of sites including imurity
+ns      = 5        # Number of sites including imurity
 
 [ED]
 w_min       = -12.0

@@ -12,9 +12,9 @@ from scipy.special import comb
 
 def job_berlin(config):
     out = '''#!/bin/bash
-#SBATCH -t 0:10:00
+#SBATCH -t 12:00:00
 #SBATCH --ntasks {0}
-#SBATCH -p standard96:test
+#SBATCH -p large96
 module load openblas/gcc.9/0.3.7 impi/2019.5 intel/19.0.5
 export SLURM_CPU_BIND=none
 mpirun ./ed_dmft.x > ed.out 2> ed.err
@@ -155,3 +155,9 @@ def run_ed_dmft(cwd, config):
         return False
     return True
     
+def copy_from_dmft(subRunDir_ED, subRunDir, files):
+    for f in files:
+        shutil.copyfile(subCodeDir_ED + "/" + f, subRunDir + "/" + f)
+    
+def copy_and_edit():
+    shutil.copyfile(subCodeDir + "/" + src_file, subRunDir_ED + "/" + src_file)

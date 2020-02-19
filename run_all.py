@@ -6,8 +6,14 @@ import toml
 from run_helpers import *
 
 
+
+# TODO: generate run scripts, build dependency pipeline
+# TODO: check for consistency and postproicess
+# TODO: copy data to directory
+
+
 # =========================================================================== 
-# =                             Setup DMFT                                  =
+# =                               Setup                                     =
 # =========================================================================== 
 # --------------------------- read input file -------------------------------
 config = toml.load("config.toml")
@@ -25,32 +31,63 @@ else:
     if reset_flag:
         reset_dir(runDir)
 
-# ---------------------- copy/edit/compile ed_dmft --------------------------
-subRunDir = runDir + "/ed_dmft"
+# =========================================================================== 
+# =                                DMFT                                     =
+# =========================================================================== 
+
+# ---------------------------- definitions ----------------------------------
 subCodeDir = config['general']['codeDir'] + "/ED_dmft"
 files_list = ["tpri.dat", "init.h", "hubb.dat", "hubb.andpar"]
 src_files  = ["ed_dmft_parallel_frequencies.f"]
 
-if not os.path.exists(subRunDir):
-    os.mkdir(subRunDir)
-create_and_populate_files(subRunDir, files_list, config)
+# ----------------------------- create dir ----------------------------------
+subRunDir_ED = runDir + "/ed_dmft"
+if not os.path.exists(subRunDir_ED):
+    os.mkdir(subRunDir_ED)
 
+# ------------------------------ copy/edit ----------------------------------
+create_and_populate_files(subRunDir_ED, files_list, config)
+subRunDir_ED = runDir + "/ed_dmft"
 for src_file in src_files:
-    shutil.copyfile(subCodeDir + "/" + src_file, subRunDir + "/" + src_file)
+    shutil.copyfile(subCodeDir + "/" + src_file, subRunDir_ED + "/" + src_file)
+
+# ----------------------------- compile/run ---------------------------------
 #TODO: edit parameters in file or change code in order to include as external
 compile_command = "mpif90 " + ' '.join(src_files) + " -o ed_dmft.x -llapack -lblas " + config['general']['CFLAGS']
-if not compile(compile_command, cwd=subRunDir ,verbose=config['general']['verbose']):
+if not compile(compile_command, cwd=subRunDir_ED ,verbose=config['general']['verbose']):
     raise Exception("Compilation Failed")
-if not run_ed_dmft(subRunDir, config):
+if not run_ed_dmft(subRunDir_ED, config):
     raise Exception("Job submit failed")
  
 
-# copy code, generate hubb.dat and hubb.andpar
+# =========================================================================== 
+# =                            DMFT Vertex                                  =
+# =========================================================================== 
+
+# ---------------------------- definitions ----------------------------------
+subCodeDir = config['general']['codeDir'] + "/ED_vertex"
+files_dmft_list = ["hubb.andpar", "hubb.dat", "gm_wim"]
+files_list = ["call_script", "checksum_script", "clean_script", "idw.dat",
+              "inversion_pp_fotso.f90", "parameters.dat", "split_script",
+              "sum_t_files.f, tpri.dat", "varbeta.dat", "ver_tpri_run.f"]
+src_files  = ["ver_tpri_run.f"]
+
+# ----------------------------- create dir ----------------------------------
+subRunDir_vert = runDir + "/ed_vertex"
+if not os.path.exists(subRunDir_vert):
+    os.mkdir(subRunDir_vert)
+
+# ------------------------------ copy/edit ----------------------------------
+copy_from_dmft(subRunDir_ED, subRunDir_vert, files_dmft_list)
+for ifile in files_list:
+    copy_and_edit(subCodeDir, subRunDir, ifile)
 
 
-# generate run scripts, build dependency pipeline
-# check for consistency and postproicess
-# copy data to directory
+
+
+# =========================================================================== 
+# =                          Postprocessing                                 =
+# =========================================================================== 
 
 cmd_cp_data = '''
 mkdir -p data
