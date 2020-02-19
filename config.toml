@@ -18,7 +18,7 @@ deltino     = 0.01
 imaxmu      = 0
 deltamu     = 0.0
 iterations  = 250
-conv_param  = 1e-13
+conv_param  = 0.007
 
 #ifix(0,1), <n>,   inew, iauto 
 #th0 , iexp (insignificant)

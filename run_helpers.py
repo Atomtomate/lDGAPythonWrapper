@@ -45,13 +45,14 @@ def hubb_dat(config):
     return out
 
 def hubb_andpar(config):
+    #TODO: var length for number of sites
     out = '''           ========================================
                1-band            30-Sep-95 LANCZOS
             ========================================
 NSITE     5 IWMAX32768
- {0}d0, {1}, {2}, 0.007
+ {0}d0, -12.0, 12.0, {1}
 c ns,imaxmu,deltamu, # iterations, conv.param.
- {3}, {4}, {5}d0, {6},  1.d-14
+ {2}, 0, 0.d0, {3},  1.d-14
 c ifix(0,1), <n>,   inew, iauto'''
     init = '''Eps(k)
         1.15026497703568
@@ -65,6 +66,11 @@ c ifix(0,1), <n>,   inew, iauto'''
         0.166899195169290
         1.00000000000000          #chemical potential
     '''
+    out.format(
+        config['parameters']['beta'], config['ED']['conv_param'],
+        config['parameters']['ns'], config['ED']['iterations'],
+        config['parameters']['mu']
+    )
     return out
 
 
