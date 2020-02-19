@@ -13,6 +13,7 @@ from run_helpers import *
 config = toml.load("config.toml")
 config['general']['codeDir'] = os.path.abspath(os.path.expanduser(config['general']['codeDir']))
 # TODO: check for consistency of parameters
+# TODO: check for correctly loaded modules
 
 # -------------------------- create directories -----------------------------
 runDir = config['general']['runDir']
@@ -38,7 +39,10 @@ for src_file in src_files:
     shutil.copyfile(subCodeDir + "/" + src_file, subRunDir + "/" + src_file)
 #TODO: edit parameters in file or change code in order to include as external
 compile_command = "mpif90 " + ' '.join(src_files) + " -o ed_dmft.x -llapack -lblas " + config['general']['CFLAGS']
-compile(compile_command, cwd=subRunDir ,verbose=config['general']['verbose'])
+if not compile(compile_command, cwd=subRunDir ,verbose=config['general']['verbose']):
+    raise Exception("Compilation Failed")
+if not run_ed_dmft(subRunDir, config):
+    raise Exception("Job submit failed")
  
 
 # copy code, generate hubb.dat and hubb.andpar

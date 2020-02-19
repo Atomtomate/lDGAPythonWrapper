@@ -1,22 +1,20 @@
 [general]
 
-runDir = "../full_calc_test_automated"
+runDir = "../full_calc_test_automated_2"
 codeDir = "../codes"
 CFLAGS = "-O3"
 verbose = false
-clusterType = "berlin" # local|berlin|goettingen|physnet| TODO: this is very hacky right now
+cluster = "berlin" # local|berlin|goettingen|physnet| TODO: this is very hacky right now
 
 
 [parameters]
-beta    = 15.0     # inverse temperature
-U       = 5.0      # Hubbard U
-t       = 0.204    # hopping
+beta    = 25.0     # inverse temperature
+U       = 12.0      # Hubbard U
+t       = 0.20     # hopping
 mu      = 1.0      # chemical potential
-ns      = 5        # Number of sites including imurity
+ns      = 6        # Number of sites including imurity
 
 [ED]
-nFermiFreq  = 80   # number of positive fermionic matsubara Frequencies, nBose will be nFermi-1
-nBoseFreq   = 79
 w_min       = -12.0
 w_max       = 12.0
 deltino     = 0.01
@@ -24,6 +22,7 @@ imaxmu      = 0
 deltamu     = 0.0
 iterations  = 250
 conv_param  = 0.007
+nprocs      = 100
 
 #ifix(0,1), <n>,   inew, iauto 
 #th0 , iexp (insignificant)
@@ -33,6 +32,8 @@ conv_param  = 0.007
 #initial anderson parameters here?
 
 [Vertex]
+nFermiFreq  = 80   # number of positive fermionic matsubara Frequencies, nBose will be nFermi-1
+nBoseFreq   = 79
 
 [Susc]
 
