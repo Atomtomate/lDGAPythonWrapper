@@ -2,7 +2,7 @@
 
 runDir = "../full_calc_test_automated_2"
 codeDir = "../codes"
-CFLAGS = "-O3"
+CFLAGS = "-O3 -xHost"
 verbose = false
 cluster = "berlin" # local|berlin|goettingen|physnet| TODO: this is very hacky right now
 
@@ -11,10 +11,11 @@ cluster = "berlin" # local|berlin|goettingen|physnet| TODO: this is very hacky r
 beta    = 25.0     # inverse temperature
 U       = 12.0      # Hubbard U
 t       = 0.20     # hopping
-mu      = 1.0      # chemical potential
-ns      = 5        # Number of sites including imurity
+mu      = 6.0      # chemical potential
+ns      = 7        # Number of sites including imurity
 
 [ED]
+skip        = false
 w_min       = -12.0
 w_max       = 12.0
 deltino     = 0.01
@@ -32,9 +33,14 @@ nprocs      = 100
 #initial anderson parameters here?
 
 [Vertex]
+skip        = false
+nmpara      = 30
 nFermiFreq  = 80   # number of positive fermionic matsubara Frequencies, nBose will be nFermi-1
 nBoseFreq   = 79
 
 [Susc]
+skip        = false
+nBoseFreq   = 10000
 
 [Trilex]
+skip        = false
