@@ -1,13 +1,13 @@
 import os
 import shutil
 import subprocess
-#import pathlib
 import toml
 from run_helpers import *
 
 
 
 # TODO: check for consistency and postproicess
+# TODO: convert to src_files style (vertex/trilex/susc not consistent with ed)
 # TODO: IMPORTANT! give option to restart from hubb.andpar
 # TODO: IMPORTANT! save jobid in file and check on restart if it is still running/exit ok!
 
@@ -39,10 +39,9 @@ else:
 # =========================================================================== 
  
 # ---------------------------- definitions ----------------------------------
-subCodeDir = config['general']['codeDir'] + "/ED_dmft"
-files_list = ["tpri.dat", "init.h", "hubb.dat", "hubb.andpar"]
+subCodeDir = os.path.join(config['general']['codeDir'], "ED_dmft")
+subRunDir_ED = os.path.join(runDir, "ed_dmft")
 src_files  = ["ed_dmft_parallel_frequencies.f"]
-subRunDir_ED = runDir + "/ed_dmft"
 compile_command = "mpif90 " + ' '.join(src_files) + " -o run.x -llapack -lblas " + config['general']['CFLAGS']
 
 if not config['ED']['skip']:
@@ -51,9 +50,7 @@ if not config['ED']['skip']:
         os.mkdir(subRunDir_ED)
 
     # ------------------------------ copy/edit ----------------------------------
-    create_and_populate_files(subRunDir_ED, files_list, config)
-    for src_file in src_files:
-        shutil.copyfile(subCodeDir + "/" + src_file, subRunDir_ED + "/" + src_file)
+    copy_and_edit_dmft(subCodeDir, subRunDir_ED, config)
 
     # ----------------------------- compile/run ---------------------------------
     #TODO: edit parameters in file or change code in order to include as external
@@ -97,12 +94,12 @@ if not config['Vertex']['skip']:
 # =========================================================================== 
 
 # ---------------------------- definitions ----------------------------------
-subCodeDir = config['general']['codeDir'] + "/ED_physical_suscpetibility"
+subCodeDir = os.path.join(config['general']['codeDir'], "ED_physical_suscpetibility")
 compile_command = "gfortran calc_chi_asymptotics_gfortran.f -o run.x -llapack -lblas " + config['general']['CFLAGS']
+subRunDir_susc = os.path.join(runDir, "ed_susc")
 
 if not config['Susc']['skip']:
     # ----------------------------- create dir ----------------------------------
-    subRunDir_susc = runDir + "/ed_susc"
     if not os.path.exists(subRunDir_susc):
         os.mkdir(subRunDir_susc)
 
@@ -121,13 +118,13 @@ if not config['Susc']['skip']:
 # =========================================================================== 
 
 # ---------------------------- definitions ----------------------------------
-subCodeDir = config['general']['codeDir'] + "/ED_Trilex_Parallel"
+subCodeDir = os.path.join(config['general']['codeDir'], "ED_Trilex_Parallel")
 compile_command = "mpif90 ver_twofreq_parallel.f -o run.x -llapack -lblas " + config['general']['CFLAGS']
+output_dirs = ["trip_omega", "tripamp_omega", "trilex_omega"]
+subRunDir_trilex = os.path.join(runDir, "ed_trilex")
 
 if not config['Trilex']['skip']:
     # ----------------------------- create dir ----------------------------------
-    subRunDir_trilex = runDir + "/ed_trilex"
-    output_dirs = ["trip_omega", "tripamp_omega", "trilex_omega"]
     if not os.path.exists(subRunDir_trilex):
         os.mkdir(subRunDir_trilex)
     for d in output_dirs:
@@ -149,6 +146,14 @@ if not config['Trilex']['skip']:
 # =========================================================================== 
 # =                          Postprocessing                                 =
 # =========================================================================== 
+
+# ---------------------------- definitions ----------------------------------
+subRunDir_data = os.path.join(runDir, "data")
+collect_data(subRunDir_data, subRunDir_ED, subRunDir_vert, subRunDir_susc, subRunDir_trilex)
+
+
+
+
 
 # TODO: clean "idw.dat", "tpri.dat", "varbeta.dat", tmp output, extract data to dir
 # TODO: run vertex post processing (sum_t still to do)

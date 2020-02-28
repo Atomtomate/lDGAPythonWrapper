@@ -4,4 +4,7 @@ Example:
     # create and activate a conda environment, if you do not want to install globally
     conda install pathlib toml scipy
 
+    edit config.toml:
+        - each step can be skipped by setting skip = true
+        - all given paths must be absolute or relative to the location of the config.toml       
 

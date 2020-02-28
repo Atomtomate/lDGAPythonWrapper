@@ -1,22 +1,23 @@
 [general]
 
-runDir = "../full_calc_test_automated_2"
+runDir = "../full_calc_test_automated_1"
 codeDir = "../codes"
 CFLAGS = "-O3 -xHost"
 verbose = false
-cluster = "berlin" # local|berlin|goettingen|physnet| TODO: this is very hacky right now
-custom_slurm_lines = ""#"#SBATCH -A hhp00048\n"
+cluster = "berlin"          # local|berlin|goettingen|physnet| TODO: this is very hacky right now
+custom_slurm_lines = ""     # example: "#SBATCH -A hhp00048\n"
+custom_andpar_file = ""     # example: "../old1/hubb.andpar"
 
 
 [parameters]
-beta    = 25.0     # inverse temperature
-U       = 12.0      # Hubbard U
+beta    = 15.0     # inverse temperature
+U       = 2.0      # Hubbard U
 t       = 0.20     # hopping
-mu      = 6.0      # chemical potential
-ns      = 7        # Number of sites including imurity
+mu      = 1.0      # chemical potential
+ns      = 5        # Number of sites including imurity
 
 [ED]
-skip        = true
+skip        = false
 w_min       = -12.0
 w_max       = 12.0
 deltino     = 0.01
@@ -34,13 +35,13 @@ nprocs      = 100
 #initial anderson parameters here?
 
 [Vertex]
-skip        = true
+skip        = false
 nmpara      = 30
 nFermiFreq  = 80   # number of positive fermionic matsubara Frequencies, nBose will be nFermi-1
 nBoseFreq   = 79
 
 [Susc]
-skip        = true
+skip        = false
 nBoseFreq   = 10000
 
 [Trilex]

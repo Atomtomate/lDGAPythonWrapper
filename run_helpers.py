@@ -50,11 +50,6 @@ def reset_dir(dirName):
         except Exception as e:
                 print('Failed to delete %s. Reason: %s' % (file_path, e))
 
-def create_and_populate_files(dirName, flist, config):
-    for fn in flist:
-        fp = dirName + "/" + fn
-        with open(fp, 'w') as f:
-            f.write(globals()[fn.replace(".","_")](config))
 
 def compile(command, cwd, verbose=False):
     if verbose:
@@ -71,6 +66,26 @@ def compile(command, cwd, verbose=False):
 # =========================================================================== 
 # =                          copy functions                                 =
 # =========================================================================== 
+
+def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
+    files_list = ["tpri.dat", "init.h", "hubb.dat", "hubb.andpar"]
+    src_files  = ["ed_dmft_parallel_frequencies.f"]
+    for fn in files_list:
+        fp = os.path.abspath(os.path.join(subRunDir_ED, fn))
+        with open(fp, 'w') as f:
+            f.write(globals()[fn.replace(".","_")](config))
+    for src_file in src_files:
+        source_file_path = os.path.abspath(os.path.join(subCodeDir, src_file))
+        target_file_path = os.path.abspath(os.path.join(subRunDir_ED, src_file))
+        shutil.copyfile(source_file_path , target_file_path)
+    old_andpar = config["general"]["custom_andpar_file"]
+    if old_andpar:
+        print("TODO: copying hubb.andpar but not checking for consistency!!")
+        source_file_path = os.path.abspath(old_andpar)
+        target_file_path = os.path.abspath(os.path.join(subRunDir_ED, filename))
+        shutil.copyfile(source_file_path, target_file_path)
+
+
 
 def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, config):
     files_dmft_list = ["hubb.andpar", "hubb.dat", "gm_wim"]
@@ -148,6 +163,22 @@ def copy_and_edit_trilex(subCodeDir, subRunDir, subRunDir_ED, config):
         st = os.stat(target_file_path)
         os.chmod(target_file_path, st.st_mode | stat.S_IEXEC)
 
+def collect_data(target_dir, dmft_dir, vertex_dir, susc_dir, trilex_dir):
+    if not os.path.exists(taret_dir):
+        os.mkdir(taret_dir)
+    dmft_files = ["hubb.dat", "hubb.andpar", "g0m", "g0mand", "gm_wim"]
+    susc_files = ["chi_asympt"]
+    for f in dmft_files:
+        source_file_path = os.path.abspath(os.path.join(dmft_dir, filename))
+        target_file_path = os.path.abspath(os.path.join(target_dir, filename))
+        shutil.copyfile(source_file_path, target_file_path)
+    for f in susc_files:
+        source_file_path = os.path.abspath(os.path.join(susc_dir, filename))
+        target_file_path = os.path.abspath(os.path.join(target_dir, filename))
+        shutil.copyfile(source_file_path, target_file_path)
+
+    print("TODO: vertex post processing not implemented yet")
+    print("TODO: trilex post processing not implemented yet")
 
 
 # =========================================================================== 
