@@ -4,18 +4,19 @@ from scipy.special import comb
 # =                        Job File Templates                               =
 # =========================================================================== 
 
-def job_berlin(config, procs, cmd, copy_from_ed=True):
+def job_berlin(config, procs, custom, cmd, copy_from_ed=True):
     out = '''#!/bin/bash
 #SBATCH -t 12:00:00
 #SBATCH --ntasks {0}
 #SBATCH -p large96
+{1}
 module load openblas/gcc.9/0.3.7 impi/2019.5 intel/19.0.5
 export SLURM_CPU_BIND=none
 '''
     if copy_from_ed:
         out = out + "./copy_ed_files \n"
-    out = out + "{1}\n"
-    out = out.format(procs, cmd)
+    out = out + "{2}\n"
+    out = out.format(procs, custom, cmd)
     return out
 
 def copy_from_ed(ed_dir, target_dir, files_list):
@@ -25,7 +26,7 @@ def copy_from_ed(ed_dir, target_dir, files_list):
     out = out + "cp " + ed_dir + "/{"
     for filename in files_list:
         out = out + filename + ","
-    out = out[:-1] + "} " + target_dir + "/"
+    out = out[:-1] + "} ."
     return out
 
 # =========================================================================== 
@@ -66,6 +67,18 @@ def init_psc_h(config):
     out += "      parameter (nmpara={3})\n"
     out = out.format(nmaxx, ns, int(config['Susc']['nBoseFreq']),
                                 int(config['Vertex']['nmpara']))
+    return out
+
+def init_trilex_h(config):
+    ns = config['parameters']['ns']
+    nmaxx = int(comb(ns, int(ns/2)) ** 2)
+    out = "      parameter (nmaxx = {0})\n"
+    out += "      parameter (nss={1})\n"
+    out += "      parameter (Iwmax={2})\n"
+    out += "      parameter (Iwbox_bose={3})\n"
+    out += "      parameter (nmpara={4})\n"
+    out = out.format(nmaxx, ns, int(config['Trilex']['nFermiFreq']),
+        int(config['Trilex']['nBoseFreq']), int(config['Trilex']['nmpara']))
     return out
 
 def hubb_dat(config):

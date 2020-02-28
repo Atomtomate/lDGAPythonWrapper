@@ -8,6 +8,8 @@ from run_helpers import *
 
 
 # TODO: check for consistency and postproicess
+# TODO: IMPORTANT! give option to restart from hubb.andpar
+# TODO: IMPORTANT! save jobid in file and check on restart if it is still running/exit ok!
 
 
 # =========================================================================== 
@@ -28,48 +30,52 @@ if not os.path.exists(runDir):
 else:
     reset_flag = query_yn("Directory " + runDir +  " already exists. Should everything be reset?", "no")
     if reset_flag:
-        reset_dir(runDir)
+        confirm = query_yn("This will purge the directory. Do you want to continue?", "no")
+        if confirm:
+            reset_dir(runDir)
 
 # =========================================================================== 
 # =                                DMFT                                     =
 # =========================================================================== 
-if not config['ED']['skip']:
-    # ---------------------------- definitions ----------------------------------
-    subCodeDir = config['general']['codeDir'] + "/ED_dmft"
-    files_list = ["tpri.dat", "init.h", "hubb.dat", "hubb.andpar"]
-    src_files  = ["ed_dmft_parallel_frequencies.f"]
+ 
+# ---------------------------- definitions ----------------------------------
+subCodeDir = config['general']['codeDir'] + "/ED_dmft"
+files_list = ["tpri.dat", "init.h", "hubb.dat", "hubb.andpar"]
+src_files  = ["ed_dmft_parallel_frequencies.f"]
+subRunDir_ED = runDir + "/ed_dmft"
+compile_command = "mpif90 " + ' '.join(src_files) + " -o run.x -llapack -lblas " + config['general']['CFLAGS']
 
+if not config['ED']['skip']:
     # ----------------------------- create dir ----------------------------------
-    subRunDir_ED = runDir + "/ed_dmft"
     if not os.path.exists(subRunDir_ED):
         os.mkdir(subRunDir_ED)
 
     # ------------------------------ copy/edit ----------------------------------
     create_and_populate_files(subRunDir_ED, files_list, config)
-    subRunDir_ED = runDir + "/ed_dmft"
     for src_file in src_files:
         shutil.copyfile(subCodeDir + "/" + src_file, subRunDir_ED + "/" + src_file)
 
     # ----------------------------- compile/run ---------------------------------
     #TODO: edit parameters in file or change code in order to include as external
-    compile_command = "mpif90 " + ' '.join(src_files) + " -o run.x -llapack -lblas " + config['general']['CFLAGS']
     if not compile(compile_command, cwd=subRunDir_ED ,verbose=config['general']['verbose']):
         raise Exception("Compilation Failed")
     ed_jobid = run_ed_dmft(subRunDir_ED, config)
     if not ed_jobid:
         raise Exception("Job submit failed")
- 
+else:
+    ed_jobid = None
 
 # =========================================================================== 
 # =                            DMFT Vertex                                  =
 # =========================================================================== 
 
-if not config['Vertex']['skip']:
-    # ---------------------------- definitions ----------------------------------
-    subCodeDir = config['general']['codeDir'] + "/ED_vertex"
+# ---------------------------- definitions ----------------------------------
+subRunDir_vert = runDir + "/ed_vertex"
+subCodeDir = config['general']['codeDir'] + "/ED_vertex"
+compile_command = "mpif90 ver_tpri_run.f -o run.x -llapack -lblas " + config['general']['CFLAGS']
 
+if not config['Vertex']['skip']:
     # ----------------------------- create dir ----------------------------------
-    subRunDir_vert = runDir + "/ed_vertex"
     if not os.path.exists(subRunDir_vert):
         os.mkdir(subRunDir_vert)
 
@@ -77,10 +83,9 @@ if not config['Vertex']['skip']:
     copy_and_edit_vertex(subCodeDir, subRunDir_vert, subRunDir_ED, config)
 
     # ----------------------------- compile/run ---------------------------------
-    compile_command = "mpif90 ver_tpri_run.f -o run.x -llapack -lblas " + config['general']['CFLAGS']
     if not compile(compile_command, cwd=subRunDir_vert, verbose=config['general']['verbose']):
         raise Exception("Compilation Failed")
-    if not run_ed_vertex(subRunDir_vert, ed_jobid, config):
+    if not run_ed_vertex(subRunDir_vert, config, ed_jobid):
         raise Exception("Job submit failed")
 
     #TODO: edit tpri?
@@ -91,10 +96,11 @@ if not config['Vertex']['skip']:
 # =                             DMFT Susc                                   =
 # =========================================================================== 
 
-if not config['Vertex']['susc']:
-    # ---------------------------- definitions ----------------------------------
-    subCodeDir = config['general']['codeDir'] + "/ED_physical_suscpetibility"
+# ---------------------------- definitions ----------------------------------
+subCodeDir = config['general']['codeDir'] + "/ED_physical_suscpetibility"
+compile_command = "gfortran calc_chi_asymptotics_gfortran.f -o run.x -llapack -lblas " + config['general']['CFLAGS']
 
+if not config['Susc']['skip']:
     # ----------------------------- create dir ----------------------------------
     subRunDir_susc = runDir + "/ed_susc"
     if not os.path.exists(subRunDir_susc):
@@ -104,25 +110,47 @@ if not config['Vertex']['susc']:
     copy_and_edit_susc(subCodeDir, subRunDir_susc, subRunDir_ED, config)
 
     # ----------------------------- compile/run ---------------------------------
-    compile_command = "gfortran calc_chi_asymptotics_gfortran.f -o run.x -llapack -lblas " + config['general']['CFLAGS']
     if not compile(compile_command, cwd=subRunDir_susc, verbose=config['general']['verbose']):
         raise Exception("Compilation Failed")
-    if not run_ed_susc(subRunDir_susc, ed_jobid, config):
+    if not run_ed_susc(subRunDir_susc, config, ed_jobid):
         raise Exception("Job submit failed")
 
 
-    # =========================================================================== 
+# =========================================================================== 
 # =                            DMFT Trilex                                  =
 # =========================================================================== 
+
+# ---------------------------- definitions ----------------------------------
+subCodeDir = config['general']['codeDir'] + "/ED_Trilex_Parallel"
+compile_command = "mpif90 ver_twofreq_parallel.f -o run.x -llapack -lblas " + config['general']['CFLAGS']
+
+if not config['Trilex']['skip']:
+    # ----------------------------- create dir ----------------------------------
+    subRunDir_trilex = runDir + "/ed_trilex"
+    output_dirs = ["trip_omega", "tripamp_omega", "trilex_omega"]
+    if not os.path.exists(subRunDir_trilex):
+        os.mkdir(subRunDir_trilex)
+    for d in output_dirs:
+        fp = os.path.abspath(os.path.join(subRunDir_trilex, d))
+        if not os.path.exists(fp):
+            os.mkdir(fp)
+
+    # ------------------------------ copy/edit ----------------------------------
+    copy_and_edit_trilex(subCodeDir, subRunDir_trilex, subRunDir_ED, config)
+
+    # ----------------------------- compile/run ---------------------------------
+    if not compile(compile_command, cwd=subRunDir_trilex, verbose=config['general']['verbose']):
+        raise Exception("Compilation Failed")
+    if not run_ed_trilex(subRunDir_trilex, config, ed_jobid):
+        raise Exception("Job submit failed")
+
+
 
 # =========================================================================== 
 # =                          Postprocessing                                 =
 # =========================================================================== 
 
-#TODO: IMPORTANT!!!! copy code from dmft to other directories
-#copy_from_dmft(subRunDir_ED, subRunDir_vert, files_dmft_list)
-
-
+# TODO: clean "idw.dat", "tpri.dat", "varbeta.dat", tmp output, extract data to dir
 # TODO: run vertex post processing (sum_t still to do)
 
 cmd_cp_data = '''

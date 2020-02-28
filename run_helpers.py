@@ -67,6 +67,11 @@ def compile(command, cwd, verbose=False):
         return False
     return True
     
+
+# =========================================================================== 
+# =                          copy functions                                 =
+# =========================================================================== 
+
 def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, config):
     files_dmft_list = ["hubb.andpar", "hubb.dat", "gm_wim"]
     files_list = ["checksum_script", "clean_script", "idw.dat",
@@ -85,14 +90,14 @@ def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, config):
         f.write(init_vertex_h(config))
     fp = os.path.join(subRunDir, "copy_ed_files")
     with open(fp, 'w') as f:
-        f.write(copy_from_ed(subRunDir_ED, subRunDir, files_dmft_list))
+        f.write(copy_from_ed(os.path.abspath(subRunDir_ED), subRunDir, files_dmft_list))
 
     for filename in files_list:
-        source_file_path = os.path.join(subCodeDir, filename)
-        target_file_path = os.path.join(subRunDir, filename)
+        source_file_path = os.path.abspath(os.path.join(subCodeDir, filename))
+        target_file_path = os.path.abspath(os.path.join(subRunDir, filename))
         shutil.copyfile(source_file_path, target_file_path)
     for filename in scripts:
-        target_file_path = os.path.join(subRunDir, filename)
+        target_file_path = os.path.abspath(os.path.join(subRunDir, filename))
         st = os.stat(target_file_path)
         os.chmod(target_file_path, st.st_mode | stat.S_IEXEC)
 
@@ -108,7 +113,31 @@ def copy_and_edit_susc(subCodeDir, subRunDir, subRunDir_ED, config):
         f.write(init_psc_h(config))
     fp = os.path.join(subRunDir, "copy_ed_files")
     with open(fp, 'w') as f:
-        f.write(copy_from_ed(subRunDir_ED, subRunDir, files_dmft_list))
+        f.write(copy_from_ed(os.path.abspath(subRunDir_ED),
+                             os.path.abspath(subRunDir), files_dmft_list))
+
+    for filename in files_list:
+        source_file_path = os.path.join(subCodeDir, filename)
+        target_file_path = os.path.join(subRunDir, filename)
+        shutil.copyfile(source_file_path, target_file_path)
+    for filename in scripts:
+        target_file_path = os.path.join(subRunDir, filename)
+        st = os.stat(target_file_path)
+        os.chmod(target_file_path, st.st_mode | stat.S_IEXEC)
+
+    
+def copy_and_edit_trilex(subCodeDir, subRunDir, subRunDir_ED, config):
+    files_dmft_list = ["hubb.andpar", "hubb.dat", "gm_wim"]
+    files_list = ["ver_twofreq_parallel.f", "idw.dat",
+                   "tpri.dat", "varbeta.dat"]
+    scripts = ["copy_ed_files"]
+    fp = os.path.join(subRunDir, "init.h")
+    with open(fp, 'w') as f:
+        f.write(init_trilex_h(config))
+    fp = os.path.join(subRunDir, "copy_ed_files")
+    with open(fp, 'w') as f:
+        f.write(copy_from_ed(os.path.abspath(subRunDir_ED),
+                             os.path.abspath(subRunDir), files_dmft_list))
 
     for filename in files_list:
         source_file_path = os.path.join(subCodeDir, filename)
@@ -120,12 +149,18 @@ def copy_and_edit_susc(subCodeDir, subRunDir, subRunDir_ED, config):
         os.chmod(target_file_path, st.st_mode | stat.S_IEXEC)
 
 
+
+# =========================================================================== 
+# =                           run functions                                 =
+# =========================================================================== 
+
 def run_ed_dmft(cwd, config):
     fp = cwd + "/" + "ed_dmft_run.sh"
-    cmd= "mpirun ./run.x > ed.out 2> ed.err"
+    cmd= "mpirun ./run.x > run.out 2> run.err"
     procs = int(config['ED']['nprocs'])
+    cslurm = config['general']['custom_slurm_lines']
     with open(fp, 'w') as f:
-        f.write(globals()["job_" + config['general']['cluster']](config, procs, cmd, copy_from_ed=False))
+        f.write(globals()["job_" + config['general']['cluster']](config, procs, cslurm, cmd, copy_from_ed=False))
     process = subprocess.run("sbatch ./ed_dmft_run.sh", cwd=cwd, shell=True, capture_output=True)
     if not (process.returncode == 0):
         print("ED submit did not work as expected:")
@@ -137,18 +172,19 @@ def run_ed_dmft(cwd, config):
         jobid = re.findall(r'job \d+', res)[-1].split()[1]
     return jobid
 
-def run_ed_vertex(cwd, ed_jobid, config):
+def run_ed_vertex(cwd, config, ed_jobid=None):
     filename = "ed_vertex_run.sh"
     fp = os.path.join(cwd, filename)
-    cmd= "./call_script > vert.out 2> vert.err"
+    cmd= "./call_script > run.out 2> run.err"
     procs = 2*int(config['Vertex']['nBoseFreq']) - 1
-    if config['ED']['skip']:
+    cslurm = config['general']['custom_slurm_lines']
+    if not ed_jobid:
         run_cmd = "sbatch " + filename
     else:
         run_cmd = "sbatch" + " --dependency=afterok:"+ed_jobid + " " + filename
     print("running: " +run_cmd)
     with open(fp, 'w') as f:
-        f.write(globals()["job_" + config['general']['cluster']](config, procs, cmd))
+        f.write(globals()["job_" + config['general']['cluster']](config, procs, cslurm, cmd))
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
     if not (process.returncode == 0):
         print("Vertex submit did not work as expected:")
@@ -160,20 +196,46 @@ def run_ed_vertex(cwd, ed_jobid, config):
         jobid = re.findall(r'job \d+', res)[-1].split()[1]
     return jobid
 
-def run_ed_susc(cwd, ed_jobid, config):
+def run_ed_susc(cwd, config, ed_jobid=None):
     filename = "ed_susc_run.sh"
     fp = os.path.join(cwd, filename)
-    cmd= "./run.x"
-    if config['ED']['skip']:
+    cmd= "./run.x > run.out 2> run.err"
+    cslurm = config['general']['custom_slurm_lines']
+    if not ed_jobid:
         run_cmd = "sbatch " + filename
     else:
         run_cmd = "sbatch" + " --dependency=afterok:"+ed_jobid + " " + filename
     print("running: " +run_cmd)
     with open(fp, 'w') as f:
-        f.write(globals()["job_" + config['general']['cluster']](config, 1,cmd))
+        f.write(globals()["job_" + config['general']['cluster']](config, 1, cslurm, cmd))
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
     if not (process.returncode == 0):
         print("Vertex submit did not work as expected:")
+        print(process.stdout.decode("utf-8"))
+        print(process.stderr.decode("utf-8"))
+        return False
+    else:
+        res = process.stdout.decode("utf-8")
+        jobid = re.findall(r'job \d+', res)[-1].split()[1]
+    return jobid
+
+def run_ed_trilex(cwd, config, ed_jobid=None):
+    filename = "ed_trilex_run.sh"
+    cmd= "./run.x > run.out 2> run.err"
+    procs = 2*int(config['Trilex']['nBoseFreq']) - 1
+    cslurm = config['general']['custom_slurm_lines']
+    if not ed_jobid:
+        run_cmd = "sbatch " + filename
+    else:
+        run_cmd = "sbatch" + " --dependency=afterok:"+ed_jobid + " " + filename
+    print("running: " +run_cmd)
+    fp = os.path.join(cwd, filename)
+    with open(fp, 'w') as f:
+        f.write(globals()["job_" + config['general']['cluster']](config, procs, cslurm, cmd))
+    process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
+
+    if not (process.returncode == 0):
+        print("Trilex submit did not work as expected:")
         print(process.stdout.decode("utf-8"))
         print(process.stderr.decode("utf-8"))
         return False

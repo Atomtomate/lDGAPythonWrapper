@@ -5,6 +5,7 @@ codeDir = "../codes"
 CFLAGS = "-O3 -xHost"
 verbose = false
 cluster = "berlin" # local|berlin|goettingen|physnet| TODO: this is very hacky right now
+custom_slurm_lines = ""#"#SBATCH -A hhp00048\n"
 
 
 [parameters]
@@ -15,7 +16,7 @@ mu      = 6.0      # chemical potential
 ns      = 7        # Number of sites including imurity
 
 [ED]
-skip        = false
+skip        = true
 w_min       = -12.0
 w_max       = 12.0
 deltino     = 0.01
@@ -33,14 +34,17 @@ nprocs      = 100
 #initial anderson parameters here?
 
 [Vertex]
-skip        = false
+skip        = true
 nmpara      = 30
 nFermiFreq  = 80   # number of positive fermionic matsubara Frequencies, nBose will be nFermi-1
 nBoseFreq   = 79
 
 [Susc]
-skip        = false
+skip        = true
 nBoseFreq   = 10000
 
 [Trilex]
 skip        = false
+nmpara      = 30
+nFermiFreq  = 80   # number of positive fermionic matsubara Frequencies, nBose will be nFermi-1
+nBoseFreq   = 79
