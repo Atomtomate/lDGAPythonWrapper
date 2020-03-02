@@ -7,7 +7,7 @@ from run_helpers import *
 
 
 
-# TODO: postproicess
+# TODO: obtain compiler and modify clean_script etc
 # TODO: convert to src_files style (vertex/trilex/susc not consistent with ed)
 # TODO: IMPORTANT! save jobid in file and check on restart if it is still running/exit ok!
 # TODO: IMPORTANT! skip computation if jobid indcates completion
@@ -32,6 +32,7 @@ config = read_preprocess_config("config.toml")
 
 # -------------------------- create directories -----------------------------
 runDir = config['general']['runDir']
+dataDir = os.path.join(config['general']['runDir'], "data")
 if not os.path.exists(runDir):
     os.mkdir(runDir)
     print("Directory " , runDir ,  " Created ")
@@ -65,7 +66,6 @@ if not config['ED']['skip']:
     #TODO: edit parameters in file or change code in order to include as external
     if not compile(compile_command, cwd=subRunDir_ED ,verbose=config['general']['verbose']):
         raise Exception("Compilation Failed")
-    quit()
     jobid_ed = run_ed_dmft(subRunDir_ED, config)
     if not jobid_ed:
         raise Exception("Job submit failed")
@@ -135,7 +135,7 @@ if not config['Susc']['skip']:
         raise Exception("Job submit failed")
 
     # ---------------------------- save job info --------------------------------
-    susc_logfile = os.path.join(runDir, "job_vert.log")
+    susc_logfile = os.path.join(runDir, "job_susc.log")
     with open(susc_logfile, 'w') as f:
         f.write(dmft_log(jobid_susc, subRunDir_susc, config))
 
@@ -181,29 +181,13 @@ if not config['Trilex']['skip']:
 # =========================================================================== 
 
 # ---------------------------- definitions ----------------------------------
-subRunDir_data = os.path.join(runDir, "data")
 
 # TODO: check all run.err for errors (later also use sacct with job_ids)
 if not config['Postprocess']['skip']:
-    # TODO: run vertex post processing (sum_t still to do)
-    # TODO: create bash file to copy everything
-    # TODO: submit as dependency job
-    print("TODO: only collect data, if jobs are completed")
-    collect_data(subRunDir_data, subRunDir_ED, subRunDir_vert, subRunDir_susc, subRunDir_trilex)
 
-
-
-
-
-# TODO: clean "idw.dat", "tpri.dat", "varbeta.dat", tmp output, extract data to dir
-
-cmd_cp_data = '''
-mkdir -p data
-cp ed_dmft/{gm_wim,g0m,g0mand,hubb.dat,hubb.andpar} data/
-cp ed_vertex/gamma_dir/ data/ -r
-cp ed_vertex/chi_dir/ data/ -r
-cp ed_susc/chi_asympt data
-cp ed_trilex/trip_omega data -r
-cp ed_trilex/tripamp_omega data -r
-cp ed_trilex/trilex_omega data -r
-'''
+    # ----------------------------- compile/run ---------------------------------
+    jobid_pp = run_postprocess(runDir, dataDir, subRunDir_ED, subRunDir_vert,\
+                    subRunDir_susc, subRunDir_trilex, config, jobids=\
+                    [jobid_ed, jobid_vert, jobid_susc, jobid_trilex])
+    if not jobid_pp:
+        raise Exception("Postprocessing job submit failed")

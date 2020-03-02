@@ -1,4 +1,5 @@
 from scipy.special import comb
+import os
 
 # =========================================================================== 
 # =                        Job File Templates                               =
@@ -8,7 +9,7 @@ def job_berlin(config, procs, custom, cmd, copy_from_ed=True):
     out = '''#!/bin/bash
 #SBATCH -t 12:00:00
 #SBATCH --ntasks {0}
-#SBATCH -p standard96
+#SBATCH -p large96
 {1}
 module load openblas/gcc.9/0.3.7 impi/2019.5 intel/19.0.5
 export SLURM_CPU_BIND=none
@@ -20,19 +21,55 @@ export SLURM_CPU_BIND=none
     out = out.format(procs, custom, cmd)
     return out
 
-def copy_from_ed(ed_dir, target_dir, files_list):
-    out = '''
-#!/bin/bash
-'''
-    out = out + "cp " + ed_dir + "/{"
+def copy_files_script(source_dir, target_dir, files_list, header=False):
+    out = "#!/bin/bash \n" if header else ""
+    out = out + "cp " + os.path.abspath(source_dir) + "/{"
     for filename in files_list:
         out = out + filename + ","
-    out = out[:-1] + "} ."
+    out = out[:-1] + "} " + os.path.abspath(target_dir)
+    out += "\n"
     return out
+
+def copy_dirs_script(source_dir, target_dir, dirs_list, header=False):
+    out = "#!/bin/bash \n" if header else ""
+    print(dirs_list)
+    for d in dirs_list:
+        out += "cp " + os.path.abspath(os.path.join(source_dir,d))\
+            + " " + os.path.abspath(target_dir) + " -ar \n"
+    return out
+
+def postprocessing_berlin(content):
+    out = '''#!/bin/bash
+#SBATCH -t 48:00:00
+#SBATCH --ntasks=1
+#SBATCH -p large96:shared
+module load openblas/gcc.9/0.3.7 impi/2019.5 intel/19.0.5
+export SLURM_CPU_BIND=none
+'''
+    out += content
+    return out
+
 
 # =========================================================================== 
 # =                          File Templates                                 =
 # =========================================================================== 
+
+def split_files(config):
+    out = '''#!/bin/bash
+cwd=$(pwd)
+cd "$(dirname "$0")"
+mkdir -p gamma_dir
+cd gamma_dir
+split --suffix-length=3 -d --lines={0} ../GAMMA_DM_FULLRANGE gamma
+cd ..
+mkdir -p chi_dir
+cd chi_dir
+split --suffix-length=3 -d --lines={1} ../vert_chi chi
+cd $cwd
+'''
+    lines = (2*config['Vertex']['nBoseFreq'])**2
+    out = out.format(lines, lines)
+    return out
 
 def tpri_dat(config):
     t = config['parameters']['t']
@@ -82,6 +119,16 @@ def init_trilex_h(config):
         int(config['Trilex']['nBoseFreq']), int(config['Trilex']['nmpara']))
     return out
 
+def init_sumt_h(config):
+    out = "      parameter (Iwmax={0})\n"
+    out += "      parameter (Iwbox_fermi={1})\n"
+    out += "      parameter (Iwmax_bose={2})\n"
+    out += "      parameter (nprocs={3})\n"
+    out = out.format(int(config['Vertex']['nFermiFreq']), \
+                     int(config['Vertex']['nFermiFreq']), \
+                     int(config['Vertex']['nBoseFreq']),  \
+                     2*int(config['Vertex']['nBoseFreq']) + 1)
+    return out
 def hubb_dat(config):
     out = '''c  U,   hmag
     {0}d0,  0.d0 0.d0
@@ -175,8 +222,7 @@ done
     return out
 
 def parameterts_dat(config):
-    out = '''
-c Iwbox_bose_ph   Iwbox_fermi_ph   Iwbox_bose_pp   Iwbox_fermi_pp   Iwbox_bose_gamma   Iwbox_fermi_gamma    Iwbox_bose_lambda   Iwbox_fermi_lambda   Iwbox_green_function
+    out = '''c Iwbox_bose_ph   Iwbox_fermi_ph   Iwbox_bose_pp   Iwbox_fermi_pp   Iwbox_bose_gamma   Iwbox_fermi_gamma    Iwbox_bose_lambda   Iwbox_fermi_lambda   Iwbox_green_function
   {0}                 {1}              0                0                0                 0                   0                   0                    {2}
 c Frequencies for up_down particle-particle vertex: Iwbox_bose_up_down   Iwbox_fermi_up_down   Iwbox_bose_up_down_backshift   Iwbox_fermi_up_down_backshift
    0     0     0     0

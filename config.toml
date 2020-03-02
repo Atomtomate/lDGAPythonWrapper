@@ -1,6 +1,6 @@
 [general]
 
-runDir = "../full_calc_test_b{beta}_U{U}"
+runDir = "../test_calc"
 codeDir = "../codes"
 CFLAGS = "-O3 -xHost"
 verbose = false
@@ -13,7 +13,7 @@ custom_init_andpar_vals_only = true  # if set to false, file is copied. otherwis
 
 [parameters]
 beta    = 15.0     # inverse temperature
-U       = 22.2     # Hubbard U
+U       = 5.6     # Hubbard U
 t       = 0.20     # hopping
 mu      = "HF"     # chemical potential as float or "HF" for half filling
 ns      = 5        # Number of sites including imurity
@@ -37,21 +37,21 @@ nprocs      = 100
 #initial anderson parameters here?
 
 [Vertex]
-skip        = true
+skip        = false
 nmpara      = 30
-nFermiFreq  = 80   # number of positive fermionic matsubara Frequencies, nBose will be nFermi-1
-nBoseFreq   = 79   # TODO: this should be fixed at nfermi - 1       
+nFermiFreq  = 40   # number of positive fermionic matsubara Frequencies, nBose will be nFermi-1
+nBoseFreq   = 39   # TODO: this should be fixed at nfermi - 1       
 
 [Susc]
-skip        = true
-nBoseFreq   = 10000
+skip        = false
+nBoseFreq   = 1000
 
 [Trilex]
-skip        = true
+skip        = false
 nmpara      = 30
-nFermiFreq  = 80   # number of positive fermionic matsubara Frequencies, nBose will be nFermi-1
-nBoseFreq   = 79
+nFermiFreq  = 40   # number of positive fermionic matsubara Frequencies, nBose will be nFermi-1
+nBoseFreq   = 39
 
 
 [Postprocess]
-skip        = true
+skip        = false

@@ -130,10 +130,10 @@ def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
 
 def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, config):
     files_dmft_list = ["hubb.andpar", "hubb.dat", "gm_wim"]
-    files_list = ["checksum_script", "clean_script", "idw.dat",
-                  "inversion_pp_fotso.f90",  "split_script",
+    files_list = ["checksum_script", "clean_script_auto", "idw.dat",
+                  "inversion_pp_fotso.f90",  "split_script", "sum_t_files.f",
                    "tpri.dat", "varbeta.dat", "ver_tpri_run.f"]
-    scripts = ["copy_ed_files" ,"call_script", "checksum_script", "clean_script", "split_script"]
+    scripts = ["copy_ed_files" ,"call_script", "checksum_script", "clean_script_auto", "split_script"]
 
     fp = os.path.join(subRunDir, "call_script")
     with open(fp, 'w') as f:
@@ -144,10 +144,13 @@ def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, config):
     fp = os.path.join(subRunDir, "init.h")
     with open(fp, 'w') as f:
         f.write(init_vertex_h(config))
+    fp = os.path.join(subRunDir, "init_sumt.h")
+    with open(fp, 'w') as f:
+        f.write(init_sumt_h(config))
     fp = os.path.join(subRunDir, "copy_ed_files")
     with open(fp, 'w') as f:
-        f.write(copy_from_ed(os.path.abspath(subRunDir_ED), subRunDir, files_dmft_list))
-
+        f.write(copy_files_script(subRunDir_ED, subRunDir,
+                                  files_dmft_list, header=True))
     for filename in files_list:
         source_file_path = os.path.abspath(os.path.join(subCodeDir, filename))
         target_file_path = os.path.abspath(os.path.join(subRunDir, filename))
@@ -156,8 +159,6 @@ def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, config):
         target_file_path = os.path.abspath(os.path.join(subRunDir, filename))
         st = os.stat(target_file_path)
         os.chmod(target_file_path, st.st_mode | stat.S_IEXEC)
-
-    src_files  = ["sum_t_files.f"]
     
 def copy_and_edit_susc(subCodeDir, subRunDir, subRunDir_ED, config):
     files_dmft_list = ["hubb.andpar", "hubb.dat", "gm_wim"]
@@ -169,8 +170,8 @@ def copy_and_edit_susc(subCodeDir, subRunDir, subRunDir_ED, config):
         f.write(init_psc_h(config))
     fp = os.path.join(subRunDir, "copy_ed_files")
     with open(fp, 'w') as f:
-        f.write(copy_from_ed(os.path.abspath(subRunDir_ED),
-                             os.path.abspath(subRunDir), files_dmft_list))
+        f.write(copy_files_script(subRunDir_ED, subRunDir, \
+                                  files_dmft_list, header=True))
 
     for filename in files_list:
         source_file_path = os.path.join(subCodeDir, filename)
@@ -192,8 +193,8 @@ def copy_and_edit_trilex(subCodeDir, subRunDir, subRunDir_ED, config):
         f.write(init_trilex_h(config))
     fp = os.path.join(subRunDir, "copy_ed_files")
     with open(fp, 'w') as f:
-        f.write(copy_from_ed(os.path.abspath(subRunDir_ED),
-                             os.path.abspath(subRunDir), files_dmft_list))
+        f.write(copy_files_script(subRunDir_ED, subRunDir,\
+                                  files_dmft_list, header=True))
 
     for filename in files_list:
         source_file_path = os.path.join(subCodeDir, filename)
@@ -203,23 +204,6 @@ def copy_and_edit_trilex(subCodeDir, subRunDir, subRunDir_ED, config):
         target_file_path = os.path.join(subRunDir, filename)
         st = os.stat(target_file_path)
         os.chmod(target_file_path, st.st_mode | stat.S_IEXEC)
-
-def collect_data(target_dir, dmft_dir, vertex_dir, susc_dir, trilex_dir):
-    if not os.path.exists(target_dir):
-        os.mkdir(target_dir)
-    dmft_files = ["hubb.dat", "hubb.andpar", "g0m", "g0mand", "gm_wim"]
-    susc_files = ["chi_asympt"]
-    for f in dmft_files:
-        source_file_path = os.path.abspath(os.path.join(dmft_dir, f))
-        target_file_path = os.path.abspath(os.path.join(target_dir, f))
-        shutil.copyfile(source_file_path, target_file_path)
-    for f in susc_files:
-        source_file_path = os.path.abspath(os.path.join(susc_dir, f))
-        target_file_path = os.path.abspath(os.path.join(target_dir, f))
-        shutil.copyfile(source_file_path, target_file_path)
-
-    print("TODO: vertex post processing not implemented yet")
-
 
 # =========================================================================== 
 # =                           run functions                                 =
@@ -232,7 +216,10 @@ def run_ed_dmft(cwd, config):
     cslurm = config['general']['custom_slurm_lines']
     with open(fp, 'w') as f:
         f.write(globals()["job_" + config['general']['cluster']](config, procs, cslurm, cmd, copy_from_ed=False))
-    process = subprocess.run("sbatch ./ed_dmft_run.sh", cwd=cwd, shell=True, capture_output=True)
+    run_cmd = "sbatch ./ed_dmft_run.sh"
+    process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
+
+    print("running: " +run_cmd)
     if not (process.returncode == 0):
         print("ED submit did not work as expected:")
         print(process.stdout.decode("utf-8"))
@@ -315,8 +302,63 @@ def run_ed_trilex(cwd, config, ed_jobid=None):
         jobid = re.findall(r'job \d+', res)[-1].split()[1]
     return jobid
 
+
+def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,\
+                    subRunDir_susc, subRunDir_trilex, config, jobids=None):
+    filename = "postprocess.sh"
+    cslurm = config['general']['custom_slurm_lines']
+    procs = 1
+
+    cp_script = build_collect_data(dataDir, subRunDir_ED, subRunDir_vert, subRunDir_susc, subRunDir_trilex)
+    cp_script_path = os.path.abspath(os.path.join(cwd, "copy_data.sh"))
+    with open(cp_script_path, 'w') as f:
+        f.write(cp_script)
+    split_script = split_files(config)
+    split_script_path = os.path.abspath(os.path.join(dataDir, "split_files.sh"))
+    with open(split_script_path, 'w') as f:
+        f.write(split_script)
+
+    clean_script_path = os.path.abspath(os.path.join(subRunDir_vert, "clean_script_auto"))
+    print("TODO: copying gm_wim from dmft. WHY?")
+    content = "cp " + os.path.join(subRunDir_ED, "gm_wim") + " " + subRunDir_vert + "\n"
+    content += str(clean_script_path)
+    content += "\n"
+    content += str(cp_script_path) + "\n"
+    content += str(split_script_path) + "\n"
+
+    st = os.stat(cp_script_path)
+    os.chmod(cp_script_path, st.st_mode | stat.S_IEXEC)
+    st = os.stat(clean_script_path)
+    os.chmod(clean_script_path, st.st_mode | stat.S_IEXEC)
+    st = os.stat(split_script_path)
+    os.chmod(split_script_path, st.st_mode | stat.S_IEXEC)
+
+    run_cmd = "sbatch " + filename
+    if jobids and any(jobids):
+        run_cmd = "sbatch" + " --dependency=afterok"
+        for j in jobids:
+            if j:
+                run_cmd += ":"+j
+        run_cmd += " " + filename
+    print("running: " +run_cmd)
+
+    fp = os.path.join(cwd, filename)
+    with open(fp, 'w') as f:
+        f.write(globals()["postprocessing_" + config['general']['cluster']](content))
+    process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
+
+    if not (process.returncode == 0):
+        print("Postprocessing submit did not work as expected:")
+        print(process.stdout.decode("utf-8"))
+        print(process.stderr.decode("utf-8"))
+        return False
+    else:
+        res = process.stdout.decode("utf-8")
+        jobid = re.findall(r'job \d+', res)[-1].split()[1]
+    return jobid
+
 # =========================================================================== 
-# =                           Log Functions                                 =
+# =                   Log and Postprocess Functions                         =
 # =========================================================================== 
 
 def dmft_log(jobid, loc, config):
@@ -335,3 +377,19 @@ job_info = {5}
                      "TODO: not implemented yet", "TODO: not implemented yet",
                      "TODO: not implemented yet")
     return out
+
+def build_collect_data(target_dir, dmft_dir, vertex_dir, susc_dir, trilex_dir):
+    if not os.path.exists(target_dir):
+        os.mkdir(target_dir)
+
+    dmft_files = ["hubb.dat", "hubb.andpar", "g0m", "g0mand", "gm_wim"]
+    susc_files = ["chi_asympt", "matrix"]
+    vertex_files = ["t.tar.gz", "parameters.dat", "GAMMA_DM_FULLRANGE", "F_DM" , "vert_chi"]
+    trilex_dirs = ["tripamp_omega", "trip_omega", "trilex_omega"]
+
+    copy_script_str = copy_files_script(dmft_dir, target_dir, dmft_files, header=True)
+    copy_script_str += copy_files_script(susc_dir, target_dir, susc_files)
+    copy_script_str += copy_files_script(vertex_dir, target_dir, vertex_files)
+    copy_script_str += copy_dirs_script(trilex_dir, target_dir, trilex_dirs)
+
+    return copy_script_str
