@@ -2,24 +2,32 @@ import os
 import shutil
 import subprocess
 import toml
+import argparse
 from run_helpers import *
 
 
 
-# TODO: check for consistency and postproicess
+# TODO: postproicess
 # TODO: convert to src_files style (vertex/trilex/susc not consistent with ed)
-# TODO: IMPORTANT! give option to restart from hubb.andpar
 # TODO: IMPORTANT! save jobid in file and check on restart if it is still running/exit ok!
+# TODO: IMPORTANT! skip computation if jobid indcates completion
 
 
+print("TODO: skip computation if jobid indcates completion")
 # =========================================================================== 
 # =                               Setup                                     =
 # =========================================================================== 
 # --------------------------- read input file -------------------------------
-config = toml.load("config.toml")
-config['general']['codeDir'] = os.path.abspath(os.path.expanduser(config['general']['codeDir']))
-check_config_consistency(config)
-# TODO: check for consistency of parameters
+
+#TODO: finish this
+#parser = argparse.ArgumentParser(description="Give a directory containing config files, each one starting with config. Default directory is current working directory.")
+#parser.add_argument('path', metavar='p', type=is_dir,
+#                       help="path of config files (default \'.\')", default=os.path.abspath("."))
+
+#args = parser.parse_args()
+#print(args)
+
+config = read_preprocess_config("config.toml")
 # TODO: check for correctly loaded modules
 
 # -------------------------- create directories -----------------------------
@@ -43,6 +51,7 @@ subCodeDir = os.path.join(config['general']['codeDir'], "ED_dmft")
 subRunDir_ED = os.path.join(runDir, "ed_dmft")
 src_files  = ["ed_dmft_parallel_frequencies.f"]
 compile_command = "mpif90 " + ' '.join(src_files) + " -o run.x -llapack -lblas " + config['general']['CFLAGS']
+jobid_ed = None
 
 if not config['ED']['skip']:
     # ----------------------------- create dir ----------------------------------
@@ -56,11 +65,15 @@ if not config['ED']['skip']:
     #TODO: edit parameters in file or change code in order to include as external
     if not compile(compile_command, cwd=subRunDir_ED ,verbose=config['general']['verbose']):
         raise Exception("Compilation Failed")
-    ed_jobid = run_ed_dmft(subRunDir_ED, config)
-    if not ed_jobid:
+    quit()
+    jobid_ed = run_ed_dmft(subRunDir_ED, config)
+    if not jobid_ed:
         raise Exception("Job submit failed")
-else:
-    ed_jobid = None
+
+    # ---------------------------- save job info --------------------------------
+    dmft_logfile = os.path.join(runDir, "job_dmft.log")
+    with open(dmft_logfile, 'w') as f:
+        f.write(dmft_log(jobid_ed, subRunDir_ED, config))
 
 # =========================================================================== 
 # =                            DMFT Vertex                                  =
@@ -70,6 +83,7 @@ else:
 subRunDir_vert = runDir + "/ed_vertex"
 subCodeDir = config['general']['codeDir'] + "/ED_vertex"
 compile_command = "mpif90 ver_tpri_run.f -o run.x -llapack -lblas " + config['general']['CFLAGS']
+jobid_vert = None
 
 if not config['Vertex']['skip']:
     # ----------------------------- create dir ----------------------------------
@@ -82,8 +96,14 @@ if not config['Vertex']['skip']:
     # ----------------------------- compile/run ---------------------------------
     if not compile(compile_command, cwd=subRunDir_vert, verbose=config['general']['verbose']):
         raise Exception("Compilation Failed")
-    if not run_ed_vertex(subRunDir_vert, config, ed_jobid):
+    jobid_vert = run_ed_vertex(subRunDir_vert, config, jobid_ed)
+    if not jobid_vert:
         raise Exception("Job submit failed")
+
+    # ---------------------------- save job info --------------------------------
+    vert_logfile = os.path.join(runDir, "job_vertex.log")
+    with open(vert_logfile, 'w') as f:
+        f.write(dmft_log(jobid_vert, subRunDir_vert, config))
 
     #TODO: edit tpri?
     #TODO: edit/compile/run sum_t_files
@@ -97,6 +117,7 @@ if not config['Vertex']['skip']:
 subCodeDir = os.path.join(config['general']['codeDir'], "ED_physical_suscpetibility")
 compile_command = "gfortran calc_chi_asymptotics_gfortran.f -o run.x -llapack -lblas " + config['general']['CFLAGS']
 subRunDir_susc = os.path.join(runDir, "ed_susc")
+jobid_susc = None
 
 if not config['Susc']['skip']:
     # ----------------------------- create dir ----------------------------------
@@ -109,8 +130,14 @@ if not config['Susc']['skip']:
     # ----------------------------- compile/run ---------------------------------
     if not compile(compile_command, cwd=subRunDir_susc, verbose=config['general']['verbose']):
         raise Exception("Compilation Failed")
-    if not run_ed_susc(subRunDir_susc, config, ed_jobid):
+    jobid_susc = run_ed_susc(subRunDir_susc, config, jobid_ed)
+    if not jobid_susc:
         raise Exception("Job submit failed")
+
+    # ---------------------------- save job info --------------------------------
+    susc_logfile = os.path.join(runDir, "job_vert.log")
+    with open(susc_logfile, 'w') as f:
+        f.write(dmft_log(jobid_susc, subRunDir_susc, config))
 
 
 # =========================================================================== 
@@ -122,6 +149,7 @@ subCodeDir = os.path.join(config['general']['codeDir'], "ED_Trilex_Parallel")
 compile_command = "mpif90 ver_twofreq_parallel.f -o run.x -llapack -lblas " + config['general']['CFLAGS']
 output_dirs = ["trip_omega", "tripamp_omega", "trilex_omega"]
 subRunDir_trilex = os.path.join(runDir, "ed_trilex")
+jobid_trilex = None
 
 if not config['Trilex']['skip']:
     # ----------------------------- create dir ----------------------------------
@@ -138,9 +166,14 @@ if not config['Trilex']['skip']:
     # ----------------------------- compile/run ---------------------------------
     if not compile(compile_command, cwd=subRunDir_trilex, verbose=config['general']['verbose']):
         raise Exception("Compilation Failed")
-    if not run_ed_trilex(subRunDir_trilex, config, ed_jobid):
+    jobid_trilex = run_ed_trilex(subRunDir_trilex, config, jobid_ed)
+    if not jobid_trilex:
         raise Exception("Job submit failed")
 
+    # ---------------------------- save job info --------------------------------
+    trilex_logfile = os.path.join(runDir, "job_vert.log")
+    with open(trilex_logfile, 'w') as f:
+        f.write(dmft_log(jobid_trilex, subRunDir_trilex, config))
 
 
 # =========================================================================== 
@@ -149,14 +182,20 @@ if not config['Trilex']['skip']:
 
 # ---------------------------- definitions ----------------------------------
 subRunDir_data = os.path.join(runDir, "data")
-collect_data(subRunDir_data, subRunDir_ED, subRunDir_vert, subRunDir_susc, subRunDir_trilex)
+
+# TODO: check all run.err for errors (later also use sacct with job_ids)
+if not config['Postprocess']['skip']:
+    # TODO: run vertex post processing (sum_t still to do)
+    # TODO: create bash file to copy everything
+    # TODO: submit as dependency job
+    print("TODO: only collect data, if jobs are completed")
+    collect_data(subRunDir_data, subRunDir_ED, subRunDir_vert, subRunDir_susc, subRunDir_trilex)
 
 
 
 
 
 # TODO: clean "idw.dat", "tpri.dat", "varbeta.dat", tmp output, extract data to dir
-# TODO: run vertex post processing (sum_t still to do)
 
 cmd_cp_data = '''
 mkdir -p data

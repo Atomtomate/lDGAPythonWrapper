@@ -1,6 +1,7 @@
 import os
 import shutil
 import subprocess
+from datetime import datetime
 #import pathlib
 import toml
 import re
@@ -13,6 +14,29 @@ from file_templates import *
 # =========================================================================== 
 # =                         helper functions                                =
 # =========================================================================== 
+
+def check_config_consistency(config):
+    if not isclose(config['parameters']['mu'], config['parameters']['U']/2.0):
+        print("Not Calculating at half filling! mu = {0} and U = {1} Make sure \
+              that bath is not forced to be symmetric.".format(
+                  config['parameters']['mu'], config['parameters']['U']/2.0
+              ))
+
+def read_preprocess_config(config_string):
+    with open("config.toml", 'r') as f:
+            config_string = f.read()
+    config = toml.loads(config_string)
+    for k in config['parameters'].keys():
+        config_string = config_string.replace("{"+k+"}", str(config['parameters'][k]))
+        config_string = config_string.replace("{"+k.upper()+"}", str(config['parameters'][k]))
+        config_string = config_string.replace("{"+k.lower()+"}", str(config['parameters'][k]))
+    config = toml.loads(config_string)
+    config['general']['codeDir'] = os.path.abspath(os.path.expanduser(config['general']['codeDir']))
+    if str(config['parameters']['mu']).lower() == "hf":
+        config['parameters']['mu'] = config['parameters']['U']/2.0
+    check_config_consistency(config)
+    return config
+
 def query_yn(question, default="yes"):
     valid = {"yes": True, "y": True,
              "no": False, "n": False}
@@ -34,10 +58,6 @@ def query_yn(question, default="yes"):
             return valid[choice]
         else:
             os.sys.stdout.write("Incorrect input! Please provide y/n answer\n")
-
-def check_config_consistency(config):
-    if not isclose(config['parameters']['mu'], config['parameters']['U']/2.0):
-        println("Not Calculating at half filling! Make sure that bath is not forced to be symmetric.")
 
 def reset_dir(dirName):
     for filename in os.listdir(dirName):
@@ -61,7 +81,12 @@ def compile(command, cwd, verbose=False):
         print(process.stderr.decode("utf-8"))
         return False
     return True
-    
+
+def is_dir(string):
+    if os.path.isdir(string):
+        return string
+    else:
+        raise NotADirectoryError(string)
 
 # =========================================================================== 
 # =                          copy functions                                 =
@@ -70,20 +95,36 @@ def compile(command, cwd, verbose=False):
 def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
     files_list = ["tpri.dat", "init.h", "hubb.dat", "hubb.andpar"]
     src_files  = ["ed_dmft_parallel_frequencies.f"]
+
+    old_andpar = config["general"]["custom_init_andpar_file"]
+    if old_andpar:
+        source_file_path = os.path.abspath(old_andpar)
+        target_file_path = os.path.abspath(os.path.join(subRunDir_ED, "hubb.andpar"))
+        if not config["general"]["custom_init_andpar_vals_only"]:
+            print("copying hubb.andpar but not checking for consistency!!")
+            shutil.copyfile(source_file_path, target_file_path)
+        else:
+            with open(source_file_path, 'r') as f:
+                andpar_string = f.read()
+            start_eps = andpar_string.find("Eps(k)") + 7
+            start_tpar = andpar_string.find("tpar(k)") + 8
+            eps_str = andpar_string[start_eps:(start_tpar-9)]
+            tpar_str = "\n".join(andpar_string[start_tpar:].splitlines()[:len(eps_str.splitlines())])
+            tpar_str += "\n"
+
     for fn in files_list:
         fp = os.path.abspath(os.path.join(subRunDir_ED, fn))
         with open(fp, 'w') as f:
-            f.write(globals()[fn.replace(".","_")](config))
+            if fn == "hubb.andpar" and old_andpar:
+                f.write(globals()[fn.replace(".","_")](config, eps_str, tpar_str))
+            else:
+                f.write(globals()[fn.replace(".","_")](config))
+
     for src_file in src_files:
         source_file_path = os.path.abspath(os.path.join(subCodeDir, src_file))
         target_file_path = os.path.abspath(os.path.join(subRunDir_ED, src_file))
         shutil.copyfile(source_file_path , target_file_path)
-    old_andpar = config["general"]["custom_andpar_file"]
-    if old_andpar:
-        print("TODO: copying hubb.andpar but not checking for consistency!!")
-        source_file_path = os.path.abspath(old_andpar)
-        target_file_path = os.path.abspath(os.path.join(subRunDir_ED, filename))
-        shutil.copyfile(source_file_path, target_file_path)
+
 
 
 
@@ -164,21 +205,20 @@ def copy_and_edit_trilex(subCodeDir, subRunDir, subRunDir_ED, config):
         os.chmod(target_file_path, st.st_mode | stat.S_IEXEC)
 
 def collect_data(target_dir, dmft_dir, vertex_dir, susc_dir, trilex_dir):
-    if not os.path.exists(taret_dir):
-        os.mkdir(taret_dir)
+    if not os.path.exists(target_dir):
+        os.mkdir(target_dir)
     dmft_files = ["hubb.dat", "hubb.andpar", "g0m", "g0mand", "gm_wim"]
     susc_files = ["chi_asympt"]
     for f in dmft_files:
-        source_file_path = os.path.abspath(os.path.join(dmft_dir, filename))
-        target_file_path = os.path.abspath(os.path.join(target_dir, filename))
+        source_file_path = os.path.abspath(os.path.join(dmft_dir, f))
+        target_file_path = os.path.abspath(os.path.join(target_dir, f))
         shutil.copyfile(source_file_path, target_file_path)
     for f in susc_files:
-        source_file_path = os.path.abspath(os.path.join(susc_dir, filename))
-        target_file_path = os.path.abspath(os.path.join(target_dir, filename))
+        source_file_path = os.path.abspath(os.path.join(susc_dir, f))
+        target_file_path = os.path.abspath(os.path.join(target_dir, f))
         shutil.copyfile(source_file_path, target_file_path)
 
     print("TODO: vertex post processing not implemented yet")
-    print("TODO: trilex post processing not implemented yet")
 
 
 # =========================================================================== 
@@ -274,3 +314,24 @@ def run_ed_trilex(cwd, config, ed_jobid=None):
         res = process.stdout.decode("utf-8")
         jobid = re.findall(r'job \d+', res)[-1].split()[1]
     return jobid
+
+# =========================================================================== 
+# =                           Log Functions                                 =
+# =========================================================================== 
+
+def dmft_log(jobid, loc, config):
+    out = """
+jobid = {0}
+result_dir = {1}
+last_check_stamp = {2}
+last_status = {3}
+run_time = {4}
+job_info = {5}
+"""
+    now = datetime.now()
+    timestamp = now.strftime("%Y-%m-%dT%H:%M:%S")
+
+    out = out.format(jobid, os.path.abspath(loc), timestamp,
+                     "TODO: not implemented yet", "TODO: not implemented yet",
+                     "TODO: not implemented yet")
+    return out

@@ -1,0 +1,5 @@
+
+beta    = 15.0     # inverse temperature
+U       = 2.0      # Hubbard U
+mu      = 1.0      # chemical potential
+ns      = 5        # Number of sites including imurity

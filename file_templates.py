@@ -8,11 +8,12 @@ def job_berlin(config, procs, custom, cmd, copy_from_ed=True):
     out = '''#!/bin/bash
 #SBATCH -t 12:00:00
 #SBATCH --ntasks {0}
-#SBATCH -p large96
+#SBATCH -p standard96
 {1}
 module load openblas/gcc.9/0.3.7 impi/2019.5 intel/19.0.5
 export SLURM_CPU_BIND=none
 '''
+    #large96
     if copy_from_ed:
         out = out + "./copy_ed_files \n"
     out = out + "{2}\n"
@@ -106,7 +107,7 @@ def hubb_dat(config):
     )
     return out
 
-def hubb_andpar(config):
+def hubb_andpar(config, eps_k="", tpar_k=""):
     #TODO: var length for number of sites
     out = '''           ========================================
                1-band            30-Sep-95 LANCZOS
@@ -118,12 +119,30 @@ c ns,imaxmu,deltamu, # iterations, conv.param.
 c ifix(0,1), <n>,   inew, iauto
 Eps(k)
 '''
-    for i in range(config['parameters']['ns']-1):
-        out += "  1.000000000000\n"
+    if eps_k:
+        ns_eps = len(eps_k.splitlines())
+        if not (ns_eps == config['parameters']['ns']-1):
+            raise InputError("Number of sites in Eps(k) ({0}) does not \
+            correspond to ns ({1})".format(
+                ns_eps, config['parameters']['ns']-1
+            ))
+        out += eps_k
+    else:
+        for i in range(config['parameters']['ns']-1):
+            out += "  1.000000000000\n"
     out += " tpar(k)\n"
-    for i in range(config['parameters']['ns']-1):
-        out += "  0.200000000000\n"
-    out += "{3}                      #chemical potential\n"
+    if tpar_k:
+        tp_eps = len(tpar_k.splitlines())
+        if not (tp_eps == config['parameters']['ns']-1):
+            raise InputError("Number of sites in tpar(k) ({0}) does not \
+            correspond to ns ({1})".format(
+                tp_eps, config['parameters']['ns']-1
+            ))
+        out += tpar_k
+    else:
+        for i in range(config['parameters']['ns']-1):
+            out += "  0.200000000000\n"
+    out += "  {3}                      #chemical potential\n"
     out = out.format(
         config['parameters']['beta'], #config['ED']['conv_param'],
         config['parameters']['ns'], config['ED']['iterations'],
