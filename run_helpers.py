@@ -314,7 +314,7 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,\
     if not os.path.exists(dataDir):
         os.mkdir(dataDir)
     fp_config = os.path.join(dataDir, "config.toml")
-    with open("config.toml", 'w') as f:
+    with open(fp_config, 'w') as f:
         toml.dump(config, f)
 
     cp_script = build_collect_data(dataDir, subRunDir_ED, subRunDir_vert,\

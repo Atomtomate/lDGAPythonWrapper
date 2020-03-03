@@ -1,58 +1,46 @@
 [general]
-
 runDir = "../scan1_from_metal/b{beta}_U{U}"
-codeDir = "../codes"
+codeDir = "/home/hhpstobb/lDGA/codes"
 CFLAGS = "-O3 -xHost"
 verbose = false
-cluster = "berlin"          # local|berlin|goettingen|physnet| TODO: this is very hacky right now
-
-custom_slurm_lines = ""     # example: "#SBATCH -A hhp00048\n"
+cluster = "berlin"
+custom_slurm_lines = ""
 custom_init_andpar_file = "../scan1_from_metal/hubb.andpar"
-#"../full_calc_test_b15_U5.6/ed_dmft/hubb.andpar"         # example: "../old1/hubb.andpar"
-custom_init_andpar_vals_only = true  # if set to false, file is copied. otherwise only start values are used
-
+custom_init_andpar_vals_only = true
 
 [parameters]
-beta    = 15.0     # inverse temperature
-U       = 2.2     # Hubbard U
-t       = 0.20     # hopping
-mu      = "HF"     # chemical potential as float or "HF" for half filling
-ns      = 5        # Number of sites including imurity
+beta = 15.0
+U = 2.4
+t = 0.2
+mu = HF
+ns = 5
 
 [ED]
-skip        = false
-w_min       = -12.0
-w_max       = 12.0
-deltino     = 0.01
-imaxmu      = 0
-deltamu     = 0.0
-iterations  = 250
-conv_param  = 0.007
-nprocs      = 100
-
-#ifix(0,1), <n>,   inew, iauto 
-#th0 , iexp (insignificant)
-#nmin, nmax
-#lambda, w0, nph
-
-#initial anderson parameters here?
+skip = false
+w_min = -12.0
+w_max = 12.0
+deltino = 0.01
+imaxmu = 0
+deltamu = 0.0
+iterations = 250
+conv_param = 0.007
+nprocs = 100
 
 [Vertex]
-skip        = false
-nmpara      = 30
-nFermiFreq  = 145   # number of positive fermionic matsubara Frequencies, nBose will be nFermi-1
-nBoseFreq   = 144   # TODO: this should be fixed at nfermi - 1       
+skip = false
+nmpara = 30
+nFermiFreq = 145
+nBoseFreq = 144
 
 [Susc]
-skip        = false
-nBoseFreq   = 10000
+skip = false
+nBoseFreq = 10000
 
 [Trilex]
-skip        = false
-nmpara      = 30
-nFermiFreq  = 145   # number of positive fermionic matsubara Frequencies, nBose will be nFermi-1
-nBoseFreq   = 144
-
+skip = false
+nmpara = 30
+nFermiFreq = 145
+nBoseFreq = 144
 
 [Postprocess]
-skip        = false
+skip = false
