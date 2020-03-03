@@ -9,7 +9,7 @@ def job_berlin(config, procs, custom, cmd, copy_from_ed=True):
     out = '''#!/bin/bash
 #SBATCH -t 12:00:00
 #SBATCH --ntasks {0}
-#SBATCH -p large96
+#SBATCH -p standard96
 {1}
 module load openblas/gcc.9/0.3.7 impi/2019.5 intel/19.0.5
 export SLURM_CPU_BIND=none
@@ -32,7 +32,6 @@ def copy_files_script(source_dir, target_dir, files_list, header=False):
 
 def copy_dirs_script(source_dir, target_dir, dirs_list, header=False):
     out = "#!/bin/bash \n" if header else ""
-    print(dirs_list)
     for d in dirs_list:
         out += "cp " + os.path.abspath(os.path.join(source_dir,d))\
             + " " + os.path.abspath(target_dir) + " -ar \n"

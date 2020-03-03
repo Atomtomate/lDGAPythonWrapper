@@ -21,6 +21,9 @@ def check_config_consistency(config):
               that bath is not forced to be symmetric.".format(
                   config['parameters']['mu'], config['parameters']['U']/2.0
               ))
+    if config['ED']['nprocs'] > 130:
+        print("Warning! Number of processors for ED DMFT is larger than 130,\
+              this sometimes leads to uneaxpected behavior!")
 
 def read_preprocess_config(config_string):
     with open("config.toml", 'r') as f:
@@ -308,8 +311,14 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,\
     filename = "postprocess.sh"
     cslurm = config['general']['custom_slurm_lines']
     procs = 1
+    if not os.path.exists(dataDir):
+        os.mkdir(dataDir)
+    fp_config = os.path.join(dataDir, "config.toml")
+    with open("config.toml", 'w') as f:
+        toml.dump(config, f)
 
-    cp_script = build_collect_data(dataDir, subRunDir_ED, subRunDir_vert, subRunDir_susc, subRunDir_trilex)
+    cp_script = build_collect_data(dataDir, subRunDir_ED, subRunDir_vert,\
+                                   subRunDir_susc, subRunDir_trilex)
     cp_script_path = os.path.abspath(os.path.join(cwd, "copy_data.sh"))
     with open(cp_script_path, 'w') as f:
         f.write(cp_script)
@@ -379,9 +388,6 @@ job_info = {5}
     return out
 
 def build_collect_data(target_dir, dmft_dir, vertex_dir, susc_dir, trilex_dir):
-    if not os.path.exists(target_dir):
-        os.mkdir(target_dir)
-
     dmft_files = ["hubb.dat", "hubb.andpar", "g0m", "g0mand", "gm_wim"]
     susc_files = ["chi_asympt", "matrix"]
     vertex_files = ["t.tar.gz", "parameters.dat", "GAMMA_DM_FULLRANGE", "F_DM" , "vert_chi"]

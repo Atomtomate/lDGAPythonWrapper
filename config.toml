@@ -1,19 +1,20 @@
 [general]
 
-runDir = "../test_calc"
+runDir = "../scan1_from_metal/b{beta}_U{U}"
 codeDir = "../codes"
 CFLAGS = "-O3 -xHost"
 verbose = false
 cluster = "berlin"          # local|berlin|goettingen|physnet| TODO: this is very hacky right now
 
 custom_slurm_lines = ""     # example: "#SBATCH -A hhp00048\n"
-custom_init_andpar_file = "../full_calc_test_b15_U5.6/ed_dmft/hubb.andpar"         # example: "../old1/hubb.andpar"
+custom_init_andpar_file = "../scan1_from_metal/hubb.andpar"
+#"../full_calc_test_b15_U5.6/ed_dmft/hubb.andpar"         # example: "../old1/hubb.andpar"
 custom_init_andpar_vals_only = true  # if set to false, file is copied. otherwise only start values are used
 
 
 [parameters]
 beta    = 15.0     # inverse temperature
-U       = 5.6     # Hubbard U
+U       = 2.2     # Hubbard U
 t       = 0.20     # hopping
 mu      = "HF"     # chemical potential as float or "HF" for half filling
 ns      = 5        # Number of sites including imurity
@@ -39,18 +40,18 @@ nprocs      = 100
 [Vertex]
 skip        = false
 nmpara      = 30
-nFermiFreq  = 40   # number of positive fermionic matsubara Frequencies, nBose will be nFermi-1
-nBoseFreq   = 39   # TODO: this should be fixed at nfermi - 1       
+nFermiFreq  = 145   # number of positive fermionic matsubara Frequencies, nBose will be nFermi-1
+nBoseFreq   = 144   # TODO: this should be fixed at nfermi - 1       
 
 [Susc]
 skip        = false
-nBoseFreq   = 1000
+nBoseFreq   = 10000
 
 [Trilex]
 skip        = false
 nmpara      = 30
-nFermiFreq  = 40   # number of positive fermionic matsubara Frequencies, nBose will be nFermi-1
-nBoseFreq   = 39
+nFermiFreq  = 145   # number of positive fermionic matsubara Frequencies, nBose will be nFermi-1
+nBoseFreq   = 144
 
 
 [Postprocess]
