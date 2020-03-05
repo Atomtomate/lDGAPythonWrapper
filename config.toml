@@ -10,9 +10,9 @@ custom_init_andpar_vals_only = true
 
 [parameters]
 beta = 15.0
-U = 2.4
+U = 3.2
 t = 0.2
-mu = HF
+mu = "HF"
 ns = 5
 
 [ED]

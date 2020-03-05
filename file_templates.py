@@ -10,7 +10,7 @@ def job_berlin(config, procs, custom, cmd, copy_from_ed=True):
 #SBATCH -t 12:00:00
 #SBATCH --ntasks {0}
 #SBATCH -p standard96
-{1}
+#SBATCH {1}
 module load openblas/gcc.9/0.3.7 impi/2019.5 intel/19.0.5
 export SLURM_CPU_BIND=none
 '''
@@ -37,14 +37,15 @@ def copy_dirs_script(source_dir, target_dir, dirs_list, header=False):
             + " " + os.path.abspath(target_dir) + " -ar \n"
     return out
 
-def postprocessing_berlin(content):
+def postprocessing_berlin(content, custom):
     out = '''#!/bin/bash
 #SBATCH -t 48:00:00
 #SBATCH --ntasks=1
 #SBATCH -p large96:shared
+#SBATCH {0}
 module load openblas/gcc.9/0.3.7 impi/2019.5 intel/19.0.5
 export SLURM_CPU_BIND=none
-'''
+'''.format(custom)
     out += content
     return out
 
