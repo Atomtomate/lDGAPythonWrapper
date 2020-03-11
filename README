@@ -2,7 +2,7 @@ In order to run this script, Python 3 with pathlib and toml must be present.
 Example:
     module load anaconda3
     # create and activate a conda environment, if you do not want to install globally
-    conda install pathlib toml scipy
+    conda install pathlib toml scipy pandas pyarrow
 
     edit config.toml:
         - each step can be skipped by setting skip = true

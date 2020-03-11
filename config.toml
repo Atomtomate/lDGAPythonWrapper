@@ -7,6 +7,9 @@ cluster = "berlin"
 custom_slurm_lines = ""
 custom_init_andpar_file = "../scan1_from_metal/hubb.andpar"
 custom_init_andpar_vals_only = true
+custom_module_load = "module restore ed_dmft"
+custom_conda_env = "p3"
+auto_continue = true
 
 [parameters]
 beta = 15.0
@@ -44,3 +47,5 @@ nBoseFreq = 144
 
 [Postprocess]
 skip = false
+data_bakup = "mv"
+output_format = "tar,parquet"

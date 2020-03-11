@@ -11,41 +11,42 @@ def job_berlin(config, procs, custom, cmd, copy_from_ed=True):
 #SBATCH --ntasks {0}
 #SBATCH -p standard96
 #SBATCH {1}
-module load openblas/gcc.9/0.3.7 impi/2019.5 intel/19.0.5
+{2}
 export SLURM_CPU_BIND=none
 '''
     #large96
     if copy_from_ed:
         out = out + "./copy_ed_files \n"
-    out = out + "{2}\n"
-    out = out.format(procs, custom, cmd)
+    out = out + "{3}\n"
+    out = out.format(procs, custom, config['general']['custom_module_load'], cmd)
     return out
 
-def copy_files_script(source_dir, target_dir, files_list, header=False):
+def bak_files_script(source_dir, target_dir, files_list, header=False, mode="mv"):
     out = "#!/bin/bash \n" if header else ""
-    out = out + "cp " + os.path.abspath(source_dir) + "/{"
+    out = out + mode +" " + os.path.abspath(source_dir) + "/{"
     for filename in files_list:
         out = out + filename + ","
     out = out[:-1] + "} " + os.path.abspath(target_dir)
     out += "\n"
     return out
 
-def copy_dirs_script(source_dir, target_dir, dirs_list, header=False):
+def bak_dirs_script(source_dir, target_dir, dirs_list, header=False, mode="mv"):
     out = "#!/bin/bash \n" if header else ""
     for d in dirs_list:
-        out += "cp " + os.path.abspath(os.path.join(source_dir,d))\
+        out += mode +" " + os.path.abspath(os.path.join(source_dir,d))\
             + " " + os.path.abspath(target_dir) + " -ar \n"
     return out
 
-def postprocessing_berlin(content, custom):
+def postprocessing_berlin(content, custom, config):
     out = '''#!/bin/bash
-#SBATCH -t 48:00:00
+#SBATCH -t 10:00:00
 #SBATCH --ntasks=1
-#SBATCH -p large96:shared
+#SBATCH -p standard96
+#SBATCH --requeue
 #SBATCH {0}
-module load openblas/gcc.9/0.3.7 impi/2019.5 intel/19.0.5
+{1}
 export SLURM_CPU_BIND=none
-'''.format(custom)
+'''.format(custom, config['general']['custom_module_load'])
     out += content
     return out
 
@@ -205,6 +206,7 @@ sed '1s/^.*$/        1/' idw.dat >hilfe
 mv hilfe idw.dat
 beta={0}d0
 uhub={1}d0
+{2}
 
 while [ $i -le 8 ]
 do
@@ -218,7 +220,8 @@ do
     i=$((i+1))
 done
 '''
-    out = out.format(config['parameters']['beta'], config['parameters']['U'])
+    out = out.format(config['parameters']['beta'], config['parameters']['U'],\
+                     config['general']['custom_module_load'])
     return out
 
 def parameterts_dat(config):

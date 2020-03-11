@@ -25,7 +25,9 @@ def run(config):
         module_cmd = "openblas/gcc.9/0.3.7 impi/2019.5 intel/19.0.5"
         #exec(open('/usr/share/Modules/init/python.py').read())
         #module('load', 'modulefile', 'modulefile', '...'))
-        # TODO: check for correctly loaded modules
+        # TODO: complte check for correctly loaded modules
+        if not check_env(config):
+            raise RuntimeError("Environment check failed! Please check the error log for more information")
 
     # -------------------------- create directories -----------------------------
     runDir = config['general']['runDir']

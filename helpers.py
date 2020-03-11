@@ -1,4 +1,5 @@
 import os
+import sys
 import shutil
 import subprocess
 from datetime import datetime
@@ -91,6 +92,23 @@ def is_dir(string):
     else:
         raise NotADirectoryError(string)
 
+def check_env(config):
+    try:
+        import os
+        import sys
+        import shutil
+        import pandas as pd
+        import pandas.io.common
+        import pyarrow as pa
+        import pyarrow.parquet as pq
+        import tarfile
+        from scipy.special import comb
+        return True
+    except:
+        print("Environment check failed with: ", sys.exc_info()[0])
+        return False
+    return False
+
 # =========================================================================== 
 # =                          copy functions                                 =
 # =========================================================================== 
@@ -152,8 +170,8 @@ def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, config):
         f.write(init_sumt_h(config))
     fp = os.path.join(subRunDir, "copy_ed_files")
     with open(fp, 'w') as f:
-        f.write(copy_files_script(subRunDir_ED, subRunDir,
-                                  files_dmft_list, header=True))
+        f.write(bak_files_script(subRunDir_ED, subRunDir,
+                                  files_dmft_list, header=True, mode="cp"))
     for filename in files_list:
         source_file_path = os.path.abspath(os.path.join(subCodeDir, filename))
         target_file_path = os.path.abspath(os.path.join(subRunDir, filename))
@@ -173,8 +191,8 @@ def copy_and_edit_susc(subCodeDir, subRunDir, subRunDir_ED, config):
         f.write(init_psc_h(config))
     fp = os.path.join(subRunDir, "copy_ed_files")
     with open(fp, 'w') as f:
-        f.write(copy_files_script(subRunDir_ED, subRunDir, \
-                                  files_dmft_list, header=True))
+        f.write(bak_files_script(subRunDir_ED, subRunDir, \
+                                  files_dmft_list, header=True, mode="cp"))
 
     for filename in files_list:
         source_file_path = os.path.join(subCodeDir, filename)
@@ -196,8 +214,8 @@ def copy_and_edit_trilex(subCodeDir, subRunDir, subRunDir_ED, config):
         f.write(init_trilex_h(config))
     fp = os.path.join(subRunDir, "copy_ed_files")
     with open(fp, 'w') as f:
-        f.write(copy_files_script(subRunDir_ED, subRunDir,\
-                                  files_dmft_list, header=True))
+        f.write(bak_files_script(subRunDir_ED, subRunDir,\
+                                  files_dmft_list, header=True, mode="cp"))
 
     for filename in files_list:
         source_file_path = os.path.join(subCodeDir, filename)
@@ -282,7 +300,7 @@ def run_ed_susc(cwd, config, ed_jobid=None):
 
 def run_ed_trilex(cwd, config, ed_jobid=None):
     filename = "ed_trilex_run.sh"
-    cmd= "./run.x > run.out 2> run.err"
+    cmd= "mpirun ./run.x > run.out 2> run.err"
     procs = 2*int(config['Trilex']['nBoseFreq']) - 1
     cslurm = config['general']['custom_slurm_lines']
     if not ed_jobid:
@@ -318,7 +336,8 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,\
         toml.dump(config, f)
 
     cp_script = build_collect_data(dataDir, subRunDir_ED, subRunDir_vert,\
-                                   subRunDir_susc, subRunDir_trilex)
+                                   subRunDir_susc, subRunDir_trilex,\
+                                   mode=config['Postprocess']['data_bakup'])
     cp_script_path = os.path.abspath(os.path.join(cwd, "copy_data.sh"))
     with open(cp_script_path, 'w') as f:
         f.write(cp_script)
@@ -326,14 +345,25 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,\
     split_script_path = os.path.abspath(os.path.join(dataDir, "split_files.sh"))
     with open(split_script_path, 'w') as f:
         f.write(split_script)
+    storage_py_path = os.path.dirname(os.path.abspath(os.path.join(__file__,"storage_io.py")))
+    storage_py_target = os.path.abspath(os.path.join(cwd, "storage_io.py"))
+    print("copy from " + storage_py_path + " to " + storage_py_target)
+    shutil.copyfile(storage_py_path, storage_py_target)
 
     clean_script_path = os.path.abspath(os.path.join(subRunDir_vert, "clean_script_auto"))
     print("TODO: copying gm_wim from dmft. WHY?")
     content = "cp " + os.path.join(subRunDir_ED, "gm_wim") + " " + subRunDir_vert + "\n"
-    content += str(clean_script_path)
-    content += "\n"
+    content += str(clean_script_path) + "\n"
     content += str(cp_script_path) + "\n"
-    content += str(split_script_path) + "\n"
+    if 'text' in config['Postprocess']['output_format'].split(','):
+        content += str(split_script_path) + "\n"
+    conda_env = config['general']['custom_conda_env']
+    if conda_env:
+        content += "eval \"$(conda shell.bash hook)\"\n"
+        content += "conda activate " + conda_env + "\n"
+    content += "python storage_io.py " + dataDir + " " +\
+        config['Postprocess']['output_format'] + "\n"
+    content += "rm storage_io.py \n"
 
     st = os.stat(cp_script_path)
     os.chmod(cp_script_path, st.st_mode | stat.S_IEXEC)
@@ -353,7 +383,7 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,\
 
     fp = os.path.join(cwd, filename)
     with open(fp, 'w') as f:
-        f.write(globals()["postprocessing_" + config['general']['cluster']](content, cslurm))
+        f.write(globals()["postprocessing_" + config['general']['cluster']](content, cslurm, config))
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
 
     if not (process.returncode == 0):
@@ -387,15 +417,15 @@ job_info = {5}
                      "TODO: not implemented yet")
     return out
 
-def build_collect_data(target_dir, dmft_dir, vertex_dir, susc_dir, trilex_dir):
+def build_collect_data(target_dir, dmft_dir, vertex_dir, susc_dir, trilex_dir, mode):
     dmft_files = ["hubb.dat", "hubb.andpar", "g0m", "g0mand", "gm_wim"]
     susc_files = ["chi_asympt", "matrix"]
     vertex_files = ["t.tar.gz", "parameters.dat", "GAMMA_DM_FULLRANGE", "F_DM" , "vert_chi"]
     trilex_dirs = ["tripamp_omega", "trip_omega", "trilex_omega"]
 
-    copy_script_str = copy_files_script(dmft_dir, target_dir, dmft_files, header=True)
-    copy_script_str += copy_files_script(susc_dir, target_dir, susc_files)
-    copy_script_str += copy_files_script(vertex_dir, target_dir, vertex_files)
-    copy_script_str += copy_dirs_script(trilex_dir, target_dir, trilex_dirs)
+    copy_script_str = bak_files_script(dmft_dir, target_dir, dmft_files, header=True, mode=mode)
+    copy_script_str += bak_files_script(susc_dir, target_dir, susc_files)
+    copy_script_str += bak_files_script(vertex_dir, target_dir, vertex_files)
+    copy_script_str += bak_dirs_script(trilex_dir, target_dir, trilex_dirs)
 
     return copy_script_str
