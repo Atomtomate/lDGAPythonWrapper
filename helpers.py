@@ -345,7 +345,8 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,\
     split_script_path = os.path.abspath(os.path.join(dataDir, "split_files.sh"))
     with open(split_script_path, 'w') as f:
         f.write(split_script)
-    storage_py_path = os.path.dirname(os.path.abspath(os.path.join(__file__,"storage_io.py")))
+    storage_py_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                   "storage_io.py")
     storage_py_target = os.path.abspath(os.path.join(cwd, "storage_io.py"))
     print("copy from " + storage_py_path + " to " + storage_py_target)
     shutil.copyfile(storage_py_path, storage_py_target)
@@ -361,9 +362,9 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,\
     if conda_env:
         content += "eval \"$(conda shell.bash hook)\"\n"
         content += "conda activate " + conda_env + "\n"
-    content += "python storage_io.py " + dataDir + " " +\
+    content += "python storage_io.py " + os.path.abspath(os.path.join(cwd,"data")) + " " +\
         config['Postprocess']['output_format'] + "\n"
-    content += "rm storage_io.py \n"
+    #content += "rm storage_io.py \n"
 
     st = os.stat(cp_script_path)
     os.chmod(cp_script_path, st.st_mode | stat.S_IEXEC)
