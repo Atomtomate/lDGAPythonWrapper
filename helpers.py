@@ -425,8 +425,8 @@ def build_collect_data(target_dir, dmft_dir, vertex_dir, susc_dir, trilex_dir, m
     trilex_dirs = ["tripamp_omega", "trip_omega", "trilex_omega"]
 
     copy_script_str = bak_files_script(dmft_dir, target_dir, dmft_files, header=True, mode=mode)
-    copy_script_str += bak_files_script(susc_dir, target_dir, susc_files)
-    copy_script_str += bak_files_script(vertex_dir, target_dir, vertex_files)
-    copy_script_str += bak_dirs_script(trilex_dir, target_dir, trilex_dirs)
+    copy_script_str += bak_files_script(susc_dir, target_dir, susc_files, header=False, mode=mode)
+    copy_script_str += bak_files_script(vertex_dir, target_dir, vertex_files, header=False, mode=mode)
+    copy_script_str += bak_dirs_script(trilex_dir, target_dir, trilex_dirs, header=False, mode=mode)
 
     return copy_script_str

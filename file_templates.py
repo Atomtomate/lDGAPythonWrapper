@@ -41,7 +41,7 @@ def postprocessing_berlin(content, custom, config):
     out = '''#!/bin/bash
 #SBATCH -t 10:00:00
 #SBATCH --ntasks=1
-#SBATCH -p standard96
+#SBATCH -p large96:shared
 #SBATCH --requeue
 #SBATCH {0}
 {1}

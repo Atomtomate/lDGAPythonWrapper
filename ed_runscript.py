@@ -36,11 +36,12 @@ def run(config):
         os.mkdir(runDir)
         print("Directory " , runDir ,  " Created ")
     else:
-        reset_flag = query_yn("Directory " + runDir +  " already exists. Should everything be reset?", "no")
-        if reset_flag:
-            confirm = query_yn("This will purge the directory. Do you want to continue?", "no")
-            if confirm:
-                reset_dir(runDir)
+        if not config['general']['auto_continue']:
+            reset_flag = query_yn("Directory " + runDir +  " already exists. Should everything be reset?", "no")
+            if reset_flag:
+                confirm = query_yn("This will purge the directory. Do you want to continue?", "no")
+                if confirm:
+                    reset_dir(runDir)
 
     # =========================================================================== 
     # =                                DMFT                                     =
