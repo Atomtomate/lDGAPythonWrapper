@@ -9,9 +9,9 @@ from helpers import *
 
 
 # TODO: obtain compiler and modify clean_script etc
-# TODO: convert to src_files style (vertex/trilex/susc not consistent with ed)
 # TODO: IMPORTANT! save jobid in file and check on restart if it is still running/exit ok!
 # TODO: IMPORTANT! skip computation if jobid indcates completion
+# TODO: IMPORTANT! options for 2D/3D
 
 
 print("TODO: skip computation if jobid indcates completion")
@@ -181,6 +181,7 @@ def run(config):
     # =========================================================================== 
 
     # ---------------------------- definitions ----------------------------------
+    jobid_pp = None
 
     # TODO: check all run.err for errors (later also use sacct with job_ids)
     if not config['Postprocess']['skip']:
@@ -191,6 +192,49 @@ def run(config):
                         [jobid_ed, jobid_vert, jobid_susc, jobid_trilex])
         if not jobid_pp:
             raise Exception("Postprocessing job submit failed")
+
+
+    # =========================================================================== 
+    # =                               lDGA                                      =
+    # =========================================================================== 
+
+    # ---------------------------- definitions ----------------------------------
+    subCodeDir = os.path.join(config['general']['codeDir'], "ladderDGA3D")
+    compile_command_kl = "gfortran dispersion.f90 calc_susc.f90 make_klist.f90 -llapack -o klist.x"
+    compile_command = "make run"
+    output_dirs = ["chisp_omega", "chich_omega", "klist"]
+    subRunDir_lDGA_f = os.path.join(runDir, "lDGA_fortran")
+    jobid_lDGA_f = None
+
+    if not config['lDGAFortran']['skip']:
+        # ----------------------------- create dirs ---------------------------------
+        if not os.path.exists(subRunDir_lDGA_f):
+            os.mkdir(subRunDir_lDGA_f)
+        for d in output_dirs:
+            fp = os.path.abspath(os.path.join(subRunDir_lDGA_f, d))
+            if not os.path.exists(fp):
+                os.mkdir(fp)
+
+        # ------------------------------ copy/edit ----------------------------------
+        print("Copying data into lDGA folder, this may take a while")
+        copy_and_edit_lDGA_f(subCodeDir, subRunDir_lDGA_f, dataDir, config)
+        if not compile(compile_command_kl, cwd=subRunDir_lDGA_f, verbose=config['general']['verbose']):
+            raise Exception("Compilation Failed")
+        jobid_lDGA_f_makeklist = run_lDGA_f_makeklist(subRunDir_lDGA_f, config, jobid_pp)
+        if not jobid_lDGA_f_makeklist:
+            raise Exception("Job submit failed")
+
+        # ----------------------------- compile/run ---------------------------------
+        if not compile(compile_command, cwd=subRunDir_lDGA_f, verbose=config['general']['verbose']):
+            raise Exception("Compilation Failed")
+        jobid_lDGA_f = run_lDGA_f(subRunDir_lDGA_f, config, jobid_lDGA_f_makeklist)
+        if not jobid_lDGA_f:
+            raise Exception("Job submit failed")
+
+        # ---------------------------- save job info --------------------------------
+        lDGA_logfile = os.path.join(runDir, "job_lDGA.log")
+        with open(lDGA_logfile, 'w') as f:
+            f.write(dmft_log(jobid_lDGA_f, subRunDir_lDGA_f, config))
 
 
 

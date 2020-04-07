@@ -16,7 +16,7 @@ def isnumber(x):
 
 
 def run_conversion(path, out_formats):
-    files = [os.path.join(path, f) for f in ["chi_asympt", "F_DM", "GAMMA_DM_FULLRANGE", "vert_chi","g0m", "g0mand", "gm_wim"]]
+    files = [os.path.join(path, f) for f in ["hubb.andpar","hubb.dat","split_files.sh","chi_asympt", "F_DM", "GAMMA_DM_FULLRANGE", "vert_chi","g0m", "g0mand", "gm_wim"]]
     dirs = [os.path.join(path,f) for f in ["trilex_omega", "tripamp_omega", "trip_omega"]]
     files_not_found = []
 

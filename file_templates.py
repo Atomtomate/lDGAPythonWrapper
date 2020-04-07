@@ -34,7 +34,7 @@ def bak_dirs_script(source_dir, target_dir, dirs_list, header=False, mode="mv"):
     out = "#!/bin/bash \n" if header else ""
     for d in dirs_list:
         out += mode +" " + os.path.abspath(os.path.join(source_dir,d))\
-            + " " + os.path.abspath(target_dir) + " -ar \n"
+            + " " + os.path.abspath(target_dir) + (" -ar \n" if (mode=="cp") else "\n")
     return out
 
 def postprocessing_berlin(content, custom, config):
@@ -55,6 +55,37 @@ export SLURM_CPU_BIND=none
 # =                          File Templates                                 =
 # =========================================================================== 
 
+def ladderDGA_in(config):
+    out = '''c AIM parameters: U, mu, beta, nden
+{0}d0      {1}d0       {2}d0       1.0d0
+c Iwbox    Iwbox_bose    shift
+{3}       {4}       0
+c LQ    Nint     k_number
+{5}       {6}       {7}
+c Should only chis_omega and chich_omega be calculated?
+{8}
+c Should a lambda-correction be performed only in the spin-channel?
+{9}
+c Should the summation over the bosonic frequency in the charge-/spin-channel be done for all bosonic Matsubara frequencies?
+{10}     {11}'''
+
+    k_number = config['lDGAFortran']['k_range'] + 1
+    out = out.format(
+        config['parameters']['U'],
+        config['parameters']['mu'],
+        config['parameters']['beta'],
+        config['Vertex']['nFermiFreq'],
+        config['Vertex']['nBoseFreq'],
+        config['lDGAFortran']['LQ'],
+        config['lDGAFortran']['Nint'],
+        int(k_number * ( k_number + 1 ) * ( k_number + 2 ) / 6),
+        ".TRUE." if config['lDGAFortran']['only_chisp_ch'] else ".FALSE.",
+        ".TRUE." if config['lDGAFortran']['only_lambda_sp'] else ".FALSE.",
+        ".TRUE." if config['lDGAFortran']['only_positive_ch'] else ".FALSE.",
+        ".TRUE." if config['lDGAFortran']['only_positive_sp'] else ".FALSE."
+    )
+    return out
+
 def split_files(config):
     out = '''#!/bin/bash
 cwd=$(pwd)
@@ -68,7 +99,7 @@ cd chi_dir
 split --suffix-length=3 -d --lines={1} ../vert_chi chi
 cd $cwd
 '''
-    lines = (2*config['Vertex']['nBoseFreq'])**2
+    lines = (2*(config['Vertex']['nBoseFreq']+1))**2
     out = out.format(lines, lines)
     return out
 
@@ -213,15 +244,19 @@ do
     name=ver_tpri_run_U$uhub\_beta$beta\_$i.x
     echo $name
     cp run.x ./$name
-    mpirun ./$name > vertex_out$i.dat 2> vertex_error$i.dat
-    sleep 2
+    mpirun -np {3} ./$name > vertex_out$i.dat 2> vertex_error$i.dat
     wait
-    rm $name
+    sleep 5
     i=$((i+1))
 done
 '''
+    #pids[${{i}}]=$!
+    #for pid in ${{pids[*]}}; do
+    #    wait $pid
+    #done
     out = out.format(config['parameters']['beta'], config['parameters']['U'],\
-                     config['general']['custom_module_load'])
+                     config['general']['custom_module_load'],\
+                     2*int(config['Vertex']['nBoseFreq']) - 1)
     return out
 
 def parameterts_dat(config):
@@ -296,7 +331,7 @@ Ferminoic frequency: nu_prime=pi*T*(2*k+1), -Iwbox_fermi<= k <= +Iwbox_fermi-1
    f) Iwbox_green_function is the range of the Green function. Since it appear in chi_0 in the combination i+j or i-j-1 it has to fullfill:
       Iwbox_green_function >= Iwbox_fermi_ph+Iwbox_bose_ph   (if Iwbox_ph >= Iwbox_pp, otherwise the same condition hold for Iwbox_..._pp)
 '''
-    out = out.format(config['Vertex']['nFermiFreq'], config['Vertex']['nBoseFreq'],
+    out = out.format(config['Vertex']['nBoseFreq'], config['Vertex']['nFermiFreq'],
                      config['Vertex']['nFermiFreq']+config['Vertex']['nBoseFreq'],
                      config['parameters']['beta'], config['parameters']['U'])
     return out

@@ -1,25 +1,25 @@
 [general]
-runDir = "../scan1_from_metal/b{beta}_U{U}"
+runDir = "../tests/b{beta}_U{U}_very_small"
 codeDir = "/home/hhpstobb/lDGA/codes"
 CFLAGS = "-O3 -xHost"
 verbose = false
 cluster = "berlin"
-custom_slurm_lines = ""
-custom_init_andpar_file = "../scan1_from_metal/hubb.andpar"
+custom_slurm_lines = "-A hhp00048"
+custom_init_andpar_file = ""#"../scan1_from_metal/hubb.andpar"
 custom_init_andpar_vals_only = true
-custom_module_load = "module restore ed_dmft"
+custom_module_load = "module restore ed"
 custom_conda_env = "p3"
 auto_continue = true
 
 [parameters]
-beta = 15.0
-U = 3.2
+beta = 25.0
+U = 2.0
 t = 0.2
 mu = "HF"
 ns = 5
 
 [ED]
-skip = false
+skip = true
 w_min = -12.0
 w_max = 12.0
 deltino = 0.01
@@ -27,25 +27,37 @@ imaxmu = 0
 deltamu = 0.0
 iterations = 250
 conv_param = 0.007
-nprocs = 100
+nprocs = 60
 
 [Vertex]
-skip = false
+skip = true
 nmpara = 30
-nFermiFreq = 145
-nBoseFreq = 144
+nFermiFreq = 3
+nBoseFreq = 2
 
 [Susc]
-skip = false
+skip = true
 nBoseFreq = 10000
 
 [Trilex]
-skip = false
+skip = true
 nmpara = 30
-nFermiFreq = 145
-nBoseFreq = 144
+nFermiFreq = 3
+nBoseFreq = 2
 
 [Postprocess]
-skip = false
+skip = true
+keep_only_data = false
 data_bakup = "mv"
-output_format = "tar,parquet"
+output_format = "tar, text"
+split = true
+
+[lDGAFortran]
+skip = false
+LQ = 50
+Nint = 50
+k_range = 10
+only_chisp_ch = false
+only_lambda_sp = true
+only_positive_ch = true
+only_positive_sp = true

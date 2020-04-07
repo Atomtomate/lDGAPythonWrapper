@@ -103,11 +103,13 @@ def check_env(config):
         import pyarrow.parquet as pq
         import tarfile
         from scipy.special import comb
-        return True
     except:
         print("Environment check failed with: ", sys.exc_info()[0])
         return False
-    return False
+    if (not config['Postprocess']['split']) and (not config['lDGAFortran']['skip']):
+        print("WARNING: Splitting of ED results deactivated, but needed for lDGA code!")
+        return False
+    return True
 
 # =========================================================================== 
 # =                          copy functions                                 =
@@ -226,6 +228,45 @@ def copy_and_edit_trilex(subCodeDir, subRunDir, subRunDir_ED, config):
         st = os.stat(target_file_path)
         os.chmod(target_file_path, st.st_mode | stat.S_IEXEC)
 
+def copy_and_edit_lDGA_f(subCodeDir, subRunDir, dataDir, config):
+    input_files_list = ["gm_wim", "g0mand"]
+    vertex_input = ["chi_dir", "gamma_dir"]
+    src_files = ["calc_susc.f90", "dispersion.f90", "lambda_correction.f90",
+                  "make_klist.f90", "read.f90", "Selfk_LU_parallel.f90",
+                  "sigma.f90", "vardef.f90", "write.f90", "makefile"]
+
+    for src_file in src_files:
+        source_file_path = os.path.abspath(os.path.join(subCodeDir, src_file))
+        target_file_path = os.path.abspath(os.path.join(subRunDir, src_file))
+        if src_file == "make_klist.f90":
+            with open(source_file_path, 'r') as f:
+                lines = f.readlines()
+            with open(target_file_path, 'w') as f:
+                lines[3] = "INTEGER, PARAMETER :: k_range=" + str(config['lDGAFortran']['k_range']) + "\n"
+                f.write("".join(lines))
+        else:
+            shutil.copyfile(source_file_path , target_file_path)
+
+    for f in input_files_list:
+        source_file_path = os.path.abspath(os.path.join(dataDir, f))
+        target_file_path = os.path.abspath(os.path.join(subRunDir, f))
+        shutil.copyfile(source_file_path , target_file_path)
+
+    for d in vertex_input:
+        source_dir_path = os.path.abspath(os.path.join(dataDir, d))
+        target_dir_path = os.path.abspath(os.path.join(subRunDir, d))
+        if os.path.exists(target_dir_path):
+            shutil.rmtree(target_dir_path)
+        shutil.copytree(source_dir_path, target_dir_path)
+
+
+    lDGA_in = ladderDGA_in(config)
+    lDGA_in_path = os.path.abspath(os.path.join(subRunDir, "ladderDGA.in"))
+    with open(lDGA_in_path, 'w') as f:
+        f.write(lDGA_in)
+
+
+
 # =========================================================================== 
 # =                           run functions                                 =
 # =========================================================================== 
@@ -255,7 +296,7 @@ def run_ed_vertex(cwd, config, ed_jobid=None):
     filename = "ed_vertex_run.sh"
     fp = os.path.join(cwd, filename)
     cmd= "./call_script > run.out 2> run.err"
-    procs = 2*int(config['Vertex']['nBoseFreq']) - 1
+    procs = (2*int(config['Vertex']['nBoseFreq']) - 1)
     cslurm = config['general']['custom_slurm_lines']
     if not ed_jobid:
         run_cmd = "sbatch " + filename
@@ -335,6 +376,14 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,\
     with open(fp_config, 'w') as f:
         toml.dump(config, f)
 
+    full_remove_script = "rm " + os.path.abspath(subRunDir_ED) +" "+ \
+            os.path.abspath(subRunDir_vert) +\
+            " " +  os.path.abspath(subRunDir_susc) + " " +\
+            os.path.abspath(subRunDir_trilex) + " -r\n"
+    full_remove_script += "rm " + os.path.abspath(os.path.join(cwd, "*.sh")) + " " +\
+            os.path.abspath(os.path.join(cwd, "*.log")) + " " +\
+            " -r\n"
+
     cp_script = build_collect_data(dataDir, subRunDir_ED, subRunDir_vert,\
                                    subRunDir_susc, subRunDir_trilex,\
                                    mode=config['Postprocess']['data_bakup'])
@@ -350,21 +399,24 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,\
     storage_py_target = os.path.abspath(os.path.join(cwd, "storage_io.py"))
     print("copy from " + storage_py_path + " to " + storage_py_target)
     shutil.copyfile(storage_py_path, storage_py_target)
-
+    data_path = os.path.abspath(os.path.join(cwd,"data"))
     clean_script_path = os.path.abspath(os.path.join(subRunDir_vert, "clean_script_auto"))
     print("TODO: copying gm_wim from dmft. WHY?")
     content = "cp " + os.path.join(subRunDir_ED, "gm_wim") + " " + subRunDir_vert + "\n"
     content += str(clean_script_path) + "\n"
     content += str(cp_script_path) + "\n"
-    if 'text' in config['Postprocess']['output_format'].split(','):
+    if 'text' in map(str.strip, config['Postprocess']['output_format'].split(',')):
         content += str(split_script_path) + "\n"
     conda_env = config['general']['custom_conda_env']
     if conda_env:
         content += "eval \"$(conda shell.bash hook)\"\n"
         content += "conda activate " + conda_env + "\n"
-    content += "python storage_io.py " + os.path.abspath(os.path.join(cwd,"data")) + " " +\
-        config['Postprocess']['output_format'] + "\n"
-    #content += "rm storage_io.py \n"
+    content += "python storage_io.py " + data_path + " " +\
+        config['Postprocess']['output_format'] + " && "
+    content += "rm storage_io.py \n"
+    if config['Postprocess']['keep_only_data']:
+        content += full_remove_script
+
 
     st = os.stat(cp_script_path)
     os.chmod(cp_script_path, st.st_mode | stat.S_IEXEC)
@@ -396,6 +448,57 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,\
         res = process.stdout.decode("utf-8")
         jobid = re.findall(r'job \d+', res)[-1].split()[1]
     return jobid
+
+
+
+def run_lDGA_f_makeklist(cwd, config, jobid=None):
+    filename = "klist.sh"
+    fp = os.path.join(cwd, filename)
+    cmd= "./klist.x > run_klist.out 2> run_klist.err"
+    cslurm = config['general']['custom_slurm_lines']
+    if not jobid:
+        run_cmd = "sbatch " + filename
+    else:
+        run_cmd = "sbatch" + " --dependency=afterok:"+jobid + " " + filename
+    print("running: " +run_cmd)
+    with open(fp, 'w') as f:
+        f.write(globals()["job_" + config['general']['cluster']](config, 1, cslurm, cmd))
+    process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
+    if not (process.returncode == 0):
+        print("klist submit did not work as expected:")
+        print(process.stdout.decode("utf-8"))
+        print(process.stderr.decode("utf-8"))
+        return False
+    else:
+        res = process.stdout.decode("utf-8")
+        jobid = re.findall(r'job \d+', res)[-1].split()[1]
+    return jobid
+
+
+def run_lDGA_f(cwd, config, jobid=None):
+    filename = "lDGA.sh"
+    fp = os.path.join(cwd, filename)
+    cmd= "mpirun ./Selfk_LU_parallel_3D.x > run.out 2> run.err"
+    procs = 2*int(config['Trilex']['nBoseFreq']) - 1
+    cslurm = config['general']['custom_slurm_lines']
+    if not jobid:
+        run_cmd = "sbatch " + filename
+    else:
+        run_cmd = "sbatch" + " --dependency=afterok:"+jobid + " " + filename
+    print("running: " +run_cmd)
+    with open(fp, 'w') as f:
+        f.write(globals()["job_" + config['general']['cluster']](config, procs, cslurm, cmd, False))
+    process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
+    if not (process.returncode == 0):
+        print("lDGA submit did not work as expected:")
+        print(process.stdout.decode("utf-8"))
+        print(process.stderr.decode("utf-8"))
+        return False
+    else:
+        res = process.stdout.decode("utf-8")
+        jobid = re.findall(r'job \d+', res)[-1].split()[1]
+    return jobid
+
 
 # =========================================================================== 
 # =                   Log and Postprocess Functions                         =
