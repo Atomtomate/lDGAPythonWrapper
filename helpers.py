@@ -247,18 +247,17 @@ def copy_and_edit_lDGA_f(subCodeDir, subRunDir, dataDir, config):
         else:
             shutil.copyfile(source_file_path , target_file_path)
 
+    copy_content = "#!/bin/bash\ncp " + os.path.abspath(dataDir) + "/{"
     for f in input_files_list:
-        source_file_path = os.path.abspath(os.path.join(dataDir, f))
-        target_file_path = os.path.abspath(os.path.join(subRunDir, f))
-        shutil.copyfile(source_file_path , target_file_path)
+        copy_content += f + ","
+    copy_content = copy_content[0:-1] + "} " + os.path.abspath(subRunDir) + "\n"
+    copy_content += "cp " + os.path.join(dataDir) + "/{"
 
     for d in vertex_input:
-        source_dir_path = os.path.abspath(os.path.join(dataDir, d))
-        target_dir_path = os.path.abspath(os.path.join(subRunDir, d))
-        if os.path.exists(target_dir_path):
-            shutil.rmtree(target_dir_path)
-        shutil.copytree(source_dir_path, target_dir_path)
-
+        copy_content += d + ","
+    copy_content = copy_content[0:-1] + "} " + os.path.abspath(subRunDir) + "/ -r\n"
+    with open( os.path.abspath(os.path.join(subRunDir,"copy.sh")), 'w') as f:
+        f.write(copy_content)
 
     lDGA_in = ladderDGA_in(config)
     lDGA_in_path = os.path.abspath(os.path.join(subRunDir, "ladderDGA.in"))
@@ -478,7 +477,7 @@ def run_lDGA_f_makeklist(cwd, config, jobid=None):
 def run_lDGA_f(cwd, config, jobid=None):
     filename = "lDGA.sh"
     fp = os.path.join(cwd, filename)
-    cmd= "mpirun ./Selfk_LU_parallel_3D.x > run.out 2> run.err"
+    cmd= "./copy.sh\nmpirun ./Selfk_LU_parallel_3D.x > run.out 2> run.err"
     procs = 2*int(config['Trilex']['nBoseFreq']) - 1
     cslurm = config['general']['custom_slurm_lines']
     if not jobid:
