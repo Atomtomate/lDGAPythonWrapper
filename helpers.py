@@ -246,18 +246,20 @@ def copy_and_edit_lDGA_f(subCodeDir, subRunDir, dataDir, config):
                 f.write("".join(lines))
         else:
             shutil.copyfile(source_file_path , target_file_path)
-
+    copy_file = os.path.abspath(os.path.join(subRunDir,"copy.sh"))
     copy_content = "#!/bin/bash\ncp " + os.path.abspath(dataDir) + "/{"
     for f in input_files_list:
         copy_content += f + ","
     copy_content = copy_content[0:-1] + "} " + os.path.abspath(subRunDir) + "\n"
-    copy_content += "cp " + os.path.join(dataDir) + "/{"
+    copy_content += "cp " + os.path.abspath(os.path.join(dataDir)) + "/{"
 
     for d in vertex_input:
         copy_content += d + ","
     copy_content = copy_content[0:-1] + "} " + os.path.abspath(subRunDir) + "/ -r\n"
-    with open( os.path.abspath(os.path.join(subRunDir,"copy.sh")), 'w') as f:
+    with open(copy_file , 'w') as f:
         f.write(copy_content)
+    st = os.stat(copy_file)
+    os.chmod(copy_file, st.st_mode | stat.S_IEXEC)
 
     lDGA_in = ladderDGA_in(config)
     lDGA_in_path = os.path.abspath(os.path.join(subRunDir, "ladderDGA.in"))
@@ -295,7 +297,7 @@ def run_ed_vertex(cwd, config, ed_jobid=None):
     filename = "ed_vertex_run.sh"
     fp = os.path.join(cwd, filename)
     cmd= "./call_script > run.out 2> run.err"
-    procs = (2*int(config['Vertex']['nBoseFreq']) - 1)
+    procs = (2*int(config['Vertex']['nBoseFreq']) + 1)
     cslurm = config['general']['custom_slurm_lines']
     if not ed_jobid:
         run_cmd = "sbatch " + filename
@@ -341,7 +343,7 @@ def run_ed_susc(cwd, config, ed_jobid=None):
 def run_ed_trilex(cwd, config, ed_jobid=None):
     filename = "ed_trilex_run.sh"
     cmd= "mpirun ./run.x > run.out 2> run.err"
-    procs = 2*int(config['Trilex']['nBoseFreq']) - 1
+    procs = 2*int(config['Trilex']['nBoseFreq']) + 1
     cslurm = config['general']['custom_slurm_lines']
     if not ed_jobid:
         run_cmd = "sbatch " + filename
@@ -393,6 +395,9 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,\
     split_script_path = os.path.abspath(os.path.join(dataDir, "split_files.sh"))
     with open(split_script_path, 'w') as f:
         f.write(split_script)
+    st = os.stat(split_script_path)
+    os.chmod(split_script_path, st.st_mode | stat.S_IEXEC)
+
     storage_py_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                    "storage_io.py")
     storage_py_target = os.path.abspath(os.path.join(cwd, "storage_io.py"))
@@ -411,7 +416,7 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,\
         content += "eval \"$(conda shell.bash hook)\"\n"
         content += "conda activate " + conda_env + "\n"
     content += "python storage_io.py " + data_path + " " +\
-        config['Postprocess']['output_format'] + " && "
+        config['Postprocess']['output_format'].replace(" ", "") + " && "
     content += "rm storage_io.py \n"
     if config['Postprocess']['keep_only_data']:
         content += full_remove_script
@@ -455,10 +460,7 @@ def run_lDGA_f_makeklist(cwd, config, jobid=None):
     fp = os.path.join(cwd, filename)
     cmd= "./klist.x > run_klist.out 2> run_klist.err"
     cslurm = config['general']['custom_slurm_lines']
-    if not jobid:
-        run_cmd = "sbatch " + filename
-    else:
-        run_cmd = "sbatch" + " --dependency=afterok:"+jobid + " " + filename
+    run_cmd = "sbatch " + filename
     print("running: " +run_cmd)
     with open(fp, 'w') as f:
         f.write(globals()["job_" + config['general']['cluster']](config, 1, cslurm, cmd))
@@ -477,8 +479,8 @@ def run_lDGA_f_makeklist(cwd, config, jobid=None):
 def run_lDGA_f(cwd, config, jobid=None):
     filename = "lDGA.sh"
     fp = os.path.join(cwd, filename)
-    cmd= "./copy.sh\nmpirun ./Selfk_LU_parallel_3D.x > run.out 2> run.err"
-    procs = 2*int(config['Trilex']['nBoseFreq']) - 1
+    procs = 2*int(config['Trilex']['nBoseFreq']) + 1
+    cmd= "./copy.sh\nmpirun -np " + str(procs) +" ./Selfk_LU_parallel_3D.x > run.out 2> run.err"
     cslurm = config['general']['custom_slurm_lines']
     if not jobid:
         run_cmd = "sbatch " + filename

@@ -216,18 +216,17 @@ def run(config):
                 os.mkdir(fp)
 
         # ------------------------------ copy/edit ----------------------------------
-        print("Copying data into lDGA folder, this may take a while")
         copy_and_edit_lDGA_f(subCodeDir, subRunDir_lDGA_f, dataDir, config)
         if not compile(compile_command_kl, cwd=subRunDir_lDGA_f, verbose=config['general']['verbose']):
             raise Exception("Compilation Failed")
-        jobid_lDGA_f_makeklist = run_lDGA_f_makeklist(subRunDir_lDGA_f, config, jobid_pp)
+        jobid_lDGA_f_makeklist = run_lDGA_f_makeklist(subRunDir_lDGA_f, config)
         if not jobid_lDGA_f_makeklist:
             raise Exception("Job submit failed")
 
         # ----------------------------- compile/run ---------------------------------
         if not compile(compile_command, cwd=subRunDir_lDGA_f, verbose=config['general']['verbose']):
             raise Exception("Compilation Failed")
-        jobid_lDGA_f = run_lDGA_f(subRunDir_lDGA_f, config, jobid_lDGA_f_makeklist)
+        jobid_lDGA_f = run_lDGA_f(subRunDir_lDGA_f, config, jobid_pp)
         if not jobid_lDGA_f:
             raise Exception("Job submit failed")
 

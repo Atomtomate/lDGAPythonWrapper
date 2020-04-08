@@ -163,26 +163,27 @@ def init_sumt_h(config):
     return out
 def hubb_dat(config):
     out = '''c  U,   hmag
-    {0}d0,  0.d0 0.d0
-    c beta, w_min, w_max, deltino
-    {1}d0, {2}, {3}, 0.01
-    c ns,imaxmu,deltamu, # iterations, conv.param.
-    {4}, 0, 0.d0, 250,  1.d-14
-    c ifix(0,1), <n>,   inew, iauto
-    0  , 1.0d0,   1,    1,
-    c  th0 , iexp (insignificant)
-    1.d-4, 1
-    c nmin, nmax
-    3 , 7
-    c lambda, w0, nph
-    0.0, 0.4, 4
-    1
+{0}d0,  0.d0 0.d0
+c beta, w_min, w_max, deltino
+{1}d0, {2}, {3}, 0.01
+c ns,imaxmu,deltamu, # iterations, conv.param.
+{4}, 0, 0.d0, {5},  {6}
+c ifix(0,1), <n>,   inew, iauto
+0  , 1.0d0,   1,    1,
+c  th0 , iexp (insignificant)
+1.d-4, 1
+c nmin, nmax
+3 , 7
+c lambda, w0, nph
+0.0, 0.4, 4
+1
     '''
     # TODO: use float(val.replace('e', 'd'))
     out = out.format( config['parameters']['U'],
         config['parameters']['beta'], config['ED']['w_min'],
         config['ED']['w_max'], #config['ED']['conv_param'],
-        config['parameters']['ns'] #TODO: important params?
+        config['parameters']['ns'], #TODO: important params?
+        config['ED']['iterations'], config['ED']['conv_param']
     )
     return out
 
