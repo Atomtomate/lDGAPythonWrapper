@@ -69,22 +69,69 @@ c Should a lambda-correction be performed only in the spin-channel?
 c Should the summation over the bosonic frequency in the charge-/spin-channel be done for all bosonic Matsubara frequencies?
 {10}     {11}'''
 
-    k_number = config['lDGAFortran']['k_range'] + 1
+    k_number = config['lDGA']['k_range'] + 1
     out = out.format(
         config['parameters']['U'],
         config['parameters']['mu'],
         config['parameters']['beta'],
         config['Vertex']['nFermiFreq'],
         config['Vertex']['nBoseFreq'],
-        config['lDGAFortran']['LQ'],
-        config['lDGAFortran']['Nint'],
+        config['lDGA']['LQ'],
+        config['lDGA']['Nint'],
         int(k_number * ( k_number + 1 ) * ( k_number + 2 ) / 6),
-        ".TRUE." if config['lDGAFortran']['only_chisp_ch'] else ".FALSE.",
-        ".TRUE." if config['lDGAFortran']['only_lambda_sp'] else ".FALSE.",
-        ".TRUE." if config['lDGAFortran']['only_positive_ch'] else ".FALSE.",
-        ".TRUE." if config['lDGAFortran']['only_positive_sp'] else ".FALSE."
+        ".TRUE." if config['lDGA']['only_chisp_ch'] else ".FALSE.",
+        ".TRUE." if config['lDGA']['only_lambda_sp'] else ".FALSE.",
+        ".TRUE." if config['lDGA']['only_positive_ch'] else ".FALSE.",
+        ".TRUE." if config['lDGA']['only_positive_sp'] else ".FALSE."
     )
     return out
+
+#TODO: some fixed parameters
+def lDGA_julia(config, dataDir):
+    out = """[Model]
+U    = {0}
+mu   = {1}
+beta = {2}
+nden = 1.0
+Dimensions = 2
+
+[Simulation]
+nFermFreq = {3}
+nBoseFreq = {4}
+shift     = 0       # shift of center of bosonic frequency range
+
+Nk        = {5}     # IMPORTANT: in Fortran this is Nk x Nk and generated bei make_klist. TODO: adaptiv mesh
+NkInt     = {6}
+Nq        = {7}
+tail_corrected = false
+chi_only = true          # Should only chis_omega and chich_omega be calculated?
+
+[Environment]
+loadFortran = "text"    # julia, text, parquet, TODO: implement hdf5
+writeFortran = false
+loadAsymptotics = false
+inputDir = "{8}"
+inputVars = "vars_sums.jld"
+asymptVars = "vars_asympt_sums.jld"
+
+[legacy]
+lambda_correction = true    # Should a lambda-correction be performed only in the spin-channel?
+force_full_bosonic_sum = false  # Should the summation over the bosonic frequency in the charge-/spin-channel be done for all bosonic Matsubara frequencies?"""
+    k_number = config['lDGA']['k_range'] + 1
+    q_number = config['lDGA']['LQ']
+    out = out.format(
+        config['parameters']['U'],
+        config['parameters']['mu'],
+        config['parameters']['beta'],
+        config['Vertex']['nFermiFreq'],
+        config['Vertex']['nBoseFreq'],
+        int(k_number),
+        config['lDGA']['Nint'],
+        int(q_number * ( q_number + 1 ) * ( q_number + 2 ) / 6),
+        dataDir
+    )
+    return out
+
 
 def split_files(config):
     out = '''#!/bin/bash
@@ -259,7 +306,6 @@ done
                      config['general']['custom_module_load'],\
                      2*int(config['Vertex']['nBoseFreq']) - 1)
     return out
-
 def parameterts_dat(config):
     out = '''c Iwbox_bose_ph   Iwbox_fermi_ph   Iwbox_bose_pp   Iwbox_fermi_pp   Iwbox_bose_gamma   Iwbox_fermi_gamma    Iwbox_bose_lambda   Iwbox_fermi_lambda   Iwbox_green_function
   {0}                 {1}              0                0                0                 0                   0                   0                    {2}

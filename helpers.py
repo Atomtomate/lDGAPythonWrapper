@@ -10,6 +10,7 @@ import stat
 from math import isclose
 from file_templates import *
 
+#TODO: refactor replicated code
    
 
 # =========================================================================== 
@@ -107,6 +108,9 @@ def check_env(config):
         print("Environment check failed with: ", sys.exc_info()[0])
         return False
     if (not config['Postprocess']['split']) and (not config['lDGAFortran']['skip']):
+        print("WARNING: Splitting of ED results deactivated, but needed for lDGA code!")
+        return False
+    if (not config['Postprocess']['split']) and (not config['lDGAJulia']['skip']):
         print("WARNING: Splitting of ED results deactivated, but needed for lDGA code!")
         return False
     return True
@@ -242,7 +246,7 @@ def copy_and_edit_lDGA_f(subCodeDir, subRunDir, dataDir, config):
             with open(source_file_path, 'r') as f:
                 lines = f.readlines()
             with open(target_file_path, 'w') as f:
-                lines[3] = "INTEGER, PARAMETER :: k_range=" + str(config['lDGAFortran']['k_range']) + "\n"
+                lines[3] = "INTEGER, PARAMETER :: k_range=" + str(config['lDGA']['k_range']) + "\n"
                 f.write("".join(lines))
         else:
             shutil.copyfile(source_file_path , target_file_path)
@@ -266,6 +270,12 @@ def copy_and_edit_lDGA_f(subCodeDir, subRunDir, dataDir, config):
     with open(lDGA_in_path, 'w') as f:
         f.write(lDGA_in)
 
+
+def copy_and_edit_lDGA_j(subRunDir, dataDir, config):
+    lDGA_in = lDGA_julia(config, os.path.abspath(dataDir))
+    lDGA_in_path = os.path.abspath(os.path.join(subRunDir, "config.toml"))
+    with open(lDGA_in_path, 'w') as f:
+        f.write(lDGA_in)
 
 
 # =========================================================================== 
@@ -499,6 +509,33 @@ def run_lDGA_f(cwd, config, jobid=None):
         res = process.stdout.decode("utf-8")
         jobid = re.findall(r'job \d+', res)[-1].split()[1]
     return jobid
+
+
+def run_lDGA_j(cwd, codeDir, config, jobid=None):
+    filename = "lDGA.sh"
+    fp = os.path.join(cwd, filename)
+    q_number = config['lDGA']['LQ']
+    procs = 2*96
+    cmd= "julia -p " + str(procs) + " " + codeDir + "/src/ladderDGA_Julia.jl > run.out 2> run.err"
+    cslurm = config['general']['custom_slurm_lines']
+    if not jobid:
+        run_cmd = "sbatch " + filename
+    else:
+        run_cmd = "sbatch" + " --dependency=afterok:"+jobid + " " + filename
+    print("running: " +run_cmd)
+    with open(fp, 'w') as f:
+        f.write(globals()["job_" + config['general']['cluster']](config, procs, cslurm, cmd, False))
+    process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
+    if not (process.returncode == 0):
+        print("Julia lDGA submit did not work as expected:")
+        print(process.stdout.decode("utf-8"))
+        print(process.stderr.decode("utf-8"))
+        return False
+    else:
+        res = process.stdout.decode("utf-8")
+        jobid = re.findall(r'job \d+', res)[-1].split()[1]
+    return jobid
+
 
 
 # =========================================================================== 

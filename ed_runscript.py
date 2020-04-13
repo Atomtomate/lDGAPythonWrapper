@@ -195,7 +195,7 @@ def run(config):
 
 
     # =========================================================================== 
-    # =                               lDGA                                      =
+    # =                           lDGA Fortran                                  =
     # =========================================================================== 
 
     # ---------------------------- definitions ----------------------------------
@@ -235,6 +235,35 @@ def run(config):
         with open(lDGA_logfile, 'w') as f:
             f.write(dmft_log(jobid_lDGA_f, subRunDir_lDGA_f, config))
 
+
+
+    # =========================================================================== 
+    # =                            lDGA Julia                                   =
+    # =========================================================================== 
+
+    # ---------------------------- definitions ----------------------------------
+    subCodeDir = os.path.join(config['general']['codeDir'], "ladderDGA_Julia")
+    subRunDir_lDGA_j = os.path.join(runDir, "lDGA_julia")
+    jobid_lDGA_f = None
+
+
+    if not config['lDGAJulia']['skip']:
+        # ----------------------------- create dirs ---------------------------------
+        if not os.path.exists(subRunDir_lDGA_j):
+            os.mkdir(subRunDir_lDGA_j)
+
+        # ------------------------------ copy/edit ----------------------------------
+        copy_and_edit_lDGA_j(subRunDir_lDGA_j, dataDir, config)
+
+        # ----------------------------- compile/run ---------------------------------
+        jobid_lDGA_j = run_lDGA_j(subRunDir_lDGA_j, subCodeDir, config, jobid_pp)
+        if not jobid_lDGA_j:
+            raise Exception("Job submit failed")
+
+        # ---------------------------- save job info --------------------------------
+        lDGA_logfile = os.path.join(runDir, "job_lDGA_j.log")
+        with open(lDGA_logfile, 'w') as f:
+            f.write(dmft_log(jobid_lDGA_j, subRunDir_lDGA_j, config))
 
 
 

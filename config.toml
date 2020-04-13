@@ -1,5 +1,5 @@
 [general]
-runDir = "../tests/test_02"
+runDir = "../tests/test_03"
 codeDir = "/home/hhpstobb/lDGA/codes"
 CFLAGS = "-O3 -xHost"
 verbose = false
@@ -17,9 +17,10 @@ U = 2.0
 t = 0.2
 mu = "HF"
 ns = 5
+Dimensions = 2
 
 [ED]
-skip = false
+skip = true
 w_min = -12.0
 w_max = 12.0
 deltino = 0.01
@@ -30,20 +31,20 @@ conv_param = "1.d-13"
 nprocs = 60
 
 [Vertex]
-skip = false
+skip = true
 nmpara = 30
-nFermiFreq = 3
-nBoseFreq = 2
+nFermiFreq = 11
+nBoseFreq = 10
 
 [Susc]
-skip = false
+skip = true
 nBoseFreq = 10000
 
 [Trilex]
-skip = false
+skip = true
 nmpara = 30
-nFermiFreq = 3
-nBoseFreq = 2
+nFermiFreq = 11
+nBoseFreq = 10
 
 [Postprocess]
 skip = false
@@ -52,8 +53,7 @@ data_bakup = "mv"
 output_format = "tar,text"
 split = true
 
-[lDGAFortran]
-skip = false
+[lDGA]
 LQ = 20
 Nint = 20
 k_range = 10
@@ -61,3 +61,9 @@ only_chisp_ch = false
 only_lambda_sp = true
 only_positive_ch = true
 only_positive_sp = true
+
+[lDGAFortran]
+skip = true
+
+[lDGAJulia]
+skip = false
