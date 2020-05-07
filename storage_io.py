@@ -154,11 +154,17 @@ def run_conversion(path, out_formats):
         for name in files:
             print(" ".ljust(84))
             print(("\rtaring: " + str(name)), end='')
-            tar.add(name)
+            try:
+                tar.add(name)
+            except FileNotFoundError:
+                print("File ", name, " not found!")
         for name in dirs:
             print(" ".ljust(84))
             print(("\rtaring: " + str(name)), end='')
-            tar.add(name)
+            try:
+                tar.add(name)
+            except FileNotFoundError:
+                print("Dir ", name, " not found!")
         tar.close()
         print("\nTarfile Created.")
 

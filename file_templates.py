@@ -1,4 +1,6 @@
 from scipy.special import comb
+import numpy as np
+from math import ceil
 import os
 
 # =========================================================================== 
@@ -67,7 +69,7 @@ c Should only chis_omega and chich_omega be calculated?
 c Should a lambda-correction be performed only in the spin-channel?
 {9}
 c Should the summation over the bosonic frequency in the charge-/spin-channel be done for all bosonic Matsubara frequencies?
-{10}     {11}'''
+{10}     {11}\n'''
 
     k_number = config['lDGA']['k_range'] + 1
     out = out.format(
@@ -81,53 +83,63 @@ c Should the summation over the bosonic frequency in the charge-/spin-channel be
         int(k_number * ( k_number + 1 ) * ( k_number + 2 ) / 6),
         ".TRUE." if config['lDGA']['only_chisp_ch'] else ".FALSE.",
         ".TRUE." if config['lDGA']['only_lambda_sp'] else ".FALSE.",
-        ".TRUE." if config['lDGA']['only_positive_ch'] else ".FALSE.",
-        ".TRUE." if config['lDGA']['only_positive_sp'] else ".FALSE."
+        ".FALSE." if config['lDGA']['only_positive_ch'] else ".TRUE.",
+        ".FALSE." if config['lDGA']['only_positive_sp'] else ".TRUE."
     )
+    if config['lDGA']['kInt'].lower() == "fft":
+        out += "c fft_bubble, fft_real(not implemented)\n.TRUE.     .FALSE.\n"
     return out
 
 #TODO: some fixed parameters
-def lDGA_julia(config, dataDir):
+def lDGA_julia(config, dataDir, tc):
     out = """[Model]
 U    = {0}
 mu   = {1}
 beta = {2}
 nden = 1.0
-Dimensions = 2
+Dimensions = {3}
 
 [Simulation]
-nFermFreq = {3}
-nBoseFreq = {4}
+nFermFreq = {4}
+nBoseFreq = {5}
 shift     = 0       # shift of center of bosonic frequency range
-
-Nk        = {5}     # IMPORTANT: in Fortran this is Nk x Nk and generated bei make_klist. TODO: adaptiv mesh
-NkInt     = {6}
-Nq        = {7}
-tail_corrected = false
+Nk        = {6}     # IMPORTANT: in Fortran this is Nk x Nk and generated bei make_klist. TODO: adaptiv mesh
+NkInt     = {7}
+Nq        = {8}
+tail_corrected = {9}
 chi_only = true          # Should only chis_omega and chich_omega be calculated?
+kInt = "{10}"
 
 [Environment]
 loadFortran = "text"    # julia, text, parquet, TODO: implement hdf5
 writeFortran = false
 loadAsymptotics = false
-inputDir = "{8}"
-inputVars = "vars_sums.jld"
+inputDir = "{11}"
+inputVars = "vars.jld"
 asymptVars = "vars_asympt_sums.jld"
+force_full_bosonic_sum = false
 
 [legacy]
 lambda_correction = true    # Should a lambda-correction be performed only in the spin-channel?
-force_full_bosonic_sum = false  # Should the summation over the bosonic frequency in the charge-/spin-channel be done for all bosonic Matsubara frequencies?"""
+
+[Debug]
+read_bubble = true
+"""
     k_number = config['lDGA']['k_range'] + 1
     q_number = config['lDGA']['LQ']
+    kIntType = config['lDGA']['kInt']
     out = out.format(
         config['parameters']['U'],
         config['parameters']['mu'],
         config['parameters']['beta'],
+        config['parameters']['Dimensions'],
         config['Vertex']['nFermiFreq'],
         config['Vertex']['nBoseFreq'],
         int(k_number),
         config['lDGA']['Nint'],
-        int(q_number * ( q_number + 1 ) * ( q_number + 2 ) / 6),
+        q_number,#int(q_number * ( q_number + 1 ) * ( q_number + 2 ) / 6),
+        tc,
+        kIntType,
         dataDir
     )
     return out
@@ -151,8 +163,8 @@ cd $cwd
     return out
 
 def tpri_dat(config):
-    t = config['parameters']['t']
-    return "      t=" + str(t) + "d0\n      t1=0.0d0\n      t2=0.0d0"
+    t = 0.5/np.sqrt(2*config['parameters']['Dimensions'])
+    return "      t=" + str(t) + "d0\n      t1=0.0d0\n      t2=0d0"
 
 def init_h(config):
     ns = config['parameters']['ns']
@@ -208,6 +220,37 @@ def init_sumt_h(config):
                      int(config['Vertex']['nBoseFreq']),  \
                      2*int(config['Vertex']['nBoseFreq']) + 1)
     return out
+
+def q_sum_h(config):
+    cnf_str = "".join(config['lDGA']['kInt'].lower().split()) # remove whitespaces and convert to lower case
+    if cnf_str == "naive" or cnf_str == "gl-1" or cnf_str == "fft":
+        out = """INTEGER, PARAMETER :: ng=1
+!points for the Gauss-Legendre integration
+REAL(KIND=8), PARAMETER, DIMENSION(ng) :: tstep=(/1.0d0/)
+!weights for the Gauss-Legendre integration
+REAL(KIND=8), PARAMETER, DIMENSION(ng) :: ws=(/2.0d0/)"""
+    elif "gl" in cnf_str:
+        order = cnf_str[3:]
+        tsteps, ws = np.polynomial.legendre.leggauss(int(order))
+        out = "INTEGER, PARAMETER :: ng="+order+"\n"
+        out += "!points for the Gauss-Legendre integration\n"
+        out += "REAL(KIND=8), PARAMETER, DIMENSION(ng) :: tstep= &\n(/"
+        for i,tstep in enumerate(tsteps):
+            out += str(tstep) + ","
+            if i%2 == 0 and i > 0 and i < len(tsteps) - 1:
+                out += " &\n"
+        out = out[0:-1] + "/)\n"
+        out += "!weights for the Gauss-Legendre integration\n"
+        out += "REAL(KIND=8), PARAMETER, DIMENSION(ng) :: ws= &\n(/"
+        for i,w in enumerate(ws):
+            out += str(w) + ","
+            if i%2 == 0 and i > 0 and i < len(ws) - 1:
+                out += " &\n"
+        out = out[0:-1] + "/)"
+    else:
+         raise NotImplementedError("Q-Integration method not recognized")
+    return out
+
 def hubb_dat(config):
     out = '''c  U,   hmag
 {0}d0,  0.d0 0.d0
@@ -256,7 +299,7 @@ Eps(k)
         out += eps_k
     else:
         for i in range(config['parameters']['ns']-1):
-            out += "  1.000000000000\n"
+            out += "  "+i+".000000000000\n"
     out += " tpar(k)\n"
     if tpar_k:
         tp_eps = len(tpar_k.splitlines())
@@ -277,35 +320,49 @@ Eps(k)
     )
     return out
 
+#TODO: old remove?#!/bin/bash
+#mpirun -np {3} ./$name > vertex_out$i.dat 2> vertex_error$i.dat &
+#
+#while [ $i -le 8 ]
+#do
+#done
+#wait $(jobs -rp)
 def call_script(config):
     out = '''
-#!/bin/bash
-i=1
-sed '1s/^.*$/        1/' idw.dat >hilfe
-mv hilfe idw.dat
+i=`cat idw.dat | sed -e 's/^[[:space:]]*//'`
 beta={0}d0
 uhub={1}d0
 {2}
-
-while [ $i -le 8 ]
-do
-    name=ver_tpri_run_U$uhub\_beta$beta\_$i.x
-    echo $name
-    cp run.x ./$name
-    mpirun -np {3} ./$name > vertex_out$i.dat 2> vertex_error$i.dat
-    wait
-    sleep 5
-    i=$((i+1))
-done
 '''
-    #pids[${{i}}]=$!
-    #for pid in ${{pids[*]}}; do
-    #    wait $pid
-    #done
     out = out.format(config['parameters']['beta'], config['parameters']['U'],\
-                     config['general']['custom_module_load'],\
-                     2*int(config['Vertex']['nBoseFreq']) - 1)
+                     config['general']['custom_module_load'])
+    if config['general']['cluster'] == "berlin":
+        jobs_per_node = 96
+        procs = (2*int(config['Vertex']['nBoseFreq']) + 1)
+        nodes_per_job = ceil(procs/jobs_per_node)
+        nodes = nodes_per_job*8
+    else:
+        print("WARNING: unrecognized cluster configuration!")
+        return False
+    for r in range(8):
+        out += "i="+str(r+1)+"\n\
+name=ver_tpri_run_U$uhub\_beta$beta\_$i.x\n\
+echo $name\n\
+cp run.x ./$name\n\
+sed '1s/^.*$/       '$i'/' idw.dat >hilfe\n\
+mv hilfe idw.dat\n\
+sleep 8\n\
+echo \"nodes per job: "+str(nodes_per_job)+"\"\n\
+mpirun -np "+str(2*int(config['Vertex']['nBoseFreq']) + 1)+" -hosts "
+        run_string = ""
+        for p in range(nodes_per_job):
+            run_string += "bcn${SLURM_JOB_NODELIST:"+str(4+5*nodes_per_job*r+5*p)+":4},"
+        run_string = run_string[0:-1] + " ./$name > vertex_out$i.dat 2> vertex_error$i.dat & \n"
+        out += run_string
+        out += "\necho \"running: " + run_string[0:-2] +"\"\n"
+    out += "wait $(jobs -rp)\n"
     return out
+
 def parameterts_dat(config):
     out = '''c Iwbox_bose_ph   Iwbox_fermi_ph   Iwbox_bose_pp   Iwbox_fermi_pp   Iwbox_bose_gamma   Iwbox_fermi_gamma    Iwbox_bose_lambda   Iwbox_fermi_lambda   Iwbox_green_function
   {0}                 {1}              0                0                0                 0                   0                   0                    {2}

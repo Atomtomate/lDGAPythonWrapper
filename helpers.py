@@ -7,11 +7,11 @@ from datetime import datetime
 import toml
 import re
 import stat
-from math import isclose
+from math import isclose, ceil
 from file_templates import *
 
 #TODO: refactor replicated code
-   
+
 
 # =========================================================================== 
 # =                         helper functions                                =
@@ -186,7 +186,8 @@ def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, config):
         target_file_path = os.path.abspath(os.path.join(subRunDir, filename))
         st = os.stat(target_file_path)
         os.chmod(target_file_path, st.st_mode | stat.S_IEXEC)
-    
+
+
 def copy_and_edit_susc(subCodeDir, subRunDir, subRunDir_ED, config):
     files_dmft_list = ["hubb.andpar", "hubb.dat", "gm_wim"]
     files_list = ["calc_chi_asymptotics_gfortran.f", "idw.dat",
@@ -209,7 +210,7 @@ def copy_and_edit_susc(subCodeDir, subRunDir, subRunDir_ED, config):
         st = os.stat(target_file_path)
         os.chmod(target_file_path, st.st_mode | stat.S_IEXEC)
 
-    
+
 def copy_and_edit_trilex(subCodeDir, subRunDir, subRunDir_ED, config):
     files_dmft_list = ["hubb.andpar", "hubb.dat", "gm_wim"]
     files_list = ["ver_twofreq_parallel.f", "idw.dat",
@@ -231,6 +232,7 @@ def copy_and_edit_trilex(subCodeDir, subRunDir, subRunDir_ED, config):
         target_file_path = os.path.join(subRunDir, filename)
         st = os.stat(target_file_path)
         os.chmod(target_file_path, st.st_mode | stat.S_IEXEC)
+
 
 def copy_and_edit_lDGA_f(subCodeDir, subRunDir, dataDir, config):
     input_files_list = ["gm_wim", "g0mand"]
@@ -270,9 +272,14 @@ def copy_and_edit_lDGA_f(subCodeDir, subRunDir, dataDir, config):
     with open(lDGA_in_path, 'w') as f:
         f.write(lDGA_in)
 
+    q_sum = q_sum_h(config)
+    q_sum_path = os.path.abspath(os.path.join(subRunDir, "q_sum.h"))
+    with open(q_sum_path, 'w') as f:
+        f.write(q_sum)
 
-def copy_and_edit_lDGA_j(subRunDir, dataDir, config):
-    lDGA_in = lDGA_julia(config, os.path.abspath(dataDir))
+
+def copy_and_edit_lDGA_j(subRunDir, dataDir, config, tc):
+    lDGA_in = lDGA_julia(config, os.path.abspath(dataDir), tc)
     lDGA_in_path = os.path.abspath(os.path.join(subRunDir, "config.toml"))
     with open(lDGA_in_path, 'w') as f:
         f.write(lDGA_in)
@@ -306,8 +313,16 @@ def run_ed_dmft(cwd, config):
 def run_ed_vertex(cwd, config, ed_jobid=None):
     filename = "ed_vertex_run.sh"
     fp = os.path.join(cwd, filename)
+    if config['general']['cluster'] == "berlin":
+        cores_per_node = 96
+        procs = (2*int(config['Vertex']['nBoseFreq']) + 1)
+        nodes_per_job = ceil(procs/cores_per_node)
+        nodes = nodes_per_job*8
+        procs = nodes*cores_per_node
+    else:
+        print("WARNING: unrecognized cluster configuration!")
+        procs = 8*(2*int(config['Vertex']['nBoseFreq']) + 1)
     cmd= "./call_script > run.out 2> run.err"
-    procs = (2*int(config['Vertex']['nBoseFreq']) + 1)
     cslurm = config['general']['custom_slurm_lines']
     if not ed_jobid:
         run_cmd = "sbatch " + filename
@@ -487,10 +502,11 @@ def run_lDGA_f_makeklist(cwd, config, jobid=None):
 
 
 def run_lDGA_f(cwd, config, jobid=None):
-    filename = "lDGA.sh"
+    filename = "lDGA_f.sh"
     fp = os.path.join(cwd, filename)
     procs = 2*int(config['Trilex']['nBoseFreq']) + 1
-    cmd= "./copy.sh\nmpirun -np " + str(procs) +" ./Selfk_LU_parallel_3D.x > run.out 2> run.err"
+    cmd = "export LD_LIBRARY_PATH=/sw/numerics/fftw3/impi/intel/3.3.8/skl/lib:$LD_LIBRARY_PATH\n"
+    cmd += "./copy.sh\nmpirun -np " + str(procs) +" ./Selfk_LU_parallel_3D.x > run.out 2> run.err"
     cslurm = config['general']['custom_slurm_lines']
     if not jobid:
         run_cmd = "sbatch " + filename
@@ -512,11 +528,12 @@ def run_lDGA_f(cwd, config, jobid=None):
 
 
 def run_lDGA_j(cwd, codeDir, config, jobid=None):
-    filename = "lDGA.sh"
+    filename = "lDGA_j.sh"
     fp = os.path.join(cwd, filename)
     q_number = config['lDGA']['LQ']
-    procs = 2*96
-    cmd= "julia -p " + str(procs) + " " + codeDir + "/src/ladderDGA_Julia.jl > run.out 2> run.err"
+    procs = 1
+    #+ str(procs) 
+    cmd= "julia " + " " + codeDir + "/src/ladderDGA_Julia.jl > run.out 2> run.err"
     cslurm = config['general']['custom_slurm_lines']
     if not jobid:
         run_cmd = "sbatch " + filename
@@ -535,6 +552,67 @@ def run_lDGA_j(cwd, codeDir, config, jobid=None):
         res = process.stdout.decode("utf-8")
         jobid = re.findall(r'job \d+', res)[-1].split()[1]
     return jobid
+
+def run_results_pp(runDir, dataDir, subRunDir_ED, subRunDir_vert,\
+                    subRunDir_susc, subRunDir_trilex, config,
+                    subRunDir_lDGA_j_tc, subRunDir_lDGA_j_naive, jobids = None):
+    filename = "results_pp.sh"
+    cslurm = config['general']['custom_slurm_lines']
+    procs = 1
+    if not os.path.exists(dataDir):
+        os.mkdir(dataDir)
+
+    full_remove_script = "rm " + os.path.abspath(subRunDir_lDGA_j_tc) +"/vars.jl\n"
+    full_remove_script += "rm " + os.path.abspath(subRunDir_lDGA_j_naive) +"/vars.jl\n"
+
+    return
+    #TODO: copy chi from julia and fortran
+    content = "cp " +  + "\n"
+    content += str(clean_script_path) + "\n"
+    content += str(cp_script_path) + "\n"
+    if 'text' in map(str.strip, config['Postprocess']['output_format'].split(',')):
+        content += str(split_script_path) + "\n"
+    conda_env = config['general']['custom_conda_env']
+    if conda_env:
+        content += "eval \"$(conda shell.bash hook)\"\n"
+        content += "conda activate " + conda_env + "\n"
+    content += "python storage_io.py " + data_path + " " +\
+        config['Postprocess']['output_format'].replace(" ", "") + " && "
+    content += "rm storage_io.py \n"
+    if config['Postprocess']['keep_only_data']:
+        content += full_remove_script
+
+    st = os.stat(cp_script_path)
+    os.chmod(cp_script_path, st.st_mode | stat.S_IEXEC)
+    st = os.stat(clean_script_path)
+    os.chmod(clean_script_path, st.st_mode | stat.S_IEXEC)
+    st = os.stat(split_script_path)
+    os.chmod(split_script_path, st.st_mode | stat.S_IEXEC)
+
+    run_cmd = "sbatch " + filename
+    if jobids and any(jobids):
+        run_cmd = "sbatch" + " --dependency=afterok"
+        for j in jobids:
+            if j:
+                run_cmd += ":"+j
+        run_cmd += " " + filename
+    print("running: " +run_cmd)
+
+    fp = os.path.join(cwd, filename)
+    with open(fp, 'w') as f:
+        f.write(globals()["postprocessing_" + config['general']['cluster']](content, cslurm, config))
+    process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
+
+    if not (process.returncode == 0):
+        print("Postprocessing submit did not work as expected:")
+        print(process.stdout.decode("utf-8"))
+        print(process.stderr.decode("utf-8"))
+        return False
+    else:
+        res = process.stdout.decode("utf-8")
+        jobid = re.findall(r'job \d+', res)[-1].split()[1]
+    return jobid
+
 
 
 
@@ -571,3 +649,11 @@ def build_collect_data(target_dir, dmft_dir, vertex_dir, susc_dir, trilex_dir, m
     copy_script_str += bak_dirs_script(trilex_dir, target_dir, trilex_dirs, header=False, mode=mode)
 
     return copy_script_str
+
+def cleanup(config):
+    pass
+
+def consistency_checks(config):
+    #TODO: check hubb.andpar for equal energies
+    #TODO: hopping 0 
+    pass

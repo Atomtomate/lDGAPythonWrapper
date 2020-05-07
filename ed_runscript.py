@@ -4,14 +4,15 @@ import shutil
 import subprocess
 import toml
 import argparse
+import numpy as np
 from helpers import *
 
 
 
 # TODO: obtain compiler and modify clean_script etc
+# TODO: IMPORTANT! shift compilation task to job itself (include in jobfile)
 # TODO: IMPORTANT! save jobid in file and check on restart if it is still running/exit ok!
 # TODO: IMPORTANT! skip computation if jobid indcates completion
-# TODO: IMPORTANT! options for 2D/3D
 
 
 print("TODO: skip computation if jobid indcates completion")
@@ -46,7 +47,7 @@ def run(config):
     # =========================================================================== 
     # =                                DMFT                                     =
     # =========================================================================== 
-     
+
     # ---------------------------- definitions ----------------------------------
     subCodeDir = os.path.join(config['general']['codeDir'], "ED_dmft")
     subRunDir_ED = os.path.join(runDir, "ed_dmft")
@@ -199,10 +200,16 @@ def run(config):
     # =========================================================================== 
 
     # ---------------------------- definitions ----------------------------------
-    subCodeDir = os.path.join(config['general']['codeDir'], "ladderDGA3D")
-    compile_command_kl = "gfortran dispersion.f90 calc_susc.f90 make_klist.f90 -llapack -o klist.x"
+    if config['parameters']['Dimensions'] == 2:
+        subCodeDir = os.path.join(config['general']['codeDir'], "ladderDGA2D")
+    elif config['parameters']['Dimensions'] == 3:
+        subCodeDir = os.path.join(config['general']['codeDir'], "ladderDGA3D")
+    if config['lDGA']['kInt'].lower() == "fft":
+        subCodeDir += "_FFT"
+
+    compile_command_kl = "gfortran dispersion.f90 make_klist.f90 -llapack -o klist.x"
     compile_command = "make run"
-    output_dirs = ["chisp_omega", "chich_omega", "klist"]
+    output_dirs = ["chisp_omega", "chich_omega", "chi_bubble", "klist"]
     subRunDir_lDGA_f = os.path.join(runDir, "lDGA_fortran")
     jobid_lDGA_f = None
 
@@ -236,36 +243,83 @@ def run(config):
             f.write(dmft_log(jobid_lDGA_f, subRunDir_lDGA_f, config))
 
 
-
     # =========================================================================== 
-    # =                            lDGA Julia                                   =
+    # =                           lDGA Julia tc                                 =
     # =========================================================================== 
 
     # ---------------------------- definitions ----------------------------------
     subCodeDir = os.path.join(config['general']['codeDir'], "ladderDGA_Julia")
-    subRunDir_lDGA_j = os.path.join(runDir, "lDGA_julia")
-    jobid_lDGA_f = None
-
+    subRunDir_lDGA_j_tc = os.path.join(runDir, "lDGA_julia_tc")
+    jobid_lDGA_j_tc = None
 
     if not config['lDGAJulia']['skip']:
-        # ----------------------------- create dirs ---------------------------------
-        if not os.path.exists(subRunDir_lDGA_j):
-            os.mkdir(subRunDir_lDGA_j)
+        if config['lDGAJulia']['tail_corrected'].casefold() == "both" or config['lDGAJulia']['tail_corrected'].casefold() == "yes":
+            tc = "true"
+            postf = "_tc"
 
-        # ------------------------------ copy/edit ----------------------------------
-        copy_and_edit_lDGA_j(subRunDir_lDGA_j, dataDir, config)
+            # ----------------------------- create dirs ---------------------------------
+            if not os.path.exists(subRunDir_lDGA_j_tc):
+                os.mkdir(subRunDir_lDGA_j_tc)
 
-        # ----------------------------- compile/run ---------------------------------
-        jobid_lDGA_j = run_lDGA_j(subRunDir_lDGA_j, subCodeDir, config, jobid_pp)
-        if not jobid_lDGA_j:
-            raise Exception("Job submit failed")
+            # ------------------------------ copy/edit ----------------------------------
+            copy_and_edit_lDGA_j(subRunDir_lDGA_j_tc, dataDir, config, tc)
 
-        # ---------------------------- save job info --------------------------------
-        lDGA_logfile = os.path.join(runDir, "job_lDGA_j.log")
-        with open(lDGA_logfile, 'w') as f:
-            f.write(dmft_log(jobid_lDGA_j, subRunDir_lDGA_j, config))
+            # ----------------------------- compile/run ---------------------------------
+            jobid_lDGA_j_tc = run_lDGA_j(subRunDir_lDGA_j_tc, subCodeDir, config, jobid_pp)
+            if not jobid_lDGA_j_tc:
+                raise Exception("Job submit failed")
+
+            # ---------------------------- save job info --------------------------------
+            lDGA_logfile = os.path.join(runDir, "job_lDGA_j"+postf+".log")
+            with open(lDGA_logfile, 'w') as f:
+                f.write(dmft_log(jobid_lDGA_j_tc, subRunDir_lDGA_j_tc, config))
 
 
+
+    # =========================================================================== 
+    # =                         lDGA Julia naive                                =
+    # =========================================================================== 
+
+    # ---------------------------- definitions ----------------------------------
+    subCodeDir = os.path.join(config['general']['codeDir'], "ladderDGA_Julia")
+    subRunDir_lDGA_j_naive = os.path.join(runDir, "lDGA_julia")
+    jobid_lDGA_j_naive = None
+
+    if not config['lDGAJulia']['skip']:
+        if config['lDGAJulia']['tail_corrected'].casefold() == "both" or config['lDGAJulia']['tail_corrected'].casefold() == "no":
+            postf = "_naive"
+            tc = "false"
+
+            # ----------------------------- create dirs ---------------------------------
+            if not os.path.exists(subRunDir_lDGA_j_naive):
+                os.mkdir(subRunDir_lDGA_j_naive)
+
+            # ------------------------------ copy/edit ----------------------------------
+            copy_and_edit_lDGA_j(subRunDir_lDGA_j_naive, dataDir, config, tc)
+
+            # ----------------------------- compile/run ---------------------------------
+            jobid_lDGA_j_naive = run_lDGA_j(subRunDir_lDGA_j_naive, subCodeDir, config, jobid_pp)
+            if not jobid_lDGA_j_naive:
+                raise Exception("Job submit failed")
+
+            # ---------------------------- save job info --------------------------------
+            lDGA_logfile = os.path.join(runDir, "job_lDGA_j"+postf+".log")
+            with open(lDGA_logfile, 'w') as f:
+                f.write(dmft_log(jobid_lDGA_j_naive, subRunDir_lDGA_j_naive, config))
+
+
+    # =========================================================================== 
+    # =                              results                                    =
+    # =========================================================================== 
+
+    # ---------------------------- definitions ----------------------------------
+    subRunDir_results = os.path.join(runDir, "results")
+    jobid_results = None
+    jobid_pp = run_results_pp(runDir, dataDir, subRunDir_ED, subRunDir_vert,\
+                    subRunDir_susc, subRunDir_trilex, config,
+                    subRunDir_lDGA_j_tc, subRunDir_lDGA_j_naive,
+                    jobids = [jobid_ed, jobid_vert, jobid_susc, jobid_trilex,
+                            jobid_lDGA_j_naive, jobid_lDGA_j_tc])
 
 if __name__ == "__main__":
     if len(sys.argv) == 1:

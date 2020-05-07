@@ -1,5 +1,5 @@
 [general]
-runDir = "../tests/test_03"
+runDir = "../scan_t_U2_from_U0_5"
 codeDir = "/home/hhpstobb/lDGA/codes"
 CFLAGS = "-O3 -xHost"
 verbose = false
@@ -12,29 +12,28 @@ custom_conda_env = "p3"
 auto_continue = true
 
 [parameters]
-beta = 25.0
-U = 2.0
-t = 0.2
+beta = 15.0
+U = 0.5
 mu = "HF"
 ns = 5
-Dimensions = 2
+Dimensions = 3
 
 [ED]
 skip = true
-w_min = -12.0
-w_max = 12.0
-deltino = 0.01
-imaxmu = 0
-deltamu = 0.0
-iterations = 50
+w_min = -12.0       # unwichtig
+w_max = 12.0        # unwichtig
+deltino = 0.01      # unwichtig
+imaxmu = 0          # unwichtig        
+deltamu = 0.0       # unwichtig
+iterations = 80
 conv_param = "1.d-13"
 nprocs = 60
 
 [Vertex]
-skip = true
+skip = false
 nmpara = 30
-nFermiFreq = 11
-nBoseFreq = 10
+nFermiFreq = 61
+nBoseFreq = 60
 
 [Susc]
 skip = true
@@ -47,23 +46,29 @@ nFermiFreq = 11
 nBoseFreq = 10
 
 [Postprocess]
-skip = false
+skip = true
 keep_only_data = false
 data_bakup = "mv"
 output_format = "tar,text"
 split = true
 
 [lDGA]
-LQ = 20
-Nint = 20
-k_range = 10
+LQ = 4
+Nint = 4
+k_range = 4
 only_chisp_ch = false
 only_lambda_sp = true
 only_positive_ch = true
 only_positive_sp = true
+kInt = "FFT" # possible values are naive, gl-n (n being the order of the Gauss Legendre integration) or FFT
 
 [lDGAFortran]
 skip = true
 
 [lDGAJulia]
-skip = false
+skip = true
+tail_corrected = "both" # possible values are "yes/no/both"
+
+[lDGAPost]
+delete_calc = false # WARNING: this will delete all logfiles and intermediate results such as F and chi
+result_vars = "chi_q"
