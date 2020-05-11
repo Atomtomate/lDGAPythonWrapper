@@ -1,6 +1,6 @@
 import sys
 import os
-from helpers import check_env, query_yn, reset_dir, dmft_log, \
+from helpers import compile_f, check_env, query_yn, reset_dir, dmft_log, \
                     copy_and_edit_dmft, run_ed_dmft, copy_and_edit_vertex, \
                     run_ed_vertex, copy_and_edit_susc, run_ed_susc, \
                     copy_and_edit_trilex, run_ed_trilex, run_postprocess,\
@@ -68,7 +68,7 @@ def run(config):
             copy_and_edit_dmft(subCodeDir, subRunDir_ED, config)
 
             # --------------------- compile/run ------------------------------
-            if not compile(compile_command, cwd=subRunDir_ED,
+            if not compile_f(compile_command, cwd=subRunDir_ED,
                            verbose=config['general']['verbose']):
                 raise Exception("Compilation Failed")
             jobid_ed = run_ed_dmft(subRunDir_ED, config)
@@ -104,7 +104,7 @@ def run(config):
                                  config)
 
             # ------------------ compile/run ---------------------------------
-            if not compile(compile_command, cwd=subRunDir_vert,
+            if not compile_f(compile_command, cwd=subRunDir_vert,
                            verbose=config['general']['verbose']):
                 raise Exception("Compilation Failed")
             jobid_vert = run_ed_vertex(subRunDir_vert, config, jobid_ed)
@@ -144,7 +144,7 @@ def run(config):
                                config)
 
             # ------------------ compile/run ---------------------------------
-            if not compile(compile_command, cwd=subRunDir_susc,
+            if not compile_f(compile_command, cwd=subRunDir_susc,
                            verbose=config['general']['verbose']):
                 raise Exception("Compilation Failed")
             jobid_susc = run_ed_susc(subRunDir_susc, config, jobid_ed)
@@ -189,7 +189,7 @@ def run(config):
                                  config)
 
             # ------------------ compile/run ---------------------------------
-            if not compile(compile_command, cwd=subRunDir_trilex,
+            if not compile_f(compile_command, cwd=subRunDir_trilex,
                            verbose=config['general']['verbose']):
                 raise Exception("Compilation Failed")
             jobid_trilex = run_ed_trilex(subRunDir_trilex, config, jobid_ed)
@@ -257,7 +257,7 @@ def run(config):
         if cont:
             # ------------------- copy/edit ----------------------------------
             copy_and_edit_lDGA_f(subCodeDir, subRunDir_lDGA_f, dataDir, config)
-            if not compile(compile_command_kl, cwd=subRunDir_lDGA_f,
+            if not compile_f(compile_command_kl, cwd=subRunDir_lDGA_f,
                            verbose=config['general']['verbose']):
                 raise Exception("Compilation Failed")
             jobid_lDGA_f_makeklist = run_lDGA_f_makeklist(subRunDir_lDGA_f,
@@ -266,7 +266,7 @@ def run(config):
                 raise Exception("Job submit failed")
 
             # ------------------ compile/run ---------------------------------
-            if not compile(compile_command, cwd=subRunDir_lDGA_f,
+            if not compile_f(compile_command, cwd=subRunDir_lDGA_f,
                            verbose=config['general']['verbose']):
                 raise Exception("Compilation Failed")
             jobid_lDGA_f = run_lDGA_f(subRunDir_lDGA_f, config, jobid_pp)

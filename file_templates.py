@@ -3,10 +3,10 @@ import numpy as np
 from math import ceil
 import os
 
-# =========================================================================== 
-# =                        Job File Templates                               =
-# =========================================================================== 
 
+# ============================================================================
+# =                        Job File Templates                                =
+# ============================================================================
 def job_berlin(config, procs, custom, cmd, copy_from_ed=True):
     out = '''#!/bin/bash
 #SBATCH -t 12:00:00
@@ -16,28 +16,35 @@ def job_berlin(config, procs, custom, cmd, copy_from_ed=True):
 {2}
 export SLURM_CPU_BIND=none
 '''
-    #large96
+    # large96
     if copy_from_ed:
         out = out + "./copy_ed_files \n"
     out = out + "{3}\n"
-    out = out.format(procs, custom, config['general']['custom_module_load'], cmd)
+    out = out.format(procs, custom, config['general']['custom_module_load'],
+                     cmd)
     return out
 
-def bak_files_script(source_dir, target_dir, files_list, header=False, mode="mv"):
+
+def bak_files_script(source_dir, target_dir, files_list, header=False,
+                     mode="mv"):
     out = "#!/bin/bash \n" if header else ""
-    out = out + mode +" " + os.path.abspath(source_dir) + "/{"
+    out = out + mode + " " + os.path.abspath(source_dir) + "/{"
     for filename in files_list:
         out = out + filename + ","
     out = out[:-1] + "} " + os.path.abspath(target_dir)
     out += "\n"
     return out
 
-def bak_dirs_script(source_dir, target_dir, dirs_list, header=False, mode="mv"):
+
+def bak_dirs_script(source_dir, target_dir, dirs_list, header=False,
+                    mode="mv"):
     out = "#!/bin/bash \n" if header else ""
     for d in dirs_list:
-        out += mode +" " + os.path.abspath(os.path.join(source_dir,d))\
-            + " " + os.path.abspath(target_dir) + (" -ar \n" if (mode=="cp") else "\n")
+        out += mode + " " + os.path.abspath(os.path.join(source_dir, d)) +\
+            " " + os.path.abspath(target_dir) + \
+            (" -ar \n" if (mode == "cp") else "\n")
     return out
+
 
 def postprocessing_berlin(content, custom, config):
     out = '''#!/bin/bash
@@ -53,9 +60,9 @@ export SLURM_CPU_BIND=none
     return out
 
 
-# =========================================================================== 
-# =                          File Templates                                 =
-# =========================================================================== 
+# ============================================================================
+# =                          File Templates                                  =
+# ============================================================================
 
 def ladderDGA_in(config):
     out = '''c AIM parameters: U, mu, beta, nden
@@ -363,7 +370,7 @@ mpirun -np "+str(2*int(config['Vertex']['nBoseFreq']) + 1)+" -hosts "
     out += "wait $(jobs -rp)\n"
     return out
 
-def parameterts_dat(config):
+def parameters_dat(config):
     out = '''c Iwbox_bose_ph   Iwbox_fermi_ph   Iwbox_bose_pp   Iwbox_fermi_pp   Iwbox_bose_gamma   Iwbox_fermi_gamma    Iwbox_bose_lambda   Iwbox_fermi_lambda   Iwbox_green_function
   {0}                 {1}              0                0                0                 0                   0                   0                    {2}
 c Frequencies for up_down particle-particle vertex: Iwbox_bose_up_down   Iwbox_fermi_up_down   Iwbox_bose_up_down_backshift   Iwbox_fermi_up_down_backshift
