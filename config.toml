@@ -1,5 +1,5 @@
 [general]
-runDir = "../scan_t_U2_from_U0_5"
+runDir = "../tests/tt1"
 codeDir = "/home/hhpstobb/lDGA/codes"
 CFLAGS = "-O3 -xHost"
 verbose = false
@@ -10,6 +10,7 @@ custom_init_andpar_vals_only = true
 custom_module_load = "module restore ed"
 custom_conda_env = "p3"
 auto_continue = true
+restart_after_success = false   # do not attempt to restart already completed jobs
 
 [parameters]
 beta = 15.0
@@ -19,7 +20,7 @@ ns = 5
 Dimensions = 3
 
 [ED]
-skip = true
+skip = false
 w_min = -12.0       # unwichtig
 w_max = 12.0        # unwichtig
 deltino = 0.01      # unwichtig
@@ -30,7 +31,7 @@ conv_param = "1.d-13"
 nprocs = 60
 
 [Vertex]
-skip = false
+skip = true
 nmpara = 30
 nFermiFreq = 61
 nBoseFreq = 60

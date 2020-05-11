@@ -16,6 +16,42 @@ from file_templates import *
 # =========================================================================== 
 # =                         helper functions                                =
 # =========================================================================== 
+def format_log_from_sacct(fn, jobid, loc):
+    out = """
+jobid = {0}
+result_dir = {1}
+last_check_stamp = {2}
+last_status = {3}
+run_time = {4}
+job_name = {5}
+    """
+    job_cmd = "sacct -j " + str(jobid) + " --format=User,JobID,Jobname,partition,state,elapsed,nnodes,ncpus,nodelist"
+    process = subprocess.run(job_cmd, shell=True, capture_output=True)
+    stdout = process.stdout.decode("utf-8")
+    stderr = process.stderr.decode("utf-8")
+    now = datetime.now()
+    timestamp = now.strftime("%Y-%m-%dT%H:%M:%S")
+    status = ""
+
+    if not (process.returncode == 0):
+        out = out.format(jobid, os.path.abspath(loc), timestamp,
+                     "sacct not accessible", "sacct not accessible",
+                     "sacct not accessible")
+        res = stderr
+        print("Warning: could not run sacct in order to check job completion! Got: \n" + res)
+    else:
+        if len(stdout.splitlines()) < 3:
+            out = out.format(jobid, os.path.abspath(loc), timestamp,
+                            "Job not found", "Job not found", "Job not found")
+            status = ""
+        else:
+            res = list(map(str.strip, stdout.splitlines()[2].split()))
+            out = out.format(jobid, os.path.abspath(loc), timestamp,
+                            res[4], res[5], res[8])
+            status = res[4]
+    with open(fn, 'w') as f:
+        f.write(out)
+    return out, status
 
 def check_config_consistency(config):
     if not isclose(config['parameters']['mu'], config['parameters']['U']/2.0):
@@ -602,7 +638,6 @@ def run_results_pp(runDir, dataDir, subRunDir_ED, subRunDir_vert,\
     with open(fp, 'w') as f:
         f.write(globals()["postprocessing_" + config['general']['cluster']](content, cslurm, config))
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
-
     if not (process.returncode == 0):
         print("Postprocessing submit did not work as expected:")
         print(process.stdout.decode("utf-8"))
@@ -620,22 +655,39 @@ def run_results_pp(runDir, dataDir, subRunDir_ED, subRunDir_vert,\
 # =                   Log and Postprocess Functions                         =
 # =========================================================================== 
 
-def dmft_log(jobid, loc, config):
-    out = """
-jobid = {0}
-result_dir = {1}
-last_check_stamp = {2}
-last_status = {3}
-run_time = {4}
-job_info = {5}
-"""
-    now = datetime.now()
-    timestamp = now.strftime("%Y-%m-%dT%H:%M:%S")
+def dmft_log(fn, jobid, loc, config):
+    old_id = None
+    continue_status = True
 
-    out = out.format(jobid, os.path.abspath(loc), timestamp,
-                     "TODO: not implemented yet", "TODO: not implemented yet",
-                     "TODO: not implemented yet")
-    return out
+    if os.path.exists(fn):               # job has been run before
+        with open(fn, 'r') as f:
+            old_file = f.readlines()
+        try:
+            old_id = int(old_file[1][8:])
+            out,old_status = format_log_from_sacct(fn, old_id, loc)
+        except ValueError:
+            old_id = None
+            old_status = ""
+        if jobid is None:                # determine previous status of job
+            if not(old_id is None):
+                out, status = format_log_from_sacct(fn, old_id, loc)
+                if ((not config["general"]["restart_after_success"]) and old_status == "COMPLETED") or\
+                       (old_status == "RUNNING"):
+                    continue_status = False
+        else:                            # compare if job ids match
+            if old_id is None:
+                out, status = format_log_from_sacct(fn, jobid, loc)
+            else:
+                if (int(jobid) == int(old_id)) or\
+                       ((not config["general"]["restart_after_success"]) and old_status == "COMPLETED") or\
+                       (old_status == "RUNNING"):
+                    continue_status = False
+                    out, status = format_log_from_sacct(fn, old_id, loc)
+    else:                                # this is a new job
+        if not (jobid is None):                # we will write a log once the id is known
+            out, status = format_log_from_sacct(fn, jobid, loc)
+    return continue_status
+
 
 def build_collect_data(target_dir, dmft_dir, vertex_dir, susc_dir, trilex_dir, mode):
     dmft_files = ["hubb.dat", "hubb.andpar", "g0m", "g0mand", "gm_wim"]
@@ -654,6 +706,8 @@ def cleanup(config):
     pass
 
 def consistency_checks(config):
+    print("WARNING: consistency checks not implemented yet.")
     #TODO: check hubb.andpar for equal energies
     #TODO: hopping 0 
+    #TODO: check if all 8 ed_vertex are present
     pass
