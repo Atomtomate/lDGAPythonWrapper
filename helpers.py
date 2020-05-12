@@ -203,6 +203,7 @@ def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
         with open(fp, 'w') as f:
             if fn == "hubb.andpar" and old_andpar:
                 f.write(globals()[fn.replace(".", "_")](config, eps_str,
+                                                        tpar_str))
             else:
                 f.write(globals()[fn.replace(".", "_")](config))
 
