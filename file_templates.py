@@ -290,9 +290,9 @@ def hubb_andpar(config, eps_k="", tpar_k=""):
                1-band            30-Sep-95 LANCZOS
             ========================================
 NSITE     5 IWMAX32768
- {0}d0, -12.0, 12.0, 0.007
+  {0}d0, -12.0, 12.0, 0.007
 c ns,imaxmu,deltamu, # iterations, conv.param.
- {1}, 0, 0.d0, {2},  1.d-14
+  {1}, 0, 0.d0, {2},  1.d-14
 c ifix(0,1), <n>,   inew, iauto
 Eps(k)
 '''

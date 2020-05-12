@@ -1,5 +1,5 @@
 [general]
-runDir = "../tests/tt1"
+runDir = "../tests/scan_test"
 codeDir = "/home/hhpstobb/lDGA/codes"
 CFLAGS = "-O3 -xHost"
 verbose = false
@@ -13,7 +13,7 @@ auto_continue = true
 restart_after_success = false   # do not attempt to restart already completed jobs
 
 [parameters]
-beta = 15.0
+beta = "15.0:2.0:19.0"
 U = 0.5
 mu = "HF"
 ns = 5
@@ -71,5 +71,5 @@ skip = true
 tail_corrected = "both" # possible values are "yes/no/both"
 
 [lDGAPost]
-delete_calc = false # WARNING: this will delete all logfiles and intermediate results such as F and chi
+delete_calc = true # WARNING: this will delete all logfiles and intermediate results such as F and chi
 result_vars = "chi_q"

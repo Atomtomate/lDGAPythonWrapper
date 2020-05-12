@@ -1,5 +1,7 @@
 import sys
 import os
+import re
+import numpy as np
 from helpers import compile_f, check_env, query_yn, reset_dir, dmft_log, \
                     copy_and_edit_dmft, run_ed_dmft, copy_and_edit_vertex, \
                     run_ed_vertex, copy_and_edit_susc, run_ed_susc, \
@@ -13,6 +15,45 @@ from helpers import compile_f, check_env, query_yn, reset_dir, dmft_log, \
 
 
 def run(config):
+    beta_list = []
+    U_list = []
+    beta_str = config['parameters']['beta']
+    U_str = config['parameters']['U']
+    try:
+        beta = float(beta_str)
+        beta_list = [beta]
+    except ValueError:
+        beta_list = re.findall("\d+\.\d+",beta_str)
+        if len(beta_list) < 3:
+            beta_list = re.findall("\d+",beta_str)
+        beta_list = list(map(float, beta_list))
+        if len(beta_list) < 3:
+            print(beta_list)
+            raise ValueError("Could not parse beta list, given as " +
+                             str(beta_list))
+        beta_list = np.arange(beta_list[0], beta_list[2] + beta_list[1]/100,
+                              beta_list[1])
+        print("Parsed beta list " + str(beta_list) + " and starting scan.")
+    try:
+        U = float(U_str)
+        U_list = [U]
+    except ValueError:
+        U_list = re.findall("\d+\.\d+",U_str)
+        if len(U_list) < 3:
+            U_list = re.findall("\d+",U_str)
+        U_list = list(map(float, U_list))
+        if len(U_list) < 3:
+            raise ValueError("Could not parse U list, given as" +str(U_list))
+        U_list = np.arange(U_list[0], U_list[2] + U_list[1]/100, U_list[1])
+        print("Parsed U list " + str(U_list) + " and starting scan.")
+
+    for beta in beta_list:
+        for U in U_list:
+            # TODO: generate copy of config for each beta and U, start run
+            print("TODO: generate configs for beta x U scan")
+            #run_single(config)
+
+def run_single(config):
     # ========================================================================
     # =                            Setup                                     =
     # ========================================================================
@@ -382,18 +423,18 @@ def run(config):
 if __name__ == "__main__":
     if len(sys.argv) == 1:
         config = read_preprocess_config("config.toml")
-        run(config)
+        run_single(config)
     else:
         arg_str = sys.argv[1]
         if os.path.isfile(arg_str):
             config = read_preprocess_config(arg_str)
-            run(config)
+            run_single(config)
         elif os.path.isdir(arg_str):
             for fn in os.listdir(arg_str):
                 if fn.startswith("config_"):
                     fp = os.path.abspath(os.path.join(arg_str, fn))
                     config = read_preprocess_config(fp)
-                    run(config)
+                    run_single(config)
         else:
             raise RuntimeError("Argument provided is not a valid config or "
                                "directory of configs starting with config_.")
