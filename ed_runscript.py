@@ -301,10 +301,10 @@ def run_single(config):
             if not compile_f(compile_command_kl, cwd=subRunDir_lDGA_f,
                            verbose=config['general']['verbose']):
                 raise Exception("Compilation Failed")
-            jobid_lDGA_f_makeklist = run_lDGA_f_makeklist(subRunDir_lDGA_f,
-                                                          config)
-            if not jobid_lDGA_f_makeklist:
-                raise Exception("Job submit failed")
+            #jobid_lDGA_f_makeklist = run_lDGA_f_makeklist(subRunDir_lDGA_f,
+            #                                              config)
+            #if not jobid_lDGA_f_makeklist:
+            #    raise Exception("Job submit failed")
 
             # ------------------ compile/run ---------------------------------
             if not compile_f(compile_command, cwd=subRunDir_lDGA_f,

@@ -177,7 +177,7 @@ def check_env(config):
 # =                          copy functions                                  =
 # ============================================================================
 def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
-    files_list = ["tpri.dat", "init.h", "hubb.dat", "hubb.andpar"]
+    files_list = ["tpri.dat", "init.h", "init_2.h", "hubb.dat", "hubb.andpar"]
     src_files = ["ed_dmft_parallel_frequencies.f"]
 
     old_andpar = config["general"]["custom_init_andpar_file"]
@@ -215,34 +215,25 @@ def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
 
 
 def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, config):
-    files_dmft_list = ["hubb.andpar", "hubb.dat", "gm_wim"]
-    files_list = ["checksum_script", "clean_script_auto", "idw.dat",
+    files_dmft_list = ["hubb.andpar", "tpri.dat"]#, , "gm_wim""hubb.dat", "gm_wim"]
+    src_files_list = ["checksum_script", "clean_script_auto", "idw.dat",
                   "inversion_pp_fotso.f90",  "split_script", "sum_t_files.f",
                   "varbeta.dat", "ver_tpri_run.f"]
     scripts = ["copy_ed_files", "call_script", "checksum_script",
                "clean_script_auto", "split_script"]
+    files_list = ["hubb.dat", "call_script", "parameters.dat", "init_vertex.h",
+                  "init_2.h","init_sumt.h", "tpri.dat"]
+    for fn in files_list:
+        fp = os.path.abspath(os.path.join(subRunDir, fn))
+        with open(fp, 'w') as f:
+            f.write(globals()[fn.replace(".", "_")](config))
 
-    # TODO: dmft style here 
-    fp = os.path.join(subRunDir, "call_script")
-    with open(fp, 'w') as f:
-        f.write(call_script(config))
-    fp = os.path.join(subRunDir, "parameters.dat")
-    with open(fp, 'w') as f:
-        f.write(parameters_dat(config))
-    fp = os.path.join(subRunDir, "init.h")
-    with open(fp, 'w') as f:
-        f.write(init_vertex_h(config))
-    fp = os.path.join(subRunDir, "init_sumt.h")
-    with open(fp, 'w') as f:
-        f.write(init_sumt_h(config))
     fp = os.path.join(subRunDir, "copy_ed_files")
     with open(fp, 'w') as f:
         f.write(bak_files_script(subRunDir_ED, subRunDir,
                                  files_dmft_list, header=True, mode="cp"))
-    fp = os.path.join(subRunDir, "tpri.dat")
-    with open(fp, 'w') as f:
-        f.write(tpri(config))
-    for filename in files_list:
+
+    for filename in src_files_list:
         source_file_path = os.path.abspath(os.path.join(subCodeDir, filename))
         target_file_path = os.path.abspath(os.path.join(subRunDir, filename))
         shutil.copyfile(source_file_path, target_file_path)
@@ -306,11 +297,6 @@ def copy_and_edit_lDGA_f(subCodeDir, subRunDir, dataDir, config):
                  "sigma.f90", "vardef.f90", "write.f90", "makefile"]
     rm_files = ["lambda_correction_sp.dat", "lambda_correction_ch.dat"]
 
-    for rm_file in rm_files:
-        fp = os.path.abspath(os.path.join(subRunDir, rm_file))
-        if os.path.exists(fp):
-            os.remove(fp)
-
     for src_file in src_files:
         source_file_path = os.path.abspath(os.path.join(subCodeDir, src_file))
         target_file_path = os.path.abspath(os.path.join(subRunDir, src_file))
@@ -329,11 +315,14 @@ def copy_and_edit_lDGA_f(subCodeDir, subRunDir, dataDir, config):
         copy_content += f + ","
     copy_content = copy_content[:-1] + "} " + os.path.abspath(subRunDir) + "\n"
     copy_content += "cp " + os.path.abspath(os.path.join(dataDir)) + "/{"
-
     for d in vertex_input:
         copy_content += d + ","
     copy_content = copy_content[:-1] + "} " + os.path.abspath(subRunDir)
     copy_content += "/ -r\n"
+    for rm_file in rm_files:
+        fp = os.path.abspath(os.path.join(subRunDir, rm_file))
+        copy_content += "rm -f " + fp + " \n"
+
     with open(copy_file, 'w') as f:
         f.write(copy_content)
     st = os.stat(copy_file)
@@ -509,10 +498,9 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,
     data_path = os.path.abspath(os.path.join(cwd, "data"))
     clean_script_path = os.path.abspath(os.path.join(subRunDir_vert,
                                                      "clean_script_auto"))
-    print("TODO: copying gm_wim from dmft. WHY?")
-    content = "cp " + os.path.join(subRunDir_ED, "gm_wim") + " " +\
-              subRunDir_vert + "\n"
-    content += str(clean_script_path) + "\n"
+    #content = "cp " + os.path.join(subRunDir_ED, "gm_wim") + " " +\
+    #          subRunDir_vert + "\n"
+    content = str(clean_script_path) + "\n"
     content += str(cp_script_path) + "\n"
     outf_lst = config['Postprocess']['output_format'].split(',')
     if 'text' in map(str.strip, outf_lst):
@@ -563,7 +551,6 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,
 def run_lDGA_f_makeklist(cwd, config, jobid=None):
     filename = "klist.sh"
     fp = os.path.join(cwd, filename)
-    cmd = "./klist.x > run_klist.out 2> run_klist.err"
     cslurm = config['general']['custom_slurm_lines']
     run_cmd = "sbatch " + filename
     print("running: " + run_cmd)
@@ -588,6 +575,8 @@ def run_lDGA_f(cwd, config, jobid=None):
     procs = 2*int(config['Trilex']['nBoseFreq']) + 1
     cmd = "export LD_LIBRARY_PATH=/sw/numerics/fftw3/impi/intel/3.3.8/skl/"\
           "lib:$LD_LIBRARY_PATH\n"
+
+    cmd += "./klist.x > run_klist.out 2> run_klist.err\n"
     cmd += "./copy.sh\nmpirun -np " + str(procs) + " ./Selfk_LU_parallel_3D.x"\
            " > run.out 2> run.err"
     cslurm = config['general']['custom_slurm_lines']

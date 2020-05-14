@@ -194,6 +194,17 @@ def init_vertex_h(config):
         int(config['Vertex']['nBoseFreq']), int(config['Vertex']['nmpara']))
     return out
 
+def init_2_h(config):
+    out = "      bethe={0}\n"
+    out += "      twodim={1}\n"
+    out += "      symm={2}\n"
+    bethe = ".true." if config['parameters']['bethe']  else ".false."
+    twodim = ".true." if config['parameters']['Dimensions'] == 2 else ".false."
+    symm = ".true." if config['parameters']['symm'] else ".false."
+    out = out.format(bethe, twodim, symm)
+    return out
+
+
 def init_psc_h(config):
     ns = config['parameters']['ns']
     nmaxx = int(comb(ns, int(ns/2)) ** 2)
@@ -327,13 +338,7 @@ Eps(k)
     )
     return out
 
-#TODO: old remove?#!/bin/bash
-#mpirun -np {3} ./$name > vertex_out$i.dat 2> vertex_error$i.dat &
-#
-#while [ $i -le 8 ]
-#do
-#done
-#wait $(jobs -rp)
+
 def call_script(config):
     out = '''
 i=`cat idw.dat | sed -e 's/^[[:space:]]*//'`
@@ -358,13 +363,13 @@ echo $name\n\
 cp run.x ./$name\n\
 sed '1s/^.*$/       '$i'/' idw.dat >hilfe\n\
 mv hilfe idw.dat\n\
-sleep 8\n\
+sleep 4\n\
 echo \"nodes per job: "+str(nodes_per_job)+"\"\n\
 mpirun -np "+str(2*int(config['Vertex']['nBoseFreq']) + 1)+" -hosts "
         run_string = ""
         for p in range(nodes_per_job):
             run_string += "bcn${SLURM_JOB_NODELIST:"+str(4+5*nodes_per_job*r+5*p)+":4},"
-        run_string = run_string[0:-1] + " ./$name > vertex_out$i.dat 2> vertex_error$i.dat & \n"
+        run_string = run_string[0:-1] + " ./$name > vertex_out$i.out 2> vertex_error$i.err & \n"
         out += run_string
         out += "\necho \"running: " + run_string[0:-2] +"\"\n"
     out += "wait $(jobs -rp)\n"
