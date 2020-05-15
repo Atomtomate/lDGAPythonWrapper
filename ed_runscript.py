@@ -170,6 +170,7 @@ def run_single(config):
                       "-llapack -lblas " + config['general']['CFLAGS']
     subRunDir_susc = os.path.join(runDir, "ed_susc")
     jobid_susc = None
+    cont = True
 
     if not config['Susc']['skip']:
         # ---------------------- create dir ----------------------------------
@@ -329,6 +330,7 @@ def run_single(config):
     subCodeDir = os.path.join(config['general']['codeDir'], "ladderDGA_Julia")
     subRunDir_lDGA_j_tc = os.path.join(runDir, "lDGA_julia_tc")
     jobid_lDGA_j_tc = None
+    cont = True
 
     if not config['lDGAJulia']['skip']:
         if config['lDGAJulia']['tail_corrected'].casefold() == "both" or \
