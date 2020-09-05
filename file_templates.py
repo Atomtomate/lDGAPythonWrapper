@@ -233,10 +233,12 @@ def init_sumt_h(config):
     out += "      parameter (Iwbox_fermi={1})\n"
     out += "      parameter (Iwmax_bose={2})\n"
     out += "      parameter (nprocs={3})\n"
+    out += "      parameter (beta={4})\n"
     out = out.format(int(config['Vertex']['nFermiFreq']), \
                      int(config['Vertex']['nFermiFreq']), \
                      int(config['Vertex']['nBoseFreq']),  \
-                     2*int(config['Vertex']['nBoseFreq']) + 1)
+                     2*int(config['Vertex']['nBoseFreq']) + 1, \
+                     config['parameters']['beta'])
     return out
 
 def q_sum_h(config):
@@ -317,7 +319,7 @@ Eps(k)
         out += eps_k
     else:
         for i in range(config['parameters']['ns']-1):
-            out += "  "+i+".000000000000\n"
+            out += "  "+str(i)+".000000000000\n"
     out += " tpar(k)\n"
     if tpar_k:
         tp_eps = len(tpar_k.splitlines())

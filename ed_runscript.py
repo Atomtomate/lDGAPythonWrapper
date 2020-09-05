@@ -17,8 +17,6 @@ from helpers import compile_f, check_env, query_yn, reset_dir, dmft_log, \
 def run(config):
     beta_list = []
     U_list = []
-    beta_str = config['parameters']['beta']
-    U_str = config['parameters']['U']
     try:
         beta = float(beta_str)
         beta_list = [beta]
@@ -54,6 +52,10 @@ def run(config):
             #run_single(config)
 
 def run_single(config):
+
+    beta_str = config['parameters']['beta']
+    U_str = config['parameters']['U']
+    print("Running for beta=",beta_str,", U=",U_str)
     # ========================================================================
     # =                            Setup                                     =
     # ========================================================================

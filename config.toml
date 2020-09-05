@@ -1,20 +1,20 @@
 [general]
-runDir = "../tests/scan_test"
+runDir = "../tests/cut_small_beta{beta}_U{U}"
 codeDir = "/home/hhpstobb/lDGA/codes"
 CFLAGS = "-O3 -xHost"
 verbose = false
 cluster = "berlin"
 custom_slurm_lines = "-A hhp00048"
-custom_init_andpar_file = "../tests/hubb.andpar"
+custom_init_andpar_file = "../hubb.andpar"
 custom_init_andpar_vals_only = true
 custom_module_load = "module restore ed"
 custom_conda_env = "p3"
 auto_continue = true
-restart_after_success = false   # do not attempt to restart already completed jobs
+restart_after_success = true   # do not attempt to restart already completed jobs
 
 [parameters]
-beta = "15.0:2.0:19.0"
-U = 0.5
+beta = 15
+U = 2.0
 mu = "HF"
 ns = 5
 bethe = false
@@ -30,35 +30,35 @@ imaxmu = 0          # unwichtig
 deltamu = 0.0       # unwichtig
 iterations = 80
 conv_param = "1.d-13"
-nprocs = 60
+nprocs = 40
 
 [Vertex]
-skip = true
+skip = false
 nmpara = 30
-nFermiFreq = 61
-nBoseFreq = 60
+nFermiFreq = 11
+nBoseFreq = 10
 
 [Susc]
-skip = true
+skip = false
 nBoseFreq = 10000
 
 [Trilex]
-skip = true
+skip = false
 nmpara = 30
 nFermiFreq = 11
 nBoseFreq = 10
 
 [Postprocess]
-skip = true
+skip = false
 keep_only_data = false
-data_bakup = "mv"
+data_bakup = "cp"
 output_format = "tar,text"
 split = true
 
 [lDGA]
-LQ = 4
-Nint = 4
-k_range = 4
+LQ = 4          # FFT requires: 2 * LQ - 2 == Nint
+Nint = 4        # 
+k_range = 4     # Sigma FFT requires: k_range = LQ - 1
 only_chisp_ch = false
 only_lambda_sp = true
 only_positive_ch = true
@@ -73,5 +73,5 @@ skip = true
 tail_corrected = "both" # possible values are "yes/no/both"
 
 [lDGAPost]
-delete_calc = true # WARNING: this will delete all logfiles and intermediate results such as F and chi
+delete_calc = false # WARNING: this will delete all logfiles and intermediate results such as F and chi
 result_vars = "chi_q"

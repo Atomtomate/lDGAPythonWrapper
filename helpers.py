@@ -577,6 +577,7 @@ def run_lDGA_f(cwd, config, jobid=None):
           "lib:$LD_LIBRARY_PATH\n"
 
     cmd += "./klist.x > run_klist.out 2> run_klist.err\n"
+    cmd += "rm -f *.dat\n"
     cmd += "./copy.sh\nmpirun -np " + str(procs) + " ./Selfk_LU_parallel_3D.x"\
            " > run.out 2> run.err"
     cslurm = config['general']['custom_slurm_lines']
