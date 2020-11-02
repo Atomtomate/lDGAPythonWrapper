@@ -35,8 +35,8 @@ nprocs = 40
 [Vertex]
 skip = false
 nmpara = 30
-nFermiFreq = 41
-nBoseFreq = 40
+nFermiFreq = 3
+nBoseFreq = 2
 
 [Susc]
 skip = false
@@ -45,8 +45,8 @@ nBoseFreq = 10000
 [Trilex]
 skip = false
 nmpara = 30
-nFermiFreq = 41
-nBoseFreq = 40
+nFermiFreq = 3
+nBoseFreq = 2
 
 [Postprocess]
 skip = false

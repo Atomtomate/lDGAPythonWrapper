@@ -1,5 +1,5 @@
 [general]
-runDir = "../tests/cut_medium_beta{beta}_U{U}"
+runDir = "../tests/cut_large_beta{beta}_U{U}"
 codeDir = "/home/hhpstobb/lDGA/codes"
 CFLAGS = "-O3 -xHost"
 verbose = false
@@ -35,8 +35,8 @@ nprocs = 40
 [Vertex]
 skip = false
 nmpara = 30
-nFermiFreq = 41
-nBoseFreq = 40
+nFermiFreq = 81
+nBoseFreq = 80
 
 [Susc]
 skip = false
@@ -45,8 +45,8 @@ nBoseFreq = 10000
 [Trilex]
 skip = false
 nmpara = 30
-nFermiFreq = 41
-nBoseFreq = 40
+nFermiFreq = 81
+nBoseFreq = 80
 
 [Postprocess]
 skip = false
