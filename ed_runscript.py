@@ -129,7 +129,7 @@ def run_single(config):
     # ------------------------- definitions ----------------------------------
     subRunDir_vert = runDir + "/ed_vertex"
     subCodeDir = config['general']['codeDir'] + "/ED_vertex"
-    compile_command = "mpif90 ver_tpri_run.f -o run.x -llapack -lblas -fallow-argument-mismatch " +\
+    compile_command = "mpif90 ver_tpri_run.f -o run.x -llapack -lblas " +\
                       config['general']['CFLAGS']
     jobid_vert = None
 

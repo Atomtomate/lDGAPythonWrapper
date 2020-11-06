@@ -180,7 +180,7 @@ def init_h(config):
     out = "      parameter (nmaxx = {0})\n"
     out += "      parameter (nss={1})\n"
     out += "      parameter (prozessoren={2})\n"
-    out = out.format(nmaxx, ns, int(config['ED']['nprocs']))
+    out = out.format(nmaxx, ns, (ns+1)**2)
     return out
 
 def init_vertex_h(config):
@@ -198,9 +198,11 @@ def init_vertex_h(config):
 def init_2_h(config):
     out = "      bethe={0}\n"
     out += "      twodim={1}\n"
+    out += "      symm={2}\n"
     bethe = ".true." if config['parameters']['bethe']  else ".false."
     twodim = ".true." if config['parameters']['Dimensions'] == 2 else ".false."
-    out = out.format(bethe, twodim)
+    symm = ".true." if config['parameters']['symm'] else ".false."
+    out = out.format(bethe, twodim, symm)
     return out
 
 

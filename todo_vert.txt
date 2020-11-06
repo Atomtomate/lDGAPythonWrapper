@@ -4,11 +4,11 @@ Fnormal
 Fener
 kinsim
 
-GWreal
-Iwmaxreal
-rlehm
-imr
+omm
+dos
 eigall
+eigall
+deltino
 ioffset
 nleng
 nblog
@@ -23,10 +23,25 @@ sigre
 omr
 xmu
 tpri
+wup
+wlow
+range
+piob
+om
+summy
+bethe  (remove from input)
+varbeta (remove from input)
+sigupre
+sigdore
 
 functions:
 
 file handles:
 
+
 files:
 tpri.dat
+
+static variables:
+calvert
+bethe

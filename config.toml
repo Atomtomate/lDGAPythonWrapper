@@ -30,7 +30,6 @@ imaxmu = 0          # unwichtig
 deltamu = 0.0       # unwichtig
 iterations = 80
 conv_param = "1.d-13"
-nprocs = 40
 
 [Vertex]
 skip = false

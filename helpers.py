@@ -67,9 +67,6 @@ def check_config_consistency(config):
               " that bath is not forced to be symmetric.".format(
                   mu, U / 2.0
               ))
-    if config['ED']['nprocs'] > 130:
-        print("Warning! Number of processors for ED DMFT is larger than 130,\
-              this sometimes leads to uneaxpected behavior!")
 
 
 def read_preprocess_config(config_string):
@@ -364,7 +361,7 @@ def copy_and_edit_lDGA_j(subRunDir, dataDir, config, tc):
 def run_ed_dmft(cwd, config):
     fp = cwd + "/" + "ed_dmft_run.sh"
     cmd = "mpirun ./run.x > run.out 2> run.err"
-    procs = int(config['ED']['nprocs'])
+    procs = (config['parameters']['ns']+1)**2
     cslurm = config['general']['custom_slurm_lines']
     with open(fp, 'w') as f:
         job_func = globals()["job_" + config['general']['cluster']]
