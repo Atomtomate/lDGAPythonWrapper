@@ -1,0 +1,1337 @@
+Running for beta= 25.0 , U= 1.0
+Skipping dmft computation, due to completed job. This behavor can be changed in the config.
+Compilation did not work as expected:
+
+ver_tpri_run.f:7.12:
+
+      real*8 deltamu,testdmft,piob,xmu0,chi2,chi22,kx,ky                
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:9.12:
+
+      real*8 zpart                                                      
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:10.15:
+
+      integer*4 unlink,a                                                
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*4 at (1)
+ver_tpri_run.f:21.12:
+
+      real*8 tpar(nss),epsk(nss),uhub,hmag,xmu,beta,densimp,pi          
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:22.12:
+
+      real*8 wlow,wup,deltino,range                                     
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:23.12:
+
+      real*8 om(0:Iwmax), dos(0:Iwmaxreal)                              
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:24.12:
+
+      real*8 omm                                                        
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:25.16:
+
+      complex*16 ni(-10*Iwmax:10*Iwmax)                                 
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:26.12:
+
+      real*8 np(0:Iwmax)                                                
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:28.16:
+
+      complex*16 omr(0:Iwmaxreal)                                       
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:30.16:
+
+      complex*16 Xi,c0,c1,ci                                            
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:31.16:
+
+      complex*16 Gw(0:Iwmax),self(0:Iwmax)                              
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:32.16:
+
+      complex*16 Gww(0:2*Iwmax-1)                                       
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:33.16:
+
+      complex*16 Gwreal(0:Iwmaxreal)                                    
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:34.16:
+
+      complex*16 sigre(0:Iwmaxreal)                                     
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:35.16:
+
+      complex*16 G0w(0:Iwmax),G0wand(0:Iwmax),G0wwand(0:2*Iwmax-1)      
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:40.15:
+
+      integer*1 abas(nss)                                               
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*1 at (1)
+ver_tpri_run.f:42.15:
+
+      integer*1 imat(nmaxx,nmaxx,nblockk)                               
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*1 at (1)
+ver_tpri_run.f:45.15:
+
+      integer*1 idouble(ntott)                                          
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*1 at (1)
+ver_tpri_run.f:47.12:
+
+      real*8 hess(nmpara**2),g(nmpara),xtemp(nmpara),                   
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:50.12:
+
+      real*8 work(3*nmaxx)                                              
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:52.12:
+
+      real*8 eig(nmaxx),zeig(nmaxx,nmaxx)                               
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:53.12:
+
+      real*8 eigall(ntott)                                              
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:54.12:
+
+      real*8 eigold(nmaxx),zold(nmaxx,nmaxx)                            
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:55.12:
+
+      real*8 realmat(nmaxx*(nmaxx+1)/2)                                 
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:56.12:
+
+      real*8 xmat(nmaxx,nmaxx)                                          
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:57.12:
+
+      real*8 rlehm(nmaxx,nmaxx,nblockk)                                 
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:58.18:
+
+      character*80 xyz                                                  
+                  1
+Warning: Obsolescent feature: Old-style character length at (1)
+ver_tpri_run.f:60.16:
+
+      complex*16 omega, adummy, cdummy1                                 
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:63.12:
+
+      real*8 Epskold(nss),tparold(nss)                                  
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:65.16:
+
+      complex*16 sig0                                                   
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:66.12:
+
+      real*8 zed,dens_wanted,diffdens,chi,densold,emin,dostest          
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:67.12:
+
+      real*8 xmularge,xmusmall,denslarge,denssmall,densmix              
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:71.12:
+
+      real*8 threshold,th0,b1,b2                                        
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:72.12:
+
+      real*8 doublep(ntott)                                             
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:73.12:
+
+      real*8 double                                                     
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:74.12:
+
+      real*8 Energy                                                     
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:76.12:
+
+      real*8 Energya(0:ksteps,0:ksteps)                                 
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:86.17:
+
+      character*6 fname1                                                
+                 1
+Warning: Obsolescent feature: Old-style character length at (1)
+mpif.h:79.18:
+    Included at ver_tpri_run.f:88:
+
+       CHARACTER*1 MPI_ARGVS_NULL(1,1)                                  
+                  1
+Warning: Obsolescent feature: Old-style character length at (1)
+mpif.h:80.18:
+    Included at ver_tpri_run.f:88:
+
+       CHARACTER*1 MPI_ARGV_NULL(1)                                     
+                  1
+Warning: Obsolescent feature: Old-style character length at (1)
+mpif.h:591.16:
+    Included at ver_tpri_run.f:88:
+
+       integer*8 MPI_DISPLACEMENT_CURRENT                               
+                1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+mpif.h:609.13:
+    Included at ver_tpri_run.f:88:
+
+       REAL*8 MPI_WTIME, MPI_WTICK                                      
+             1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+mpif.h:610.13:
+    Included at ver_tpri_run.f:88:
+
+       REAL*8 PMPI_WTIME, PMPI_WTICK                                    
+             1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:670.7:
+
+     $            emin,idouble,doublep,double,myid,ierror)              
+       1
+Warning: Nonconforming tab character at (1)
+ver_tpri_run.f:852.12:
+
+      real*8 epsk(ns),tpar(ns),xmu                                      
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:885.19:
+
+      character *80 xyz                                                 
+                   1
+Warning: Obsolescent feature: Old-style character length at (1)
+ver_tpri_run.f:886.18:
+
+      character *8 xxx                                                  
+                  1
+Warning: Obsolescent feature: Old-style character length at (1)
+ver_tpri_run.f:909.12:
+
+      real*8 dfn,deps,fmin,hh                                           
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:910.12:
+
+      real*8 hess(nmpara**2),g(nmpara),xtemp(nmpara),                   
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:912.12:
+
+      real*8 tpar(ns),epsk(ns),piob                                     
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:913.12:
+
+      real*8 om(0:Iwmax)                                                
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:914.16:
+
+      complex*16 Xi                                                     
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:915.16:
+
+      complex*16 G0w(0:Iwmax),G0wand(0:Iwmax)                           
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:936.28:
+
+            icount=icount+1                                             
+                            1
+Warning: Nonconforming tab character at (1)
+ver_tpri_run.f:960.28:
+
+            icount=icount+1                                             
+                            1
+Warning: Nonconforming tab character at (1)
+ver_tpri_run.f:1006.12:
+
+      real*8 z,zz,dmin,f,df,dfn,aeps,eps,alpha,ff,tot,f1,f2,half,       
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1008.12:
+
+      real*8 tpar(ns),epsk(ns),piob                                     
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1009.16:
+
+      complex*16 Xi                                                     
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:1010.16:
+
+      complex*16 G0w(0:Iwmax),G0wand(0:Iwmax)                           
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:1011.12:
+
+      real*8  x(*), g(*), h(*), w(*), xm(*)                             
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1012.12:
+
+      real*8 om(0:Iwmax)                                                
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1032.72:
+
+   6  h(ij) = 0.d0                                                      
+                                                                        1
+Warning: Obsolescent feature: DO termination statement which is not END DO or CONTINUE with label 6 at (1)
+ver_tpri_run.f:1033.72:
+
+   5  h(ij) = 1.d0                                                      
+                                                                        1
+Warning: Obsolescent feature: DO termination statement which is not END DO or CONTINUE with label 5 at (1)
+ver_tpri_run.f:1042.72:
+
+      do 11 j = i, n                                                    
+                                                                        1
+Warning: Obsolescent feature: Shared DO termination label 11 at (1)
+ver_tpri_run.f:1061.72:
+
+  16  ij = ij + np - i                                                  
+                                                                        1
+Warning: Obsolescent feature: DO termination statement which is not END DO or CONTINUE with label 16 at (1)
+ver_tpri_run.f:1077.72:
+
+      if (idiff - 1) 100, 100, 110                                      
+                                                                        1
+Warning: Obsolescent feature: Arithmetic IF statement at (1)
+ver_tpri_run.f:1092.72:
+
+  22  w(i) = z                                                          
+                                                                        1
+Warning: Obsolescent feature: DO termination statement which is not END DO or CONTINUE with label 22 at (1)
+ver_tpri_run.f:1102.72:
+
+  25  w(is+n-i) = w(n-i) / h(ij) - z                                    
+                                                                        1
+Warning: Obsolescent feature: DO termination statement which is not END DO or CONTINUE with label 25 at (1)
+ver_tpri_run.f:1135.72:
+
+      if (int - 1) 35, 49, 50                                           
+                                                                        1
+Warning: Obsolescent feature: Arithmetic IF statement at (1)
+ver_tpri_run.f:1184.72:
+
+      if (idiff - 1) 100, 100, 110                                      
+                                                                        1
+Warning: Obsolescent feature: Arithmetic IF statement at (1)
+ver_tpri_run.f:1246.72:
+
+      do 80 j = i1, n                                                   
+                                                                        1
+Warning: Obsolescent feature: Shared DO termination label 80 at (1)
+ver_tpri_run.f:1251.72:
+
+      go to (60, 20), link                                              
+                                                                        1
+Warning: Obsolescent feature: Computed GOTO at (1)
+ver_tpri_run.f:1271.72:
+
+      go to (18, 54), link                                              
+                                                                        1
+Warning: Obsolescent feature: Computed GOTO at (1)
+ver_tpri_run.f:1285.72:
+
+      go to (18, 54), link                                              
+                                                                        1
+Warning: Obsolescent feature: Computed GOTO at (1)
+ver_tpri_run.f:1294.14:
+
+        real*8  tpar(ns),epsk(ns),piob,diff,f                           
+              1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1295.18:
+
+        complex*16  cdummy1,G0w(0:Iwmax),G0wand(0:Iwmax)                
+                  1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:1296.18:
+
+        complex*16 Xi                                                   
+                  1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:1297.14:
+
+        real*8  x(nbparm),om(0:Iwmax)                                   
+              1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1360.14:
+
+        real*8 tpar(ns),epsk(ns)                                        
+              1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1361.18:
+
+        complex*16 g0and,Xi                                             
+                  1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:1362.14:
+
+        real*8 omega                                                    
+              1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1383.12:
+
+      real*8 uhub,xmu,hmag,deltamu,varbeta                              
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1384.12:
+
+      real*8 wlow,wup,deltino,aaa                                       
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1385.12:
+
+      real*8 beta,testdmft,dens_wanted,th0                              
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1388.18:
+
+      character*80 text,text1                                           
+                  1
+Warning: Obsolescent feature: Old-style character length at (1)
+ver_tpri_run.f:1445.16:
+
+      integer *1 abas(nss)                                              
+                1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*1 at (1)
+ver_tpri_run.f:1475.16:
+
+      integer *1 anew(nss)                                              
+                1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*1 at (1)
+ver_tpri_run.f:1503.15:
+
+      integer*1 abas(ns)                                                
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*1 at (1)
+ver_tpri_run.f:1505.15:
+
+      integer*1 imat(nmax,nmax,nblock)                                  
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*1 at (1)
+ver_tpri_run.f:1508.15:
+
+      integer*1 idouble(ntot)                                           
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*1 at (1)
+ver_tpri_run.f:1562.15:
+
+      integer*1 imatin(nmax,nmax)                                       
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*1 at (1)
+ver_tpri_run.f:1564.15:
+
+      integer*1 abas(ns)                                                
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*1 at (1)
+ver_tpri_run.f:1649.15:
+
+      integer*1 abas(ns)                                                
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*1 at (1)
+ver_tpri_run.f:1680.16:
+
+      integer *1 anew(ns)                                               
+                1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*1 at (1)
+ver_tpri_run.f:1708.15:
+
+      integer*1 abas(ns)                                                
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*1 at (1)
+ver_tpri_run.f:1743.15:
+
+      integer*1 abas(ns)                                                
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*1 at (1)
+ver_tpri_run.f:1803.12:
+
+      real*8 diffe,piccolo                                              
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1806.12:
+
+      real*8 tpar(ns),epsk(ns),uhub,hmag,sum,rmel,emin,beta             
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1807.12:
+
+      real*8 wup,wlow,range,piob                                        
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1811.15:
+
+      integer*1 idouble(ntot)                                           
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*1 at (1)
+ver_tpri_run.f:1812.15:
+
+      integer*1 imat(nmax,nmax,nblock)                                  
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*1 at (1)
+ver_tpri_run.f:1814.15:
+
+      integer*1 abas(ns)                                                
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*1 at (1)
+ver_tpri_run.f:1817.12:
+
+      real*8 work(3*nmaxx)                                              
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1818.12:
+
+      real*8 eig(nmaxx),zeig(nmaxx,nmaxx)                               
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1819.12:
+
+      real*8 eigold(nmax)                                               
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1820.12:
+
+      real*8 zold(nmax,nmax)                                            
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1821.12:
+
+      real*8 realmat(nmaxx*(nmaxx+1)/2)                                 
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1822.12:
+
+      real*8 xmat(nmaxx,nmaxx)                                          
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1823.16:
+
+      complex*16 Xi                                                     
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:1824.16:
+
+      complex*16 Gw(0:Iwmax)                                            
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:1825.12:
+
+      real*8 om(0:Iwmax)                                                
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1826.12:
+
+      real*8 dens,xmu                                                   
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1827.12:
+
+      real*8 rlehm(nmaxx,nmaxx,nblock)                                  
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1828.12:
+
+      real*8 eigall(ntot)                                               
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1829.12:
+
+      real*8 doublep(ntot)                                              
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1830.12:
+
+      real*8 double                                                     
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1831.12:
+
+      real*8 zpart,Fener, logtest, Fnormal, znormal, kinsim             
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:1832.12:
+
+      real*8 summy                                                      
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2111.12:
+
+      real*8 diffe,piccolo                                              
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2115.12:
+
+      real*8 tpar(ns),epsk(ns),uhub,hmag,sum,rmel,emin,beta             
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2116.12:
+
+      real*8 wup,wlow,range,piob                                        
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2121.15:
+
+      integer*1 idouble(ntot)                                           
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*1 at (1)
+ver_tpri_run.f:2122.15:
+
+      integer*1 imat(nmax,nmax,nblock)                                  
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*1 at (1)
+ver_tpri_run.f:2124.15:
+
+      integer*1 abas(ns)                                                
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*1 at (1)
+ver_tpri_run.f:2127.12:
+
+      real*8 work(3*nmaxx)                                              
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2128.12:
+
+      real*8 eig(nmaxx),zeig(nmaxx,nmaxx)                               
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2129.12:
+
+      real*8 eigold(nmax)                                               
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2130.12:
+
+      real*8 zold(nmax,nmax)                                            
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2131.12:
+
+      real*8 realmat(nmaxx*(nmaxx+1)/2)                                 
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2132.12:
+
+      real*8 xmat(nmaxx,nmaxx)                                          
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2133.16:
+
+      complex*16 Xi                                                     
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:2134.16:
+
+      complex*16 Gw(0:2*Iwmax-1)                                        
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:2135.16:
+
+      complex*16 Gcut(0:2*Iwmax-1)                                      
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:2136.16:
+
+      complex*16 Grn(-2*Iwmax:2*Iwmax-1)                                
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:2137.12:
+
+      real*8 om(0:Iwmax)                                                
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2138.12:
+
+      real*8 dens,xmu                                                   
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2139.12:
+
+      real*8 rlehm(nmaxx,nmaxx,nblock)                                  
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2140.12:
+
+      real*8 lehm(nmaxx,nmaxx,nblock)                                   
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2141.12:
+
+      real*8 dolehm(nmaxx,nmaxx,nblock)                                 
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2142.12:
+
+      real*8 eigall(ntot)                                               
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2143.12:
+
+      real*8 doublep(ntot)                                              
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2144.12:
+
+      real*8 double                                                     
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2145.12:
+
+      real*8 zpart,Fener, logtest, Fnormal, znormal, kinsim             
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2146.12:
+
+      real*8 summy                                                      
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2147.16:
+
+      complex*16 ver(-Iwmax:Iwmax,-Iwmax:Iwmax)                         
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:2148.16:
+
+      complex*16 verdo(-Iwmax:Iwmax,-Iwmax:Iwmax)                       
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:2149.16:
+
+      complex*16 versend(1:(2*Iwmax+1)*(Iwmax+1))                       
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:2150.16:
+
+      complex*16 verdosend(1:(2*Iwmax+1)*(Iwmax+1))                     
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:2155.16:
+
+      complex*16 vercollectmpi(1:(2*Iwbox_bose+1)*(2*Iwmax+1)*          
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:2157.16:
+
+      complex*16 verdocollectmpi(1:(2*Iwbox_bose+1)*(2*Iwmax+1)*        
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:2161.16:
+
+      complex*16 verch(2*Iwmax,2*Iwmax)                                 
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:2162.16:
+
+      complex*16 versp(2*Iwmax,2*Iwmax)                                 
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:2166.16:
+
+      complex*16 ni(-10*Iwmax:10*Iwmax)                                 
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:2170.12:
+
+      real*8 np(0:Iwmax)                                                
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2171.12:
+
+      real*8 chi1,chi2,chi3,chi4,matr,chiup,chiupdo                     
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2172.16:
+
+      complex*16 chi11,chi22,chi33,chi44                                
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:2173.12:
+
+      real*8 En,Em,El,Es,Exn,Exm,Exl,Exs,Etiny                          
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2174.16:
+
+      complex*16 ver1,ver2,ver3,ver4,vv,Den                             
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:2175.12:
+
+      real*8 ich1,ich2,ich3,ich4                                        
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2176.16:
+
+      complex*16 ich11,ich22,ich33,ich44,Ned,rev1,rev2,rev3,rev4        
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:2177.12:
+
+      real*8 hic1,hic2,hic3,hic4                                        
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2178.16:
+
+      complex*16 vre1,vre2,vre3,vre4,Dn                                 
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:2179.16:
+
+      complex*16 test1,test2,test3, test4                               
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:2180.12:
+
+      real*8 lst1,lst2,lst3,lst4,Traw                                   
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2181.16:
+
+      complex*16 lst11,lst22,lst33,lst44,Nde                            
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:2182.16:
+
+      complex*16 erv1,erv2,erv3,erv4                                    
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:2183.12:
+
+      real*8 Enm,Eml,Ems,Els,Ens,Enl,hope,small,asym,asym2,compl,approx 
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2184.16:
+
+      complex*16 hic11,hic22,hic33,hic44                                
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:2191.16:
+
+      complex*16 workinv(20*Iwmax)                                      
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+mpif.h:79.18:
+    Included at ver_tpri_run.f:2193:
+
+       CHARACTER*1 MPI_ARGVS_NULL(1,1)                                  
+                  1
+Warning: Obsolescent feature: Old-style character length at (1)
+mpif.h:80.18:
+    Included at ver_tpri_run.f:2193:
+
+       CHARACTER*1 MPI_ARGV_NULL(1)                                     
+                  1
+Warning: Obsolescent feature: Old-style character length at (1)
+mpif.h:591.16:
+    Included at ver_tpri_run.f:2193:
+
+       integer*8 MPI_DISPLACEMENT_CURRENT                               
+                1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+mpif.h:609.13:
+    Included at ver_tpri_run.f:2193:
+
+       REAL*8 MPI_WTIME, MPI_WTICK                                      
+             1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+mpif.h:610.13:
+    Included at ver_tpri_run.f:2193:
+
+       REAL*8 PMPI_WTIME, PMPI_WTICK                                    
+             1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:2942.72:
+
+     $                                               +Ems)              
+                                                                        1
+Warning: Line truncated at (1)
+ver_tpri_run.f:4150.16:
+
+      complex*16 Gwreal(0:Iwmaxreal)                                    
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:4151.12:
+
+      real*8 eigall(ntot)                                               
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:4152.12:
+
+      real*8 rlehm(nmax,nmax,nblock)                                    
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:4153.16:
+
+      complex*16 omr(0:Iwmaxreal)                                       
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:4154.12:
+
+      real*8 beta,pi,zpart                                              
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:4155.12:
+
+      real*8 sum,x                                                      
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:4196.12:
+
+      real*8 Pi,E,dos(0:Iwmaxreal),sum,xmu,tpri,beta                    
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:4197.16:
+
+      complex*16 Sigre(0:Iwmaxreal), omr(0:Iwmaxreal)                   
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:4198.12:
+
+      real*8 DenOS                                                      
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:4248.12:
+
+      real*8 beta,xmu                                                   
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:4249.12:
+
+      real*8 om(0:Iwmax),Energya(0:ksteps,0:ksteps)                     
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:4250.16:
+
+      complex*16 Xi                                                     
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:4251.16:
+
+      complex*16 g0wand(0:Iwmax),Gw(0:Iwmax)                            
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:4253.16:
+
+      complex*16 Gloc(0:Iwmax)                                          
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:4256.12:
+
+      real*8 weightx,weighty,weightm                                    
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:4257.16:
+
+      complex*16 W(0:Iwmax)                                             
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:4258.16:
+
+      complex*16 gand(0:Iwmax)                                          
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:4300.12:
+
+      real*8 E,Pi                                                       
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:4301.12:
+
+      real*8 DenOS                                                      
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:4302.12:
+
+      real*8 tpri,argum                                                 
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:4304.12:
+
+      real*8 EllypticK                                                  
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:4324.12:
+
+      real*8 EllypticK,x                                                
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:4350.12:
+
+      real*8 Pi,xmu,Ek,var                                              
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:4351.16:
+
+      complex*16 Xi                                                     
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:4352.12:
+
+      real*8 om(0:Iwmax)                                                
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:4353.16:
+
+      complex*16 g0wand(0:Iwmax),Gw(0:Iwmax),Gloc(0:Iwmax)              
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:4354.16:
+
+      complex*16 W(0:Iwmax)                                             
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:4355.12:
+
+      real*8 Lx,Ly,Lz,Vol,kx,ky,kz,k0x,k0y,k0z,tsc,tfcc,d               
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:4555.16:
+
+      complex*16 ver(1:(2*Iwbox_bose+1)*(2*Iwmax+1)*                    
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:4559.16:
+
+      complex*16 verdo(1:(2*Iwbox_bose+1)*(2*Iwmax+1)*                  
+                1
+Warning: GNU Extension: Nonstandard type declaration COMPLEX*16 at (1)
+ver_tpri_run.f:4566.15:
+
+      integer*8 checksum,cs,a                                           
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+ver_tpri_run.f:4640.15:
+
+      integer*8 function checksum(ver,verdo,i,Iwmax,Iwbox_bose)         
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+ver_tpri_run.f:4642.15:
+
+      integer*8 cs                                                      
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+ver_tpri_run.f:4647.15:
+
+      integer*8 ver(1:(2*Iwbox_bose+1)*(2*Iwmax+1)*                     
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+ver_tpri_run.f:4650.15:
+
+      integer*8 verdo(1:(2*Iwbox_bose+1)*(2*Iwmax+1)*                   
+               1
+Warning: GNU Extension: Nonstandard type declaration INTEGER*8 at (1)
+ver_tpri_run.f:4656.72:
+
+      do 1 j=-Iwmax,Iwmax                                               
+                                                                        1
+Warning: Obsolescent feature: Shared DO termination label 1 at (1)
+ver_tpri_run.f:4657.72:
+
+      do 1 k=0,Iwmax                                                    
+                                                                        1
+Warning: Obsolescent feature: Shared DO termination label 1 at (1)
+ver_tpri_run.f:4658.72:
+
+      do 1 l=1,2                                                        
+                                                                        1
+Warning: Obsolescent feature: Shared DO termination label 1 at (1)
+ver_tpri_run.f:4699.12:
+
+      real*8 x,y                                                        
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:4700.12:
+
+      real*8 Energy,t,t1,t2                                             
+            1
+Warning: GNU Extension: Nonstandard type declaration REAL*8 at (1)
+ver_tpri_run.f:499.3:
+
+ 68            write(200+ntask,*) 'SELF_CONSISTENCY LOOP'               
+   1
+Warning: Label 68 at (1) defined but not used
+ver_tpri_run.f:146.15:
+
+      Xi=cmplx(0.d0,1.d0)                                               
+               1
+Warning: Conversion from REAL(8) to default-kind COMPLEX(4) at (1) might loose precision, consider using the KIND argument
+ver_tpri_run.f:1688.18:
+
+        anew(i) = nb - 1                                                
+                  1
+Warning: Possible change of value in conversion from INTEGER(4) to INTEGER(1) at (1)
+ver_tpri_run.f:1592.33:
+
+                  imatin(i,inew)=j*isegno                               
+                                 1
+Warning: Possible change of value in conversion from INTEGER(4) to INTEGER(1) at (1)
+ver_tpri_run.f:1593.33:
+
+                  imatin(inew,i)=j*isegno                               
+                                 1
+Warning: Possible change of value in conversion from INTEGER(4) to INTEGER(1) at (1)
+ver_tpri_run.f:1611.33:
+
+                  imatin(i,inew)=j*isegno                               
+                                 1
+Warning: Possible change of value in conversion from INTEGER(4) to INTEGER(1) at (1)
+ver_tpri_run.f:1612.33:
+
+                  imatin(inew,i)=j*isegno                               
+                                 1
+Warning: Possible change of value in conversion from INTEGER(4) to INTEGER(1) at (1)
+ver_tpri_run.f:1903.56:
+
+               xmat(j,j)=xmat(j,j)+epsk(is)*dabs(dfloat(abas(is)))      
+                                                        1
+Warning: GNU Extension: non-default INTEGER kind argument to dfloat intrinsic at (1)
+ver_tpri_run.f:1908.47:
+
+               xmat(j,j)=xmat(j,j)-hmag*dfloat(abas(1))                 
+                                               1
+Warning: GNU Extension: non-default INTEGER kind argument to dfloat intrinsic at (1)
+ver_tpri_run.f:1966.27:
+
+     $              dfloat(idouble(ioffset(i)+j))                       
+                           1
+Warning: GNU Extension: non-default INTEGER kind argument to dfloat intrinsic at (1)
+ver_tpri_run.f:2061.16:
+
+         kinsim=kinsim + Gw(i)*Gw(i)+                                   
+                1
+Warning: Possible change of value in conversion from COMPLEX(8) to REAL(8) at (1)
+ver_tpri_run.f:4399.20:
+
+            do iz=1,Lz/2-1                                              
+                    1
+Warning: Deleted feature: End expression in DO loop at (1) must be integer
+ver_tpri_run.f:4399.20:
+
+            do iz=1,Lz/2-1                                              
+                    1
+Warning: Possible change of value in conversion from REAL(8) to INTEGER(4) at (1)
+ver_tpri_run.f:4396.17:
+
+         do iy=1,Ly/2-1                                                 
+                 1
+Warning: Deleted feature: End expression in DO loop at (1) must be integer
+ver_tpri_run.f:4396.17:
+
+         do iy=1,Ly/2-1                                                 
+                 1
+Warning: Possible change of value in conversion from REAL(8) to INTEGER(4) at (1)
+ver_tpri_run.f:4392.14:
+
+      do ix=1,Lx/2-1                                                    
+              1
+Warning: Deleted feature: End expression in DO loop at (1) must be integer
+ver_tpri_run.f:4392.14:
+
+      do ix=1,Lx/2-1                                                    
+              1
+Warning: Possible change of value in conversion from REAL(8) to INTEGER(4) at (1)
+ver_tpri_run.f:4431.20:
+
+            do iz=1,Lz/2-1                                              
+                    1
+Warning: Deleted feature: End expression in DO loop at (1) must be integer
+ver_tpri_run.f:4431.20:
+
+            do iz=1,Lz/2-1                                              
+                    1
+Warning: Possible change of value in conversion from REAL(8) to INTEGER(4) at (1)
+ver_tpri_run.f:4428.17:
+
+         do iy=1,Ly/2-1                                                 
+                 1
+Warning: Deleted feature: End expression in DO loop at (1) must be integer
+ver_tpri_run.f:4428.17:
+
+         do iy=1,Ly/2-1                                                 
+                 1
+Warning: Possible change of value in conversion from REAL(8) to INTEGER(4) at (1)
+ver_tpri_run.f:4462.20:
+
+            do iz=1,Lz/2-1                                              
+                    1
+Warning: Deleted feature: End expression in DO loop at (1) must be integer
+ver_tpri_run.f:4462.20:
+
+            do iz=1,Lz/2-1                                              
+                    1
+Warning: Possible change of value in conversion from REAL(8) to INTEGER(4) at (1)
+ver_tpri_run.f:968.4:
+
+ 112         continue                                                   
+    1
+Warning: Label 112 at (1) defined but not used
+ver_tpri_run.f:962.4:
+
+ 111        continue                                                    
+    1
+Warning: Label 111 at (1) defined but not used
+ver_tpri_run.f:994.3:
+
+ 30   format(' iexit fmin ',i5,e14.6)                                   
+   1
+Warning: Label 30 at (1) defined but not used
+ver_tpri_run.f:944.3:
+
+ 12         continue                                                    
+   1
+Warning: Label 12 at (1) defined but not used
+ver_tpri_run.f:938.3:
+
+ 11         continue                                                    
+   1
+Warning: Label 11 at (1) defined but not used
+ver_tpri_run.f:1081.4:
+
+  21  continue                                                          
+    1
+Warning: Label 21 at (1) defined but not used
+ver_tpri_run.f:1069.10:
+
+      if (dfn .eq. 0.d0) df = f - z                                     
+          1
+Warning: Equality comparison for REAL(8) at (1)
+ver_tpri_run.f:2275.56:
+
+               xmat(j,j)=xmat(j,j)+epsk(is)*dabs(dfloat(abas(is)))      
+                                                        1
+Warning: GNU Extension: non-default INTEGER kind argument to dfloat intrinsic at (1)
+ver_tpri_run.f:2280.47:
+
+               xmat(j,j)=xmat(j,j)-hmag*dfloat(abas(1))                 
+                                               1
+Warning: GNU Extension: non-default INTEGER kind argument to dfloat intrinsic at (1)
+ver_tpri_run.f:2341.27:
+
+     $              dfloat(idouble(ioffset(i)+j))                       
+                           1
+Warning: GNU Extension: non-default INTEGER kind argument to dfloat intrinsic at (1)
+ver_tpri_run.f:2498.56:
+
+               xmat(j,j)=xmat(j,j)+epsk(is)*dabs(dfloat(abas(is)))      
+                                                        1
+Warning: GNU Extension: non-default INTEGER kind argument to dfloat intrinsic at (1)
+ver_tpri_run.f:2503.47:
+
+               xmat(j,j)=xmat(j,j)-hmag*dfloat(abas(1))                 
+                                               1
+Warning: GNU Extension: non-default INTEGER kind argument to dfloat intrinsic at (1)
+ver_tpri_run.f:2826.45:
+
+                                       asym2=asym2-                     
+                                             1
+Warning: Possible change of value in conversion from COMPLEX(8) to REAL(8) at (1)
+ver_tpri_run.f:3094.38:
+
+                                 asym=asym+((Exs-Exm)/(ni(0)+Ems)+      
+                                      1
+Warning: Possible change of value in conversion from COMPLEX(8) to REAL(8) at (1)
+ver_tpri_run.f:3241.38:
+
+                                 asym=asym+((Exs-Exm)/(ni(0)+Ems)+      
+                                      1
+Warning: Possible change of value in conversion from COMPLEX(8) to REAL(8) at (1)
+ver_tpri_run.f:4569.72:
+
+  12  open(unit=1,file=fname,form='unformatted',err=12)                 
+                                                                        1
+Warning: Branch at (1) may result in an infinite loop
+ver_tpri_run.f:4579.29:
+
+      write(200+n,*)checksum(ver,verdo,n,Iwmax,Iwbox_bose)              
+                             1
+Error: Type mismatch in argument 'ver' at (1); passed COMPLEX(8) to INTEGER(8)
+ver_tpri_run.f:4580.24:
+
+      write(1) checksum(ver,verdo,n,Iwmax,Iwbox_bose)                   
+                        1
+Error: Type mismatch in argument 'ver' at (1); passed COMPLEX(8) to INTEGER(8)
+ver_tpri_run.f:4585.72:
+
+  32  open(unit=1,file=fname1,err=32)                                   
+                                                                        1
+Warning: Branch at (1) may result in an infinite loop
+ver_tpri_run.f:1480.18:
+
+        anew(i) = nb - 1                                                
+                  1
+Warning: Possible change of value in conversion from INTEGER(4) to INTEGER(1) at (1)
+tpri.dat:1.8:
+    Included at ver_tpri_run.f:4201:
+
+      t=0.20412414523193154d0                                           
+        1
+Warning: Change of value in conversion from  REAL(8) to REAL(4) at (1)
+tpri.dat:1.8:
+    Included at ver_tpri_run.f:4306:
+
+      t=0.20412414523193154d0                                           
+        1
+Warning: Change of value in conversion from  REAL(8) to REAL(4) at (1)
+ver_tpri_run.f:4328.8:
+
+      b=sqrt(1-x)                                                       
+        1
+Warning: Possible change of value in conversion from REAL(8) to REAL(4) at (1)
+ver_tpri_run.f:4329.8:
+
+      t=x                                                               
+        1
+Warning: Possible change of value in conversion from REAL(8) to REAL(4) at (1)
+ver_tpri_run.f:4339.16:
+
+            if ((a+b).eq.0) stop 99                                     
+                1
+Warning: Equality comparison for REAL(4) at (1)
+

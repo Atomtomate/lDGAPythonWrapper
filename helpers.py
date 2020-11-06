@@ -214,13 +214,13 @@ def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
         shutil.copyfile(source_file_path, target_file_path)
 
 
-def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, config):
+def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
     files_dmft_list = ["hubb.andpar", "tpri.dat"]#, , "gm_wim""hubb.dat", "gm_wim"]
     src_files_list = ["checksum_script", "clean_script_auto", "idw.dat",
                   "inversion_pp_fotso.f90",  "split_script", "sum_t_files.f",
-                  "varbeta.dat", "ver_tpri_run.f"]
-    scripts = ["copy_ed_files", "call_script", "checksum_script",
-               "clean_script_auto", "split_script"]
+                   "ver_tpri_run.f"]
+    scripts = ["copy_dmft_files", "copy_data_files", "call_script",
+               "checksum_script", "clean_script_auto", "split_script"]
     files_list = ["hubb.dat", "call_script", "parameters.dat", "init_vertex.h",
                   "init_2.h","init_sumt.h", "tpri.dat"]
     for fn in files_list:
@@ -228,9 +228,13 @@ def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, config):
         with open(fp, 'w') as f:
             f.write(globals()[fn.replace(".", "_")](config))
 
-    fp = os.path.join(subRunDir, "copy_ed_files")
+    fp = os.path.join(subRunDir, "copy_dmft_files")
     with open(fp, 'w') as f:
         f.write(bak_files_script(subRunDir_ED, subRunDir,
+                                 files_dmft_list, header=True, mode="cp"))
+    fp = os.path.join(subRunDir, "copy_data_files")
+    with open(fp, 'w') as f:
+        f.write(bak_files_script(dataDir, subRunDir,
                                  files_dmft_list, header=True, mode="cp"))
 
     for filename in src_files_list:
@@ -243,17 +247,21 @@ def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, config):
         os.chmod(target_file_path, st.st_mode | stat.S_IEXEC)
 
 
-def copy_and_edit_susc(subCodeDir, subRunDir, subRunDir_ED, config):
+def copy_and_edit_susc(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
     files_dmft_list = ["hubb.andpar", "hubb.dat", "gm_wim"]
     files_list = ["calc_chi_asymptotics_gfortran.f", "idw.dat",
-                  "tpri.dat", "varbeta.dat"]
-    scripts = ["copy_ed_files"]
+                  "tpri.dat"]
+    scripts = ["copy_dmft_files", "copy_data_files"]
     fp = os.path.join(subRunDir, "init.h")
     with open(fp, 'w') as f:
         f.write(init_psc_h(config))
-    fp = os.path.join(subRunDir, "copy_ed_files")
+    fp = os.path.join(subRunDir, "copy_dmft_files")
     with open(fp, 'w') as f:
         f.write(bak_files_script(subRunDir_ED, subRunDir,
+                                 files_dmft_list, header=True, mode="cp"))
+    fp = os.path.join(subRunDir, "copy_data_files")
+    with open(fp, 'w') as f:
+        f.write(bak_files_script(dataDir, subRunDir,
                                  files_dmft_list, header=True, mode="cp"))
 
     for filename in files_list:
@@ -266,17 +274,21 @@ def copy_and_edit_susc(subCodeDir, subRunDir, subRunDir_ED, config):
         os.chmod(target_file_path, st.st_mode | stat.S_IEXEC)
 
 
-def copy_and_edit_trilex(subCodeDir, subRunDir, subRunDir_ED, config):
+def copy_and_edit_trilex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
     files_dmft_list = ["hubb.andpar", "hubb.dat", "gm_wim"]
     files_list = ["ver_twofreq_parallel.f", "idw.dat",
-                  "tpri.dat", "varbeta.dat"]
-    scripts = ["copy_ed_files"]
+                  "tpri.dat"]
+    scripts = ["copy_dmft_files", "copy_data_files"]
     fp = os.path.join(subRunDir, "init.h")
     with open(fp, 'w') as f:
         f.write(init_trilex_h(config))
-    fp = os.path.join(subRunDir, "copy_ed_files")
+    fp = os.path.join(subRunDir, "copy_dmft_files")
     with open(fp, 'w') as f:
         f.write(bak_files_script(subRunDir_ED, subRunDir,
+                                 files_dmft_list, header=True, mode="cp"))
+    fp = os.path.join(subRunDir, "copy_data_files")
+    with open(fp, 'w') as f:
+        f.write(bak_files_script(dataDir, subRunDir,
                                  files_dmft_list, header=True, mode="cp"))
 
     for filename in files_list:

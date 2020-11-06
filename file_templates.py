@@ -18,7 +18,8 @@ export SLURM_CPU_BIND=none
 '''
     # large96
     if copy_from_ed:
-        out = out + "./copy_ed_files \n"
+        out = out + "./copy_dmft_files \n"
+        out = out + "./copy_data_files || true \n"
     out = out + "{3}\n"
     out = out.format(procs, custom, config['general']['custom_module_load'],
                      cmd)
@@ -197,11 +198,9 @@ def init_vertex_h(config):
 def init_2_h(config):
     out = "      bethe={0}\n"
     out += "      twodim={1}\n"
-    out += "      symm={2}\n"
     bethe = ".true." if config['parameters']['bethe']  else ".false."
     twodim = ".true." if config['parameters']['Dimensions'] == 2 else ".false."
-    symm = ".true." if config['parameters']['symm'] else ".false."
-    out = out.format(bethe, twodim, symm)
+    out = out.format(bethe, twodim)
     return out
 
 

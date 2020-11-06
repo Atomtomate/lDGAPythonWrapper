@@ -129,7 +129,7 @@ def run_single(config):
     # ------------------------- definitions ----------------------------------
     subRunDir_vert = runDir + "/ed_vertex"
     subCodeDir = config['general']['codeDir'] + "/ED_vertex"
-    compile_command = "mpif90 ver_tpri_run.f -o run.x -llapack -lblas " +\
+    compile_command = "mpif90 ver_tpri_run.f -o run.x -llapack -lblas -fallow-argument-mismatch " +\
                       config['general']['CFLAGS']
     jobid_vert = None
 
@@ -144,7 +144,7 @@ def run_single(config):
 
             # ------------------- copy/edit ----------------------------------
             copy_and_edit_vertex(subCodeDir, subRunDir_vert, subRunDir_ED,
-                                 config)
+                                 dataDir, config)
 
             # ------------------ compile/run ---------------------------------
             if not compile_f(compile_command, cwd=subRunDir_vert,
@@ -185,7 +185,7 @@ def run_single(config):
         if cont:
             # ------------------- copy/edit ----------------------------------
             copy_and_edit_susc(subCodeDir, subRunDir_susc, subRunDir_ED,
-                               config)
+                               dataDir, config)
 
             # ------------------ compile/run ---------------------------------
             if not compile_f(compile_command, cwd=subRunDir_susc,
@@ -230,7 +230,7 @@ def run_single(config):
         if cont:
             # ------------------- copy/edit ----------------------------------
             copy_and_edit_trilex(subCodeDir, subRunDir_trilex, subRunDir_ED,
-                                 config)
+                                 dataDir, config)
 
             # ------------------ compile/run ---------------------------------
             if not compile_f(compile_command, cwd=subRunDir_trilex,
