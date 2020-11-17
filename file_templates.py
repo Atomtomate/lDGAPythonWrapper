@@ -80,12 +80,13 @@ c Should the summation over the bosonic frequency in the charge-/spin-channel be
 {10}     {11}\n'''
 
     k_number = config['lDGA']['k_range'] + 1
+    nBoseFreq = config['Vertex']['boseFreq_max']-config['Vertex']['boseFreq_min']+1
     out = out.format(
         config['parameters']['U'],
         config['parameters']['mu'],
         config['parameters']['beta'],
         config['Vertex']['nFermiFreq'],
-        config['Vertex']['nBoseFreq'],
+        nBoseFreq,
         config['lDGA']['LQ'],
         config['lDGA']['Nint'],
         int(k_number * ( k_number + 1 ) * ( k_number + 2 ) / 6),
@@ -109,20 +110,21 @@ Dimensions = {3}
 
 [Simulation]
 nFermFreq = {4}
-nBoseFreq = {5}
+boseFreq_min = {5}
+boseFreq_max = {6}
 shift     = 0       # shift of center of bosonic frequency range
-Nk        = {6}     # IMPORTANT: in Fortran this is Nk x Nk and generated bei make_klist. TODO: adaptiv mesh
-NkInt     = {7}
-Nq        = {8}
-tail_corrected = {9}
+Nk        = {7}     # IMPORTANT: in Fortran this is Nk x Nk and generated bei make_klist. TODO: adaptiv mesh
+NkInt     = {8}
+Nq        = {9}
+tail_corrected = {10}
 chi_only = true          # Should only chis_omega and chich_omega be calculated?
-kInt = "{10}"
+kInt = "{11}"
 
 [Environment]
 loadFortran = "text"    # julia, text, parquet, TODO: implement hdf5
 writeFortran = false
 loadAsymptotics = false
-inputDir = "{11}"
+inputDir = "{12}"
 inputVars = "vars.jld"
 asymptVars = "vars_asympt_sums.jld"
 force_full_bosonic_sum = false
@@ -142,7 +144,8 @@ read_bubble = true
         config['parameters']['beta'],
         config['parameters']['Dimensions'],
         config['Vertex']['nFermiFreq'],
-        config['Vertex']['nBoseFreq'],
+        config['Vertex']['boseFreq_min'],
+        config['Vertex']['boseFreq_max'],
         int(k_number),
         config['lDGA']['Nint'],
         q_number,#int(q_number * ( q_number + 1 ) * ( q_number + 2 ) / 6),
@@ -166,7 +169,8 @@ cd chi_dir
 split --suffix-length=3 -d --lines={1} ../vert_chi chi
 cd $cwd
 '''
-    lines = (2*(config['Vertex']['nBoseFreq']+1))**2
+    nBoseFreq = config['Vertex']['boseFreq_max']-config['Vertex']['boseFreq_min']+1
+    lines = (nBoseFreq)**2
     out = out.format(lines, lines)
     return out
 
@@ -176,29 +180,32 @@ def tpri_dat(config):
 
 def init_h(config):
     ns = config['parameters']['ns']
-    nmaxx = int(comb(ns, int(ns/2)) ** 2)
+    nmax = int(comb(ns, int(ns/2)) ** 2)
     out = "      parameter (nmaxx = {0})\n"
     out += "      parameter (nss={1})\n"
     out += "      parameter (prozessoren={2})\n"
-    out = out.format(nmaxx, ns, (ns+1)**2)
+    out = out.format(nmax, ns, (ns+1)**2)
     return out
 
 def init_vertex_h(config):
     ns = config['parameters']['ns']
-    nmaxx = int(comb(ns, int(ns/2)) ** 2)
-    out = "      parameter (nmaxx = {0})\n"
-    out += "      parameter (nss={1})\n"
-    out += "      parameter (Iwmax={2})\n"
-    out += "      parameter (Iwbox_bose={3})\n"
-    out += "      parameter (nmpara={4})\n"
-    out = out.format(nmaxx, ns, int(config['Vertex']['nFermiFreq']),
-        int(config['Vertex']['nBoseFreq']), int(config['Vertex']['nmpara']))
+    nmax = int(comb(ns, int(ns/2)) ** 2)
+    out =  "      integer, parameter :: nmax = {0}\n"
+    out += "      integer, parameter :: ns={1}\n"
+    out += "      integer, parameter :: Iwmax={2}\n"
+    out += "      integer, parameter :: Iwbose_min={3}\n"
+    out += "      integer, parameter :: Iwbose_max={4}\n"
+    out += "      integer, parameter :: nmpara={5}\n"
+    out = out.format(nmax, ns, int(config['Vertex']['nFermiFreq']),
+        int(config['Vertex']['boseFreq_min']),
+        int(config['Vertex']['boseFreq_max']),
+        int(config['Vertex']['nmpara']))
     return out
 
 def init_2_h(config):
-    out = "      bethe={0}\n"
-    out += "      twodim={1}\n"
-    out += "      symm={2}\n"
+    out =  "      logical, parameter :: bethe={0}\n"
+    out += "      logical, parameter :: twodim={1}\n"
+    out += "      logical, parameter :: symm={2}\n"
     bethe = ".true." if config['parameters']['bethe']  else ".false."
     twodim = ".true." if config['parameters']['Dimensions'] == 2 else ".false."
     symm = ".true." if config['parameters']['symm'] else ".false."
@@ -208,37 +215,39 @@ def init_2_h(config):
 
 def init_psc_h(config):
     ns = config['parameters']['ns']
-    nmaxx = int(comb(ns, int(ns/2)) ** 2)
+    nmax = int(comb(ns, int(ns/2)) ** 2)
     out = "      parameter (nmaxx = {0})\n"
     out += "      parameter (nss={1})\n"
     out += "      parameter (Iwmax={2})\n"
     out += "      parameter (nmpara={3})\n"
-    out = out.format(nmaxx, ns, int(config['Susc']['nBoseFreq']),
+    out = out.format(nmax, ns, int(config['Susc']['nBoseFreq']),
                                 int(config['Vertex']['nmpara']))
     return out
 
 def init_trilex_h(config):
     ns = config['parameters']['ns']
-    nmaxx = int(comb(ns, int(ns/2)) ** 2)
+    nmax = int(comb(ns, int(ns/2)) ** 2)
     out = "      parameter (nmaxx = {0})\n"
     out += "      parameter (nss={1})\n"
     out += "      parameter (Iwmax={2})\n"
     out += "      parameter (Iwbox_bose={3})\n"
     out += "      parameter (nmpara={4})\n"
-    out = out.format(nmaxx, ns, int(config['Trilex']['nFermiFreq']),
+    out = out.format(nmax, ns, int(config['Trilex']['nFermiFreq']),
         int(config['Trilex']['nBoseFreq']), int(config['Trilex']['nmpara']))
     return out
 
 def init_sumt_h(config):
     out = "      parameter (Iwmax={0})\n"
     out += "      parameter (Iwbox_fermi={1})\n"
-    out += "      parameter (Iwmax_bose={2})\n"
-    out += "      parameter (nprocs={3})\n"
-    out += "      parameter (beta={4})\n"
+    out += "      parameter (Iwbose_min={2})\n"
+    out += "      parameter (Iwbose_max={3})\n"
+    out += "      parameter (nprocs={4})\n"
+    out += "      parameter (beta={5})\n"
     out = out.format(int(config['Vertex']['nFermiFreq']), \
                      int(config['Vertex']['nFermiFreq']), \
-                     int(config['Vertex']['nBoseFreq']),  \
-                     2*int(config['Vertex']['nBoseFreq']) + 1, \
+                     int(config['Vertex']['boseFreq_min']),  \
+                     int(config['Vertex']['boseFreq_max']),  \
+                     int(config['Vertex']['boseFreq_max'])-int(config['Vertex']['boseFreq_min']) + 1, \
                      config['parameters']['beta'])
     return out
 
@@ -353,7 +362,7 @@ uhub={1}d0
                      config['general']['custom_module_load'])
     if config['general']['cluster'] == "berlin":
         jobs_per_node = 96
-        procs = (2*int(config['Vertex']['nBoseFreq']) + 1)
+        procs = (int(config['Vertex']['boseFreq_max']) - int(config['Vertex']['boseFreq_min']) + 1)
         nodes_per_job = ceil(procs/jobs_per_node)
         nodes = nodes_per_job*8
     else:
@@ -361,14 +370,10 @@ uhub={1}d0
         return False
     for r in range(8):
         out += "i="+str(r+1)+"\n\
-name=ver_tpri_run_U$uhub\_beta$beta\_$i.x\n\
+name=run\_$i.x\n\
 echo $name\n\
-cp run.x ./$name\n\
-sed '1s/^.*$/       '$i'/' idw.dat >hilfe\n\
-mv hilfe idw.dat\n\
-sleep 4\n\
 echo \"nodes per job: "+str(nodes_per_job)+"\"\n\
-mpirun -np "+str(2*int(config['Vertex']['nBoseFreq']) + 1)+" -hosts "
+mpirun -np "+str(int(config['Vertex']['boseFreq_max']) - int(config['Vertex']['boseFreq_min']) + 1)+" -hosts "
         run_string = ""
         for p in range(nodes_per_job):
             run_string += "bcn${SLURM_JOB_NODELIST:"+str(4+5*nodes_per_job*r+5*p)+":4},"
@@ -450,7 +455,8 @@ Ferminoic frequency: nu_prime=pi*T*(2*k+1), -Iwbox_fermi<= k <= +Iwbox_fermi-1
    f) Iwbox_green_function is the range of the Green function. Since it appear in chi_0 in the combination i+j or i-j-1 it has to fullfill:
       Iwbox_green_function >= Iwbox_fermi_ph+Iwbox_bose_ph   (if Iwbox_ph >= Iwbox_pp, otherwise the same condition hold for Iwbox_..._pp)
 '''
-    out = out.format(config['Vertex']['nBoseFreq'], config['Vertex']['nFermiFreq'],
-                     config['Vertex']['nFermiFreq']+config['Vertex']['nBoseFreq'],
+    nBoseFreq = config['Vertex']['boseFreq_max']-config['Vertex']['boseFreq_min']+1
+    out = out.format(nBoseFreq, config['Vertex']['nFermiFreq'],
+                     config['Vertex']['nFermiFreq']+nBoseFreq,
                      config['parameters']['beta'], config['parameters']['U'])
     return out

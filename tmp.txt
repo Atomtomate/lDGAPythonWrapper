@@ -1,1 +1,2 @@
 Running for beta= 25.0 , U= 1.0
+running: sbatch ed_vertex_run.sh

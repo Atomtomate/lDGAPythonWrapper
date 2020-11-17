@@ -4,44 +4,25 @@ Fnormal
 Fener
 kinsim
 
-omm
-dos
-eigall
-eigall
-deltino
-ioffset
-nleng
-nblog
-ntot
-nsp1
-pi
-Pi
-nmax
-zpart
-sum
-sigre
-omr
-xmu
-tpri
-wup
-wlow
-range
-piob
-om
-summy
-bethe  (remove from input)
-varbeta (remove from input)
-sigupre
-sigdore
+abas
+idouble
+
 
 functions:
+diag
+?ddown?
 
 file handles:
 
 
 files:
 tpri.dat
+idw.dat
 
 static variables:
 calvert
 bethe
+
+
+general:
+suplement intent on all variables

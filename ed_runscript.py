@@ -2,7 +2,7 @@ import sys
 import os
 import re
 import numpy as np
-from helpers import compile_f, check_env, query_yn, reset_dir, dmft_log, \
+from helpers import run_bash, check_env, query_yn, reset_dir, dmft_log, \
                     copy_and_edit_dmft, run_ed_dmft, copy_and_edit_vertex, \
                     run_ed_vertex, copy_and_edit_susc, run_ed_susc, \
                     copy_and_edit_trilex, run_ed_trilex, run_postprocess,\
@@ -111,7 +111,7 @@ def run_single(config):
             copy_and_edit_dmft(subCodeDir, subRunDir_ED, config)
 
             # --------------------- compile/run ------------------------------
-            if not compile_f(compile_command, cwd=subRunDir_ED,
+            if not run_bash(compile_command, cwd=subRunDir_ED,
                            verbose=config['general']['verbose']):
                 raise Exception("Compilation Failed")
             jobid_ed = run_ed_dmft(subRunDir_ED, config)
@@ -123,13 +123,13 @@ def run_single(config):
                   "This behavor can be changed in the config.")
 
     # ========================================================================
-    # =                         DMFT Vertex                                  =
+    # =                           ED Vertex                                  =
     # ========================================================================
 
     # ------------------------- definitions ----------------------------------
     subRunDir_vert = runDir + "/ed_vertex"
     subCodeDir = config['general']['codeDir'] + "/ED_vertex"
-    compile_command = "mpif90 ver_tpri_run.f -o run.x -llapack -lblas " +\
+    dbg_compile_command = "mpif90 ver_tpri_run.f -o run.x -g -Og -llapack -lblas -ffixed-line-length-0 -Wall -Wextra -pedantic -fimplicit-none -fcheck=all -fbacktrace " +\
                       config['general']['CFLAGS']
     jobid_vert = None
 
@@ -147,9 +147,13 @@ def run_single(config):
                                  dataDir, config)
 
             # ------------------ compile/run ---------------------------------
-            if not compile_f(compile_command, cwd=subRunDir_vert,
-                           verbose=config['general']['verbose']):
-                raise Exception("Compilation Failed")
+            for ntask in range(1,9):
+                compile_command = "mpif90 ver_tpri_run_"+str(ntask)+".f -o run_"+\
+                        str(ntask)+".x -O3 -llapack -lblas " +\
+                        config['general']['CFLAGS']
+                if not run_bash(compile_command, cwd=subRunDir_vert,
+                               verbose=config['general']['verbose']):
+                    raise Exception("Compilation Failed")
             jobid_vert = run_ed_vertex(subRunDir_vert, config, jobid_ed)
             if not jobid_vert:
                 raise Exception("Job submit failed")
@@ -188,7 +192,7 @@ def run_single(config):
                                dataDir, config)
 
             # ------------------ compile/run ---------------------------------
-            if not compile_f(compile_command, cwd=subRunDir_susc,
+            if not run_bash(compile_command, cwd=subRunDir_susc,
                            verbose=config['general']['verbose']):
                 raise Exception("Compilation Failed")
             jobid_susc = run_ed_susc(subRunDir_susc, config, jobid_ed)
@@ -233,7 +237,7 @@ def run_single(config):
                                  dataDir, config)
 
             # ------------------ compile/run ---------------------------------
-            if not compile_f(compile_command, cwd=subRunDir_trilex,
+            if not run_bash(compile_command, cwd=subRunDir_trilex,
                            verbose=config['general']['verbose']):
                 raise Exception("Compilation Failed")
             jobid_trilex = run_ed_trilex(subRunDir_trilex, config, jobid_ed)
@@ -301,7 +305,7 @@ def run_single(config):
         if cont:
             # ------------------- copy/edit ----------------------------------
             copy_and_edit_lDGA_f(subCodeDir, subRunDir_lDGA_f, dataDir, config)
-            if not compile_f(compile_command_kl, cwd=subRunDir_lDGA_f,
+            if not run_bash(compile_command_kl, cwd=subRunDir_lDGA_f,
                            verbose=config['general']['verbose']):
                 raise Exception("Compilation Failed")
             #jobid_lDGA_f_makeklist = run_lDGA_f_makeklist(subRunDir_lDGA_f,
@@ -310,7 +314,7 @@ def run_single(config):
             #    raise Exception("Job submit failed")
 
             # ------------------ compile/run ---------------------------------
-            if not compile_f(compile_command, cwd=subRunDir_lDGA_f,
+            if not run_bash(compile_command, cwd=subRunDir_lDGA_f,
                            verbose=config['general']['verbose']):
                 raise Exception("Compilation Failed")
             jobid_lDGA_f = run_lDGA_f(subRunDir_lDGA_f, config, jobid_pp)
