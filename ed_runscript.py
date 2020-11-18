@@ -154,7 +154,7 @@ def run_single(config):
                 if not run_bash(compile_command, cwd=subRunDir_vert,
                                verbose=config['general']['verbose']):
                     raise Exception("Compilation Failed")
-            jobid_vert = run_ed_vertex(subRunDir_vert, config, jobid_ed)
+            jobid_vert = run_ed_vertex(subRunDir_vert, config, nBoseFreq, jobid_ed)
             if not jobid_vert:
                 raise Exception("Job submit failed")
 

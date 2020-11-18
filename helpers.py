@@ -213,13 +213,13 @@ def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
 
 def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
     files_dmft_list = ["hubb.andpar", "tpri.dat", "zpart.dat"]#, , "gm_wim""hubb.dat", "gm_wim"]
-    src_files_list = ["checksum_script", "clean_script_auto", "idw.dat",
+    src_files_list = ["checksum_script", "clean_script_auto",
                   "inversion_pp_fotso.f90",  "split_script", "sum_t_files.f",
                    "ver_tpri_run.f"]
     scripts = ["copy_dmft_files", "copy_data_files", "call_script",
                "checksum_script", "clean_script_auto", "split_script"]
     files_list = ["hubb.dat", "call_script", "parameters.dat", "init_vertex.h",
-                  "init_2.h","init_sumt.h"]
+                  "init_2.h", "init_sumt.h", 'freq_list.h']
     for fn in files_list:
         fp = os.path.abspath(os.path.join(subRunDir, fn))
         with open(fp, 'w') as f:
@@ -390,9 +390,8 @@ def run_ed_dmft(cwd, config):
     return jobid
 
 
-def run_ed_vertex(cwd, config, ed_jobid=None):
+def run_ed_vertex(cwd, config, nBoseFreq, ed_jobid=None):
     filename = "ed_vertex_run.sh"
-    nBoseFreq = int(config['Vertex']['boseFreq_max']) - int(config['Vertex']['boseFreq_min']) + 1
     fp = os.path.join(cwd, filename)
     if config['general']['cluster'] == "berlin":
         cores_per_node = 96

@@ -64,6 +64,8 @@ export SLURM_CPU_BIND=none
 # ============================================================================
 # =                          File Templates                                  =
 # ============================================================================
+def freq_list_h(config):
+
 
 def ladderDGA_in(config):
     out = '''c AIM parameters: U, mu, beta, nden
