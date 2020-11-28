@@ -1,2 +1,11 @@
 Running for beta= 25.0 , U= 1.0
-running: sbatch ed_vertex_run.sh
+running compilation for vertex # 1
+running compilation for vertex # 2
+running compilation for vertex # 3
+running compilation for vertex # 4
+running compilation for vertex # 5
+running compilation for vertex # 6
+running compilation for vertex # 7
+running compilation for vertex # 8
+Compiling vertex task 1 of 8
+Compiling vertex task 2 of 8

@@ -9,7 +9,7 @@ from math import isclose, ceil
 from file_templates import *
 # flake8:  noqa: F405
 # from file_templates import call_script, parameters_dat, init_vertex_h,\
-#                           init_sumt_h, bak_files_script, init_psc_h,\
+#                           bak_files_script, init_psc_h,\
 #                           init_trilex_h, ladderDGA_in, q_sum_h, lDGA_julia,\
 #                           split_files, tpri_dat, init_h, hubb_dat,\
 #                           hubb_andpar
@@ -174,7 +174,7 @@ def check_env(config):
 # =                          copy functions                                  =
 # ============================================================================
 def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
-    files_list = ["tpri.dat", "init.h", "init_2.h", "hubb.dat", "hubb.andpar"]
+    files_list = ["tpri.dat", "init.h", "hubb.dat", "hubb.andpar"]
     src_files = ["ed_dmft_parallel_frequencies.f"]
 
     old_andpar = config["general"]["custom_init_andpar_file"]
@@ -213,17 +213,17 @@ def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
 
 def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
     files_dmft_list = ["hubb.andpar", "tpri.dat", "zpart.dat"]#, , "gm_wim""hubb.dat", "gm_wim"]
-    src_files_list = ["checksum_script", "clean_script_auto",
+    src_files_list = ["checksum_script", "cleanup.sh",
                   "inversion_pp_fotso.f90",  "split_script", "sum_t_files.f",
-                   "ver_tpri_run.f"]
+                   "ver_tpri_run.f90", "idw.dat"]
     scripts = ["copy_dmft_files", "copy_data_files", "call_script",
-               "checksum_script", "clean_script_auto", "split_script"]
+               "checksum_script", "cleanup.sh", "split_script"]
     files_list = ["hubb.dat", "call_script", "parameters.dat", "init_vertex.h",
-                  "init_2.h", "init_sumt.h", 'freq_list.h']
+                  'freq_list.h']
     for fn in files_list:
         fp = os.path.abspath(os.path.join(subRunDir, fn))
         with open(fp, 'w') as f:
-            f.write(globals()[fn.replace(".", "_")](config))
+            f.write(globals()[fn.replace(".", "_")](config, mode="Vertex"))
 
     fp = os.path.join(subRunDir, "copy_dmft_files")
     with open(fp, 'w') as f:
@@ -242,13 +242,13 @@ def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
         target_file_path = os.path.abspath(os.path.join(subRunDir, filename))
         st = os.stat(target_file_path)
         os.chmod(target_file_path, st.st_mode | stat.S_IEXEC)
-    source_file_path = os.path.abspath(os.path.join(subRunDir, "ver_tpri_run.f"))
+    source_file_path = os.path.abspath(os.path.join(subRunDir, "ver_tpri_run.f90"))
     lines = open(source_file_path).read().splitlines()
     for ntask in range(1,9):
         target_file_path = os.path.abspath(os.path.join(subRunDir,
-            "ver_tpri_run_"+str(ntask)+".f"))
+            "ver_tpri_run_"+str(ntask)+".f90"))
         shutil.copyfile(source_file_path, target_file_path)
-        edit_task_number = "sed -i '7s/NTASKNUMBER/"+str(ntask)+"/' ver_tpri_run_"+str(ntask)+".f"
+        edit_task_number = "sed -i '14s/NTASKNUMBER/"+str(ntask)+"/' ver_tpri_run_"+str(ntask)+".f90"
         run_bash(edit_task_number, subRunDir, verbose=False)
 
 

@@ -1,7 +1,10 @@
 from scipy.special import comb
 import numpy as np
+import re
 from math import ceil
 import os
+
+p = re.compile(r'^(-?\d+):(-?\d+)$', re.M)
 
 
 # ============================================================================
@@ -61,13 +64,82 @@ export SLURM_CPU_BIND=none
     return out
 
 
+# Either read list form file or generate string for new file
+def parse_freq_list(config, subProg):
+    options_list = ['freqList_fermi','freqList_bose']
+    freq_list = [None, None]
+    for ti in range(2):
+        freq_str = config[subProg][options_list[ti]]
+        if os.path.exists(freq_str):
+            raise NotImplementedError("loading of frequency grid not yet supported")
+        else:
+            match = re.match(p, freq_str)
+            if not match or (match[1] >= match[2]):
+                raise ValueError("Could not parse frequency grid. Format should\
+ be N1:N2 with N1 < N2, but got ", freq_str)
+            freq_list[ti] = list(range(int(match[1]),int(match[2])+1))
+    return freq_list
+
+# build fortran input file from frequency grids
+def freq_list_fort(config, fermi_grid, bose_grid):
+    line_length_counter = 6
+    max_line_length = 180
+    nf_max = max(fermi_grid, key=abs)
+    nb_max = max(bose_grid, key=abs)
+    max_freq = 2*(2*abs(nf_max)+abs(nb_max))+5
+    out =  "      integer,parameter,dimension("+str(len(fermi_grid))+") :: fermi_grid = (/ &\n      "
+    for el in fermi_grid:
+        els = str(el) + ","
+        if line_length_counter+len(els) < max_line_length:
+            out += els
+            line_length_counter += len(els)
+        else:
+            out += " &\n            "+els
+            line_length_counter = 12+len(els)
+    out = out[:-1]
+    out += "/)\n"
+    line_length_counter = 6
+    out += "      integer,parameter,dimension("+str(len(bose_grid))+") :: bose_grid = (/ & \n      "
+    for el in bose_grid:
+        els = str(el) + ","
+        if line_length_counter+len(els) < max_line_length:
+            out += els
+            line_length_counter += len(els)
+        else:
+            out += " & \n            "+els
+            line_length_counter = 12+len(els)
+    out = out[:-1]
+    out += "/)\n"
+    line_length_counter = 6
+    out += "      complex*16,parameter,dimension("+str(-max_freq)+":"+str(max_freq)+") :: mf = (/ & \n        "
+    for elf in range(-max_freq,max_freq+1):
+        el = (1j*elf*np.pi/config['parameters']['beta'])
+        els = "(" + str(el.real) + "_dp ," + str(el.imag) + "_dp ), "
+        if line_length_counter+len(els) < max_line_length:
+            out += els
+            line_length_counter += len(els)
+        else:
+            out += " & \n        "+els
+            line_length_counter = 8+len(els)
+    out = out[:-2]
+    out += "/)\n"
+    out += "      integer, parameter :: nFermi="+str(len(fermi_grid))+"\n"
+    out += "      integer, parameter :: nBose="+str(len(bose_grid))+"\n"
+    out += "      integer, parameter :: Iwmax="+str(fermi_grid[-1]+1)+"\n"
+    out += "      integer, parameter :: Iwbose_min="+str(bose_grid[0])+"\n"
+    out += "      integer, parameter :: Iwbose_max="+str(bose_grid[-1])+"\n"
+    out += "      real(dp), parameter :: beta="+str(config['parameters']['beta'])+"\n"
+    out += "      real(dp), parameter :: uhub="+str(config['parameters']['U'])+"\n"
+    return out
+
 # ============================================================================
 # =                          File Templates                                  =
 # ============================================================================
-def freq_list_h(config):
+def freq_list_h(config, mode=None):
+    freq_list = parse_freq_list(config, mode)
+    return freq_list_fort(config, *freq_list)
 
-
-def ladderDGA_in(config):
+def ladderDGA_in(config, mode=None):
     out = '''c AIM parameters: U, mu, beta, nden
 {0}d0      {1}d0       {2}d0       1.0d0
 c Iwbox    Iwbox_bose    shift
@@ -176,11 +248,11 @@ cd $cwd
     out = out.format(lines, lines)
     return out
 
-def tpri_dat(config):
+def tpri_dat(config, mode=None):
     t = 0.5/np.sqrt(2*config['parameters']['Dimensions'])
     return "      t=" + str(t) + "d0\n      t1=0.0d0\n      t2=0d0"
 
-def init_h(config):
+def init_h(config, mode=None):
     ns = config['parameters']['ns']
     nmax = int(comb(ns, int(ns/2)) ** 2)
     out = "      parameter (nmaxx = {0})\n"
@@ -189,14 +261,12 @@ def init_h(config):
     out = out.format(nmax, ns, (ns+1)**2)
     return out
 
-def init_vertex_h(config):
+#TODO: unify init files using modes
+def init_vertex_h(config, mode=None):
     ns = config['parameters']['ns']
     nmax = int(comb(ns, int(ns/2)) ** 2)
     out =  "      integer, parameter :: nmax = {0}\n"
     out += "      integer, parameter :: ns={1}\n"
-    out += "      integer, parameter :: Iwmax={2}\n"
-    out += "      integer, parameter :: Iwbose_min={3}\n"
-    out += "      integer, parameter :: Iwbose_max={4}\n"
     out += "      integer, parameter :: nmpara={5}\n"
     out = out.format(nmax, ns, int(config['Vertex']['nFermiFreq']),
         int(config['Vertex']['boseFreq_min']),
@@ -204,7 +274,7 @@ def init_vertex_h(config):
         int(config['Vertex']['nmpara']))
     return out
 
-def init_2_h(config):
+def init_2_h(config, mode=None):
     out =  "      logical, parameter :: bethe={0}\n"
     out += "      logical, parameter :: twodim={1}\n"
     out += "      logical, parameter :: symm={2}\n"
@@ -215,7 +285,7 @@ def init_2_h(config):
     return out
 
 
-def init_psc_h(config):
+def init_psc_h(config, mode=None):
     ns = config['parameters']['ns']
     nmax = int(comb(ns, int(ns/2)) ** 2)
     out = "      parameter (nmaxx = {0})\n"
@@ -226,7 +296,7 @@ def init_psc_h(config):
                                 int(config['Vertex']['nmpara']))
     return out
 
-def init_trilex_h(config):
+def init_trilex_h(config, mode=None):
     ns = config['parameters']['ns']
     nmax = int(comb(ns, int(ns/2)) ** 2)
     out = "      parameter (nmaxx = {0})\n"
@@ -238,22 +308,7 @@ def init_trilex_h(config):
         int(config['Trilex']['nBoseFreq']), int(config['Trilex']['nmpara']))
     return out
 
-def init_sumt_h(config):
-    out = "      parameter (Iwmax={0})\n"
-    out += "      parameter (Iwbox_fermi={1})\n"
-    out += "      parameter (Iwbose_min={2})\n"
-    out += "      parameter (Iwbose_max={3})\n"
-    out += "      parameter (nprocs={4})\n"
-    out += "      parameter (beta={5})\n"
-    out = out.format(int(config['Vertex']['nFermiFreq']), \
-                     int(config['Vertex']['nFermiFreq']), \
-                     int(config['Vertex']['boseFreq_min']),  \
-                     int(config['Vertex']['boseFreq_max']),  \
-                     int(config['Vertex']['boseFreq_max'])-int(config['Vertex']['boseFreq_min']) + 1, \
-                     config['parameters']['beta'])
-    return out
-
-def q_sum_h(config):
+def q_sum_h(config, mode=None):
     cnf_str = "".join(config['lDGA']['kInt'].lower().split()) # remove whitespaces and convert to lower case
     if cnf_str == "naive" or cnf_str == "gl-1" or cnf_str == "fft":
         out = """INTEGER, PARAMETER :: ng=1
@@ -283,7 +338,7 @@ REAL(KIND=8), PARAMETER, DIMENSION(ng) :: ws=(/2.0d0/)"""
          raise NotImplementedError("Q-Integration method not recognized")
     return out
 
-def hubb_dat(config):
+def hubb_dat(config, mode=None):
     out = '''c  U,   hmag
 {0}d0,  0.d0 0.d0
 c beta, w_min, w_max, deltino
@@ -343,7 +398,7 @@ Eps(k)
         out += tpar_k
     else:
         for i in range(config['parameters']['ns']-1):
-            out += "  0.200000000000\n"
+            out += "  0.200000000000_dp\n"
     out += "  {3}                      #chemical potential\n"
     out = out.format(
         config['parameters']['beta'], #config['ED']['conv_param'],
@@ -353,11 +408,10 @@ Eps(k)
     return out
 
 
-def call_script(config):
+def call_script(config, mode=None):
     out = '''
-i=`cat idw.dat | sed -e 's/^[[:space:]]*//'`
-beta={0}d0
-uhub={1}d0
+beta={0}_dp
+uhub={1}_dp
 {2}
 '''
     out = out.format(config['parameters']['beta'], config['parameters']['U'],\
@@ -370,22 +424,27 @@ uhub={1}d0
     else:
         print("WARNING: unrecognized cluster configuration!")
         return False
+        #.x -Og -g -ffixed-line-length-0 -Wall -Wextra -pedantic -fcheck=all -fbacktrace -llapack -lblas " + config['general']['CFLAGS'] +" ;\
     for r in range(8):
         out += "i="+str(r+1)+"\n\
 name=run\_$i.x\n\
-echo $name\n\
 echo \"nodes per job: "+str(nodes_per_job)+"\"\n\
+echo $name\n\
+sed '1s/^.*$/       '$i'/' idw.dat >hilfe\n\
+mv hilfe idw.dat\n\
+((( mpiifort ver_tpri_run_"+str(r+1)+".f90 -o run_"+str(r+1)+"\
+.x -g -check all -traceback -mkl " + config['general']['CFLAGS'] +" ;\
 mpirun -np "+str(int(config['Vertex']['boseFreq_max']) - int(config['Vertex']['boseFreq_min']) + 1)+" -hosts "
         run_string = ""
         for p in range(nodes_per_job):
             run_string += "bcn${SLURM_JOB_NODELIST:"+str(4+5*nodes_per_job*r+5*p)+":4},"
-        run_string = run_string[0:-1] + " ./$name > vertex_out$i.out 2> vertex_error$i.err & \n"
+        run_string = run_string[0:-1] + " ./$name 2>&1 1>&3 | tee vertex_out$i.err run.err) 3>&1 | tee vertex_out$i.out run.out) > run.out 2>&1) & \n"
         out += run_string
         out += "\necho \"running: " + run_string[0:-2] +"\"\n"
     out += "wait $(jobs -rp)\n"
     return out
 
-def parameters_dat(config):
+def parameters_dat(config, mode=None):
     out = '''c Iwbox_bose_ph   Iwbox_fermi_ph   Iwbox_bose_pp   Iwbox_fermi_pp   Iwbox_bose_gamma   Iwbox_fermi_gamma    Iwbox_bose_lambda   Iwbox_fermi_lambda   Iwbox_green_function
   {0}                 {1}              0                0                0                 0                   0                   0                    {2}
 c Frequencies for up_down particle-particle vertex: Iwbox_bose_up_down   Iwbox_fermi_up_down   Iwbox_bose_up_down_backshift   Iwbox_fermi_up_down_backshift

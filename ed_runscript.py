@@ -4,6 +4,7 @@ import re
 import numpy as np
 from helpers import run_bash, check_env, query_yn, reset_dir, dmft_log, \
                     copy_and_edit_dmft, run_ed_dmft, copy_and_edit_vertex, \
+                    parse_freq_list, \
                     run_ed_vertex, copy_and_edit_susc, run_ed_susc, \
                     copy_and_edit_trilex, run_ed_trilex, run_postprocess,\
                     copy_and_edit_lDGA_f, run_lDGA_f_makeklist, run_lDGA_f,\
@@ -129,7 +130,7 @@ def run_single(config):
     # ------------------------- definitions ----------------------------------
     subRunDir_vert = runDir + "/ed_vertex"
     subCodeDir = config['general']['codeDir'] + "/ED_vertex"
-    dbg_compile_command = "mpif90 ver_tpri_run.f -o run.x -g -Og -llapack -lblas -ffixed-line-length-0 -Wall -Wextra -pedantic -fimplicit-none -fcheck=all -fbacktrace " +\
+    dbg_compile_command = "mpiifort ver_tpri_run.f90 -o run.x -g -Og -llapack -lblas -ffixed-line-length-0 -Wall -Wextra -pedantic -fimplicit-none -fcheck=all -fbacktrace " +\
                       config['general']['CFLAGS']
     jobid_vert = None
 
@@ -148,13 +149,16 @@ def run_single(config):
 
             # ------------------ compile/run ---------------------------------
             for ntask in range(1,9):
-                compile_command = "mpif90 ver_tpri_run_"+str(ntask)+".f -o run_"+\
-                        str(ntask)+".x -O3 -llapack -lblas " +\
+                compile_cmd = "mpiifort ver_tpri_run_{0}.f90 -o run_"+\
+                        "{0}.x -O3 -llapack -lblas " +\
                         config['general']['CFLAGS']
-                if not run_bash(compile_command, cwd=subRunDir_vert,
-                               verbose=config['general']['verbose']):
-                    raise Exception("Compilation Failed")
-            jobid_vert = run_ed_vertex(subRunDir_vert, config, nBoseFreq, jobid_ed)
+                #if not run_bash(compile_command, cwd=subRunDir_vert,
+                #        verbose=True):
+                #    #config['general']['verbose']):
+                #    raise Exception("Compilation Failed")
+            freq_list = parse_freq_list(config, "Vertex")
+            jobid_vert = run_ed_vertex(subRunDir_vert, config,
+                    len(freq_list[1]),  jobid_ed)
             if not jobid_vert:
                 raise Exception("Job submit failed")
 
