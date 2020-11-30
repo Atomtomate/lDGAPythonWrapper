@@ -174,7 +174,7 @@ def check_env(config):
 # =                          copy functions                                  =
 # ============================================================================
 def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
-    files_list = ["tpri.dat", "init.h", "hubb.dat", "hubb.andpar"]
+    files_list = ["tpri.dat", "init.h", "init_2.h", "hubb.dat", "hubb.andpar"]
     src_files = ["ed_dmft_parallel_frequencies.f"]
 
     old_andpar = config["general"]["custom_init_andpar_file"]

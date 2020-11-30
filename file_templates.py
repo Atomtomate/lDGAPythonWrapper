@@ -433,7 +433,7 @@ echo $name\n\
 sed '1s/^.*$/       '$i'/' idw.dat >hilfe\n\
 mv hilfe idw.dat\n\
 ((( mpiifort ver_tpri_run_"+str(r+1)+".f90 -o run_"+str(r+1)+"\
-.x -g -check all -traceback -mkl " + config['general']['CFLAGS'] +" ;\
+.x -mkl " + config['general']['CFLAGS'] +" ;\
 mpirun -np "+str(int(config['Vertex']['boseFreq_max']) - int(config['Vertex']['boseFreq_min']) + 1)+" -hosts "
         run_string = ""
         for p in range(nodes_per_job):
