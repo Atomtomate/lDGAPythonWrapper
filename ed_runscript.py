@@ -156,9 +156,7 @@ def run_single(config):
                 #        verbose=True):
                 #    #config['general']['verbose']):
                 #    raise Exception("Compilation Failed")
-            freq_list = parse_freq_list(config, "Vertex")
-            jobid_vert = run_ed_vertex(subRunDir_vert, config,
-                    len(freq_list[1]),  jobid_ed)
+            jobid_vert = run_ed_vertex(subRunDir_vert, config,jobid_ed)
             if not jobid_vert:
                 raise Exception("Job submit failed")
 

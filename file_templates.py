@@ -4,8 +4,6 @@ import re
 from math import ceil
 import os
 
-p = re.compile(r'^(-?\d+):(-?\d+)$', re.M)
-
 
 # ============================================================================
 # =                        Job File Templates                                =
@@ -65,53 +63,25 @@ export SLURM_CPU_BIND=none
 
 
 # Either read list form file or generate string for new file
-def parse_freq_list(config, subProg):
-    options_list = ['freqList_fermi','freqList_bose']
-    freq_list = [None, None]
-    for ti in range(2):
-        freq_str = config[subProg][options_list[ti]]
-        if os.path.exists(freq_str):
-            raise NotImplementedError("loading of frequency grid not yet supported")
-        else:
-            match = re.match(p, freq_str)
-            if not match or (match[1] >= match[2]):
-                raise ValueError("Could not parse frequency grid. Format should\
- be N1:N2 with N1 < N2, but got ", freq_str)
-            freq_list[ti] = list(range(int(match[1]),int(match[2])+1))
-    return freq_list
+def parse_freq_list(freq_grid):
+    nFreq = len(range(*freq_grid[1])) * len(range(*freq_grid[0])) * \
+                len(range(*freq_grid[0]))
+    file_str = "# === Header Start === ".ljust(30)
+    file_str += "\n# Elements".ljust(31)
+    file_str += ("\n   " + str(nFreq)).ljust(31)
+    file_str += "\n# === Header End === ".ljust(31)
+    for bi in range(*freq_grid[1]):
+        for nui in range(*freq_grid[0]):
+            for nupi in range(*freq_grid[0]):
+                file_str += "\n" + str(bi).rjust(10) + str(nui).rjust(10) + \
+                        str(nupi).rjust(10)
+    return nFreq, file_str
 
 # build fortran input file from frequency grids
-def freq_list_fort(config, fermi_grid, bose_grid):
+def freq_list_h(config, nFreq, max_freq, mode=None):
     line_length_counter = 6
     max_line_length = 180
-    nf_max = max(fermi_grid, key=abs)
-    nb_max = max(bose_grid, key=abs)
-    max_freq = 2*(2*abs(nf_max)+abs(nb_max))+5
-    out =  "      integer,parameter,dimension("+str(len(fermi_grid))+") :: fermi_grid = (/ &\n      "
-    for el in fermi_grid:
-        els = str(el) + ","
-        if line_length_counter+len(els) < max_line_length:
-            out += els
-            line_length_counter += len(els)
-        else:
-            out += " &\n            "+els
-            line_length_counter = 12+len(els)
-    out = out[:-1]
-    out += "/)\n"
-    line_length_counter = 6
-    out += "      integer,parameter,dimension("+str(len(bose_grid))+") :: bose_grid = (/ & \n      "
-    for el in bose_grid:
-        els = str(el) + ","
-        if line_length_counter+len(els) < max_line_length:
-            out += els
-            line_length_counter += len(els)
-        else:
-            out += " & \n            "+els
-            line_length_counter = 12+len(els)
-    out = out[:-1]
-    out += "/)\n"
-    line_length_counter = 6
-    out += "      complex*16,parameter,dimension("+str(-max_freq)+":"+str(max_freq)+") :: mf = (/ & \n        "
+    out = "      complex*16,parameter,dimension("+str(-max_freq)+":"+str(max_freq)+") :: mf = (/ & \n        "
     for elf in range(-max_freq,max_freq+1):
         el = (1j*elf*np.pi/config['parameters']['beta'])
         els = "(" + str(el.real) + "_dp ," + str(el.imag) + "_dp ), "
@@ -123,22 +93,14 @@ def freq_list_fort(config, fermi_grid, bose_grid):
             line_length_counter = 8+len(els)
     out = out[:-2]
     out += "/)\n"
-    out += "      integer, parameter :: nFermi="+str(len(fermi_grid))+"\n"
-    out += "      integer, parameter :: nBose="+str(len(bose_grid))+"\n"
-    out += "      integer, parameter :: Iwmax="+str(fermi_grid[-1]+1)+"\n"
-    out += "      integer, parameter :: Iwbose_min="+str(bose_grid[0])+"\n"
-    out += "      integer, parameter :: Iwbose_max="+str(bose_grid[-1])+"\n"
     out += "      real(dp), parameter :: beta="+str(config['parameters']['beta'])+"\n"
     out += "      real(dp), parameter :: uhub="+str(config['parameters']['U'])+"\n"
+    out += "      integer(id), parameter :: nFreq = "+str(nFreq)
     return out
 
 # ============================================================================
 # =                          File Templates                                  =
 # ============================================================================
-def freq_list_h(config, mode=None):
-    freq_list = parse_freq_list(config, mode)
-    return freq_list_fort(config, *freq_list)
-
 def ladderDGA_in(config, mode=None):
     out = '''c AIM parameters: U, mu, beta, nden
 {0}d0      {1}d0       {2}d0       1.0d0
@@ -154,7 +116,8 @@ c Should the summation over the bosonic frequency in the charge-/spin-channel be
 {10}     {11}\n'''
 
     k_number = config['lDGA']['k_range'] + 1
-    nBoseFreq = config['Vertex']['boseFreq_max']-config['Vertex']['boseFreq_min']+1
+    raise NotImplementedError("No longer working on a grid! Cannot start FortranLDGA")
+    nBoseFreq = 0
     out = out.format(
         config['parameters']['U'],
         config['parameters']['mu'],
@@ -175,6 +138,7 @@ c Should the summation over the bosonic frequency in the charge-/spin-channel be
 
 #TODO: some fixed parameters
 def lDGA_julia(config, dataDir, tc):
+    raise NotImplementedError("No longer working on a grid! Cannot start JuliaLDGA")
     out = """[Model]
 U    = {0}
 mu   = {1}
@@ -184,8 +148,8 @@ Dimensions = {3}
 
 [Simulation]
 nFermFreq = {4}
-boseFreq_min = {5}
-boseFreq_max = {6}
+= {5}
+= {6}
 shift     = 0       # shift of center of bosonic frequency range
 Nk        = {7}     # IMPORTANT: in Fortran this is Nk x Nk and generated bei make_klist. TODO: adaptiv mesh
 NkInt     = {8}
@@ -217,9 +181,7 @@ read_bubble = true
         config['parameters']['mu'],
         config['parameters']['beta'],
         config['parameters']['Dimensions'],
-        config['Vertex']['nFermiFreq'],
-        config['Vertex']['boseFreq_min'],
-        config['Vertex']['boseFreq_max'],
+        0,0,0,
         int(k_number),
         config['lDGA']['Nint'],
         q_number,#int(q_number * ( q_number + 1 ) * ( q_number + 2 ) / 6),
@@ -267,11 +229,7 @@ def init_vertex_h(config, mode=None):
     nmax = int(comb(ns, int(ns/2)) ** 2)
     out =  "      integer, parameter :: nmax = {0}\n"
     out += "      integer, parameter :: ns={1}\n"
-    out += "      integer, parameter :: nmpara={5}\n"
-    out = out.format(nmax, ns, int(config['Vertex']['nFermiFreq']),
-        int(config['Vertex']['boseFreq_min']),
-        int(config['Vertex']['boseFreq_max']),
-        int(config['Vertex']['nmpara']))
+    out = out.format(nmax, ns)
     return out
 
 def init_2_h(config, mode=None):
@@ -285,7 +243,7 @@ def init_2_h(config, mode=None):
     return out
 
 
-def init_psc_h(config, mode=None):
+def init_susc_h(config, mode=None):
     ns = config['parameters']['ns']
     nmax = int(comb(ns, int(ns/2)) ** 2)
     out = "      parameter (nmaxx = {0})\n"
@@ -293,7 +251,7 @@ def init_psc_h(config, mode=None):
     out += "      parameter (Iwmax={2})\n"
     out += "      parameter (nmpara={3})\n"
     out = out.format(nmax, ns, int(config['Susc']['nBoseFreq']),
-                                int(config['Vertex']['nmpara']))
+                                int(config['Susc']['nmpara']))
     return out
 
 def init_trilex_h(config, mode=None):
@@ -418,7 +376,7 @@ uhub={1}_dp
                      config['general']['custom_module_load'])
     if config['general']['cluster'] == "berlin":
         jobs_per_node = 96
-        procs = (int(config['Vertex']['boseFreq_max']) - int(config['Vertex']['boseFreq_min']) + 1)
+        procs = jobs_per_node*int(config['Vertex']['nnodes'])
         nodes_per_job = ceil(procs/jobs_per_node)
         nodes = nodes_per_job*8
     else:
@@ -434,11 +392,11 @@ sed '1s/^.*$/       '$i'/' idw.dat >hilfe\n\
 mv hilfe idw.dat\n\
 ((( mpiifort ver_tpri_run_"+str(r+1)+".f90 -o run_"+str(r+1)+"\
 .x -mkl " + config['general']['CFLAGS'] +" ;\
-mpirun -np "+str(int(config['Vertex']['boseFreq_max']) - int(config['Vertex']['boseFreq_min']) + 1)+" -hosts "
+mpirun -np "+str(procs)+" -hosts "
         run_string = ""
         for p in range(nodes_per_job):
             run_string += "bcn${SLURM_JOB_NODELIST:"+str(4+5*nodes_per_job*r+5*p)+":4},"
-        run_string = run_string[0:-1] + " ./$name 2>&1 1>&3 | tee vertex_out$i.err run.err) 3>&1 | tee vertex_out$i.out run.out) > run.out 2>&1) & \n"
+        run_string = run_string[0:-1] + " ./$name 2>&1 1>&3 | tee run.err) 3>&1 | tee run.out) > run.out 2>&1) & \n"
         out += run_string
         out += "\necho \"running: " + run_string[0:-2] +"\"\n"
     out += "wait $(jobs -rp)\n"
@@ -516,8 +474,9 @@ Ferminoic frequency: nu_prime=pi*T*(2*k+1), -Iwbox_fermi<= k <= +Iwbox_fermi-1
    f) Iwbox_green_function is the range of the Green function. Since it appear in chi_0 in the combination i+j or i-j-1 it has to fullfill:
       Iwbox_green_function >= Iwbox_fermi_ph+Iwbox_bose_ph   (if Iwbox_ph >= Iwbox_pp, otherwise the same condition hold for Iwbox_..._pp)
 '''
-    nBoseFreq = config['Vertex']['boseFreq_max']-config['Vertex']['boseFreq_min']+1
-    out = out.format(nBoseFreq, config['Vertex']['nFermiFreq'],
-                     config['Vertex']['nFermiFreq']+nBoseFreq,
-                     config['parameters']['beta'], config['parameters']['U'])
+    #nBoseFreq = config['Vertex']['boseFreq_max']-config['Vertex']['boseFreq_min']+1
+    #out = out.format(nBoseFreq, config['Vertex']['nFermiFreq'],
+    #                 config['Vertex']['nFermiFreq']+nBoseFreq,
+    #                 config['parameters']['beta'], config['parameters']['U'])
+    out = "TODO: not supported yet!\n"
     return out

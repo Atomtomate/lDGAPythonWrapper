@@ -33,12 +33,14 @@ conv_param = "1.d-13"
 
 [Vertex]
 skip = false
-nmpara = 30
-nFermiFreq = 41
-nBoseFreq = 40
+# freqList can be either a path to a frequency list or
+# "F1:F2,B1:B2" for N1 to N2 (integer) fermionic and B1 to B2 bosonic.
+freqList = "-3:4,-4,4"
+nprocs = 192
 
 [Susc]
 skip = false
+nmpara = 30
 nBoseFreq = 10000
 
 [Trilex]
