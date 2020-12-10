@@ -36,7 +36,7 @@ skip = false
 # freqList can be either a path to a frequency list or
 # "F1:F2,B1:B2" for N1 to N2 (integer) fermionic and B1 to B2 bosonic.
 freqList = "-3:4,-4,4"
-nprocs = 192
+nnodes = 2
 
 [Susc]
 skip = false
