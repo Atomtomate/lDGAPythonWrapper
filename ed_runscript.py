@@ -94,7 +94,7 @@ def run_single(config):
     subCodeDir = os.path.join(config['general']['codeDir'], "ED_dmft")
     subRunDir_ED = os.path.join(runDir, "ed_dmft")
     src_files = ["ed_dmft_parallel_frequencies.f"]
-    compile_command = "mpif90 " + ' '.join(src_files) + \
+    compile_command = "mpiifort " + ' '.join(src_files) + \
                       " -o run.x -llapack -lblas " + \
                       config['general']['CFLAGS']
     jobid_ed = None
@@ -130,8 +130,6 @@ def run_single(config):
     # ------------------------- definitions ----------------------------------
     subRunDir_vert = runDir + "/ed_vertex"
     subCodeDir = config['general']['codeDir'] + "/ED_vertex"
-    dbg_compile_command = "mpiifort ver_tpri_run.f90 -o run.x -g -Og -llapack -lblas -ffixed-line-length-0 -Wall -Wextra -pedantic -fimplicit-none -fcheck=all -fbacktrace " +\
-                      config['general']['CFLAGS']
     jobid_vert = None
 
     if not config['Vertex']['skip']:
@@ -148,14 +146,6 @@ def run_single(config):
                                  dataDir, config)
 
             # ------------------ compile/run ---------------------------------
-            for ntask in range(1,9):
-                compile_cmd = "mpiifort ver_tpri_run_{0}.f90 -o run_"+\
-                        "{0}.x -O3 -llapack -lblas " +\
-                        config['general']['CFLAGS']
-                #if not run_bash(compile_command, cwd=subRunDir_vert,
-                #        verbose=True):
-                #    #config['general']['verbose']):
-                #    raise Exception("Compilation Failed")
             jobid_vert = run_ed_vertex(subRunDir_vert, config,jobid_ed)
             if not jobid_vert:
                 raise Exception("Job submit failed")
@@ -215,7 +205,7 @@ def run_single(config):
     # ------------------------- definitions ----------------------------------
     subCodeDir = os.path.join(config['general']['codeDir'],
                               "ED_Trilex_Parallel")
-    compile_command = "mpif90 ver_twofreq_parallel.f -o run.x -llapack " \
+    compile_command = "mpiifort ver_twofreq_parallel.f -o run.x -llapack " \
                       "-lblas " + config['general']['CFLAGS']
     output_dirs = ["trip_omega", "tripamp_omega", "trilex_omega"]
     subRunDir_trilex = os.path.join(runDir, "ed_trilex")

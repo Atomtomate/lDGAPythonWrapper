@@ -344,7 +344,7 @@ Eps(k)
         out += eps_k
     else:
         for i in range(config['parameters']['ns']-1):
-            out += "  "+str(i)+".000000000000\n"
+            out += "  0."+str(3(i+1))+"00000000000\n"
     out += " tpar(k)\n"
     if tpar_k:
         tp_eps = len(tpar_k.splitlines())
@@ -356,7 +356,7 @@ Eps(k)
         out += tpar_k
     else:
         for i in range(config['parameters']['ns']-1):
-            out += "  0.200000000000_dp\n"
+            out += "  0.250000000000\n"
     out += "  {3}                      #chemical potential\n"
     out = out.format(
         config['parameters']['beta'], #config['ED']['conv_param'],
@@ -365,42 +365,6 @@ Eps(k)
     )
     return out
 
-
-def call_script(config, mode=None):
-    out = '''
-beta={0}_dp
-uhub={1}_dp
-{2}
-'''
-    out = out.format(config['parameters']['beta'], config['parameters']['U'],\
-                     config['general']['custom_module_load'])
-    if config['general']['cluster'] == "berlin":
-        jobs_per_node = 96
-        procs = jobs_per_node*int(config['Vertex']['nnodes'])
-        nodes_per_job = ceil(procs/jobs_per_node)
-        nodes = nodes_per_job*8
-    else:
-        print("WARNING: unrecognized cluster configuration!")
-        return False
-        #.x -Og -g -ffixed-line-length-0 -Wall -Wextra -pedantic -fcheck=all -fbacktrace -llapack -lblas " + config['general']['CFLAGS'] +" ;\
-    for r in range(8):
-        out += "i="+str(r+1)+"\n\
-name=run\_$i.x\n\
-echo \"nodes per job: "+str(nodes_per_job)+"\"\n\
-echo $name\n\
-sed '1s/^.*$/       '$i'/' idw.dat >hilfe\n\
-mv hilfe idw.dat\n\
-((( mpiifort ver_tpri_run_"+str(r+1)+".f90 -o run_"+str(r+1)+"\
-.x -mkl " + config['general']['CFLAGS'] +" ;\
-mpirun -np "+str(procs)+" -hosts "
-        run_string = ""
-        for p in range(nodes_per_job):
-            run_string += "bcn${SLURM_JOB_NODELIST:"+str(4+5*nodes_per_job*r+5*p)+":4},"
-        run_string = run_string[0:-1] + " ./$name 2>&1 1>&3 | tee run.err) 3>&1 | tee run.out) > run.out 2>&1) & \n"
-        out += run_string
-        out += "\necho \"running: " + run_string[0:-2] +"\"\n"
-    out += "wait $(jobs -rp)\n"
-    return out
 
 def parameters_dat(config, mode=None):
     out = '''c Iwbox_bose_ph   Iwbox_fermi_ph   Iwbox_bose_pp   Iwbox_fermi_pp   Iwbox_bose_gamma   Iwbox_fermi_gamma    Iwbox_bose_lambda   Iwbox_fermi_lambda   Iwbox_green_function

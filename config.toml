@@ -5,7 +5,7 @@ CFLAGS = "-O3 -xHost"
 verbose = false
 cluster = "berlin"
 custom_slurm_lines = "-A hhp00048"
-custom_init_andpar_file = "../hubb.andpar"
+custom_init_andpar_file = ""
 custom_init_andpar_vals_only = true
 custom_module_load = "module restore ed"
 custom_conda_env = "p3"
@@ -30,13 +30,20 @@ imaxmu = 0          # unwichtig
 deltamu = 0.0       # unwichtig
 iterations = 80
 conv_param = "1.d-13"
+# thresholds for anderson parameters checks
+square_sum_diff = 1.0      # maximal allowed value for sum_k (eps^2_k - tpar^2_k)
+bathsite_cancel_eps = 0.01 # minimal allowed value for |eps_k - eps_l| 
+bathsite_cancel_v = 0.01   # minimal allowed value for |V_l|
+large_eps = 10             # maximal factor c for |eps_k| = c * T
+check_behavior = "break"   # possible options: ignore (continue on check fail), warn (warn in run.err), break (fail job)
+
 
 [Vertex]
 skip = false
 # freqList can be either a path to a frequency list or
 # "F1:F2,B1:B2" for N1 to N2 (integer) fermionic and B1 to B2 bosonic.
-freqList = "-3:4,-4,4"
-nnodes = 2
+freqList = "-3:4,-4:4"
+nprocs = 192
 
 [Susc]
 skip = false

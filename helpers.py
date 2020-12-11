@@ -8,7 +8,7 @@ import stat
 from math import isclose, ceil
 from file_templates import *
 # flake8:  noqa: F405
-# from file_templates import call_script, parameters_dat, init_vertex_h,\
+# from file_templates import , parameters_dat, init_vertex_h,\
 #                           bak_files_script, init_susc_h,\
 #                           init_trilex_h, ladderDGA_in, q_sum_h, lDGA_julia,\
 #                           split_files, tpri_dat, init_h, hubb_dat,\
@@ -82,6 +82,28 @@ def check_config_consistency(config):
               " that bath is not forced to be symmetric.".format(
                   mu, U / 2.0
               ))
+
+def check_andpar_result(config, andpar_lines):
+    ns = config['parameters']['ns']
+    eps = np.zeros(ns)
+    tpar = np.zeros(ns)
+    for i in range(ns):
+        eps[i] = float(andpar_lines[9+i])
+    for i in range(ns):
+        tpar[i] = float(andpar_lines[ns+1+9+i])
+    eps_ssum = np.sum(eps**2)
+    tpar_ssum = np.sum(tpar**2)
+    checks_success = [True, True, True, True]
+    checks_success[0] = abs(ps_ssum*0.25 - tpar_ssum) <= config['ED']['square_sum_diff']
+    for i in range(ns):
+        for j in range(i+1,ns):
+            if abs(eps[i] - eps[j]) <= config['ED']['bathsite_cancel_eps']:
+                checks_success[1] = False
+        if abs(tpar[i]) <= config['ED']['bathsite_cancel_V']:
+            checks_success[2] = False
+        if abs(eps[i]) >= (1.0/config['parameters']['beta'])*config['ED']['bathsite_cancel_V']:
+            checks_success[3] = False
+    return checks_success
 
 
 def read_preprocess_config(config_string):
@@ -228,12 +250,10 @@ def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
 
 def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
     files_dmft_list = ["hubb.andpar", "tpri.dat", "zpart.dat"]#, , "gm_wim""hubb.dat", "gm_wim"]
-    src_files_list = ["cleanup.sh","inversion_pp_fotso.f90",  "split_script",
-                   "sum_t_files.f","ver_tpri_run.f90"]
-    scripts = ["copy_dmft_files", "copy_data_files", "call_script",
+    src_files_list = ["cleanup.sh","inversion_pp_fotso.f90",  "split_script","ver_tpri_run.f90"]
+    scripts = ["copy_dmft_files", "copy_data_files",
                "cleanup.sh", "split_script"]
-    files_list = ["hubb.dat", "call_script", "parameters.dat", "init_vertex.h",
-                  ]
+    files_list = ["hubb.dat", "parameters.dat", "init_vertex.h"]
     for fn in files_list:
         fp = os.path.abspath(os.path.join(subRunDir, fn))
         with open(fp, 'w') as f:
@@ -271,17 +291,6 @@ def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
         target_file_path = os.path.abspath(os.path.join(subRunDir, filename))
         st = os.stat(target_file_path)
         os.chmod(target_file_path, st.st_mode | stat.S_IEXEC)
-
-    source_file_path = os.path.abspath(os.path.join(subRunDir, "ver_tpri_run.f90"))
-    lines = open(source_file_path).read().splitlines()
-
-    for ntask in range(1,9):
-        target_file_path = os.path.abspath(os.path.join(subRunDir,
-            "ver_tpri_run_"+str(ntask)+".f90"))
-        shutil.copyfile(source_file_path, target_file_path)
-        edit_task_number = "sed -i '343s/NTASKNUMBER/"+str(ntask)+"/' ver_tpri_run_"+str(ntask)+".f90"
-        run_bash(edit_task_number, subRunDir, verbose=False)
-
 
 
 def copy_and_edit_susc(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
@@ -426,12 +435,13 @@ def run_ed_vertex(cwd, config, ed_jobid=None):
     fp = os.path.join(cwd, filename)
     if config['general']['cluster'] == "berlin":
         cores_per_node = 96
-        procs = 8*config['Vertex']['nnodes']*cores_per_node
-        nodes = 8*config['Vertex']['nnodes']
+        procs = config['Vertex']['nprocs']
+        nodes = ceil(procs/cores_per_node)
     else:
         print("WARNING: unrecognized cluster configuration!")
-        procs = 8*config['Vertex']['nnodes']
-    cmd = "./call_script > run.out 2> run.err"
+        procs = config['Vertex']['nprocs']
+    cmd = "mpiifort ver_tpri_run.f90 -o run.x -mkl " + config['general']['CFLAGS']+"\n"
+    cmd+= "mpirun -np " + str(procs) + " ./run.x > run.out 2> run.err"
     cslurm = config['general']['custom_slurm_lines']
     if not ed_jobid:
         run_cmd = "sbatch " + filename
