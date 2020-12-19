@@ -33,7 +33,7 @@ conv_param = "1.d-13"
 # thresholds for anderson parameters checks
 square_sum_diff = 1.0      # maximal allowed value for sum_k (eps^2_k - tpar^2_k)
 bathsite_cancel_eps = 0.01 # minimal allowed value for |eps_k - eps_l| 
-bathsite_cancel_v = 0.01   # minimal allowed value for |V_l|
+bathsite_cancel_V = 0.01   # minimal allowed value for |V_l|
 large_eps = 10             # maximal factor c for |eps_k| = c * T
 check_behavior = "break"   # possible options: ignore (continue on check fail), warn (warn in run.err), break (fail job)
 

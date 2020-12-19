@@ -80,22 +80,26 @@ def parse_freq_list(freq_grid):
 # build fortran input file from frequency grids
 def freq_list_h(config, nFreq, max_freq, mode=None):
     line_length_counter = 6
-    max_line_length = 180
-    out = "      complex*16,parameter,dimension("+str(-max_freq)+":"+str(max_freq)+") :: mf = (/ & \n        "
-    for elf in range(-max_freq,max_freq+1):
-        el = (1j*elf*np.pi/config['parameters']['beta'])
-        els = "(" + str(el.real) + "_dp ," + str(el.imag) + "_dp ), "
-        if line_length_counter+len(els) < max_line_length:
-            out += els
-            line_length_counter += len(els)
-        else:
-            out += " & \n        "+els
-            line_length_counter = 8+len(els)
-    out = out[:-2]
-    out += "/)\n"
-    out += "      real(dp), parameter :: beta="+str(config['parameters']['beta'])+"\n"
+    max_line_length = 3500
+    out = "      real(dp), parameter :: beta="+str(config['parameters']['beta'])+"\n"
     out += "      real(dp), parameter :: uhub="+str(config['parameters']['U'])+"\n"
-    out += "      integer(id), parameter :: nFreq = "+str(nFreq)
+    out += "      integer(id), parameter :: nFreq = "+str(nFreq) + "\n"
+    out += "      real(dp) :: mf_r,mf_im\n"
+    if max_freq < 3500:
+        out += "      complex*16,parameter,dimension("+str(-max_freq)+":"+str(max_freq)+") :: mf = (/ & \n        "
+        for elf in range(-max_freq,max_freq+1):
+            el = (1j*elf*np.pi/config['parameters']['beta'])
+            els = "({:0.1f},{:0.10f}),".format(el.real,el.imag)
+            if line_length_counter+len(els) < max_line_length:
+                out += els
+                line_length_counter += len(els)
+            else:
+                out += " & \n        "+els
+                line_length_counter = 8+len(els)
+        out = out[:-1]
+        out += "/)\n"
+    else:
+        raise NotImplementedError("Frequency range too large for static alloc")
     return out
 
 # ============================================================================
@@ -344,7 +348,7 @@ Eps(k)
         out += eps_k
     else:
         for i in range(config['parameters']['ns']-1):
-            out += "  0."+str(3(i+1))+"00000000000\n"
+            out += "  0."+str(3*(i+1))+"00000000000\n"
     out += " tpar(k)\n"
     if tpar_k:
         tp_eps = len(tpar_k.splitlines())

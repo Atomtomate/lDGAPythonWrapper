@@ -2,6 +2,7 @@ import sys
 import os
 import re
 import numpy as np
+import shutil
 from helpers import run_bash, check_env, query_yn, reset_dir, dmft_log, \
                     copy_and_edit_dmft, run_ed_dmft, copy_and_edit_vertex, \
                     parse_freq_list, \
@@ -52,7 +53,7 @@ def run(config):
             print("TODO: generate configs for beta x U scan")
             #run_single(config)
 
-def run_single(config):
+def run_single(config, config_path):
 
     beta_str = config['parameters']['beta']
     U_str = config['parameters']['U']
@@ -72,7 +73,8 @@ def run_single(config):
 
     # ------------------------ create directories ----------------------------
     runDir = config['general']['runDir']
-    dataDir = os.path.join(config['general']['runDir'], "data")
+    print(os.path.abspath(config_path))
+    dataDir = os.path.join(runDir, "data")
     if not os.path.exists(runDir):
         os.mkdir(runDir)
         print("Directory ", runDir,  " Created ")
@@ -85,6 +87,9 @@ def run_single(config):
                                    "Do you want to continue?", "no")
                 if confirm:
                     reset_dir(runDir)
+    config_path = os.path.abspath(config_path)
+    config_path_target = os.path.abspath(os.path.join(runDir, "config.toml"))
+    shutil.copyfile(config_path, config_path_target)
 
     # ========================================================================
     # =                             DMFT                                     =
@@ -423,18 +428,18 @@ def run_single(config):
 if __name__ == "__main__":
     if len(sys.argv) == 1:
         config = read_preprocess_config("config.toml")
-        run_single(config)
+        run_single(config, "config.toml")
     else:
         arg_str = sys.argv[1]
         if os.path.isfile(arg_str):
             config = read_preprocess_config(arg_str)
-            run_single(config)
+            run_single(config, arg_str)
         elif os.path.isdir(arg_str):
             for fn in os.listdir(arg_str):
                 if fn.startswith("config_"):
                     fp = os.path.abspath(os.path.join(arg_str, fn))
                     config = read_preprocess_config(fp)
-                    run_single(config)
+                    run_single(config, fp)
         else:
             raise RuntimeError("Argument provided is not a valid config or "
                                "directory of configs starting with config_.")
