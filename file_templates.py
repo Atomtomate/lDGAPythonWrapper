@@ -84,12 +84,11 @@ def freq_list_h(config, nFreq, max_freq, mode=None):
     out = "      real(dp), parameter :: beta="+str(config['parameters']['beta'])+"\n"
     out += "      real(dp), parameter :: uhub="+str(config['parameters']['U'])+"\n"
     out += "      integer(id), parameter :: nFreq = "+str(nFreq) + "\n"
-    out += "      real(dp) :: mf_r,mf_im\n"
     if max_freq < 3500:
         out += "      complex*16,parameter,dimension("+str(-max_freq)+":"+str(max_freq)+") :: mf = (/ & \n        "
         for elf in range(-max_freq,max_freq+1):
             el = (1j*elf*np.pi/config['parameters']['beta'])
-            els = "({:0.1f},{:0.10f}),".format(el.real,el.imag)
+            els = "({:0.1f},{:0.12f}),".format(el.real,el.imag)
             if line_length_counter+len(els) < max_line_length:
                 out += els
                 line_length_counter += len(els)
