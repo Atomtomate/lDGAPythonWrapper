@@ -283,7 +283,7 @@ def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
         with open(target_file_path, "w") as fp:
             nFreq, freq_str = parse_freq_list(freq_grid)
             fp.write(freq_str)
-        max_freq = (2*len(range(*freq_grid[0]))+len(range(*freq_grid[1])))+5
+        max_freq = 2*len(range(*freq_grid[0]))+len(range(*freq_grid[1]))+5
     fp = os.path.abspath(os.path.join(subRunDir, "freq_list.h"))
     with open(fp, 'w') as f:
         f.write(freq_list_h(config, nFreq, max_freq))
