@@ -89,7 +89,11 @@ def run_single(config, config_path):
                     reset_dir(runDir)
     config_path = os.path.abspath(config_path)
     config_path_target = os.path.abspath(os.path.join(runDir, "config.toml"))
-    shutil.copyfile(config_path, config_path_target)
+    if os.path.exists(config_path_target):
+        if not os.path.samefile(config_path, config_path_target):
+            shutil.copyfile(config_path, config_path_target)
+    else:
+        shutil.copyfile(config_path, config_path_target)
 
     # ========================================================================
     # =                             DMFT                                     =

@@ -79,6 +79,7 @@ def parse_freq_list(freq_grid):
 
 # build fortran input file from frequency grids
 def freq_list_h(config, nFreq, max_freq, mode=None):
+    max_freq = 2*max_freq
     line_length_counter = 6
     max_line_length = 3500
     out = "      real(dp), parameter :: beta="+str(config['parameters']['beta'])+"\n"
