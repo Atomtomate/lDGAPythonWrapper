@@ -8,7 +8,7 @@ import stat
 from math import isclose, ceil
 from file_templates import *
 # flake8:  noqa: F405
-# from file_templates import , parameters_dat, init_vertex_h,\
+# from file_templates import , init_vertex_h,\
 #                           bak_files_script, init_susc_h,\
 #                           init_trilex_h, ladderDGA_in, q_sum_h, lDGA_julia,\
 #                           split_files, tpri_dat, init_h, hubb_dat,\
@@ -249,11 +249,10 @@ def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
 
 
 def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
-    files_dmft_list = ["hubb.andpar", "tpri.dat", "zpart.dat"]#, , "gm_wim""hubb.dat", "gm_wim"]
-    src_files_list = ["cleanup.sh","inversion_pp_fotso.f90",  "split_script","ver_tpri_run.f90"]
-    scripts = ["copy_dmft_files", "copy_data_files", "checks.py",
-               "cleanup.sh", "split_script"]
-    files_list = ["hubb.dat", "parameters.dat", "init_vertex.h"]
+    files_dmft_list = ["hubb.andpar", "tpri.dat", "zpart.dat", "g0mand","hubb.dat", "gm_wim"]
+    src_files_list = ["ver_tpri_run.f90"]
+    scripts = ["copy_dmft_files", "copy_data_files", "checks.py"]
+    files_list = ["init_vertex.h"]
     for fn in files_list:
         fp = os.path.abspath(os.path.join(subRunDir, fn))
         with open(fp, 'w') as f:
@@ -268,18 +267,26 @@ def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
         f.write(bak_files_script(dataDir, subRunDir,
                                  files_dmft_list, header=True, mode="cp"))
 
-    freq_str = config['Vertex']['freqList']
+    freq_path = config['Vertex']['freqList']
+    if freq_path.endswith("freqList.dat"):
+        full_freq_dat = freq_path
+    else:
+        full_freq_dat = os.path.join(freq_path, "freqList.dat")
+    freq_dir = os.path.dirname(full_freq_dat)
     target_file_path = os.path.abspath(os.path.join(subRunDir, "freqList.dat"))
-    if os.path.exists(freq_str):
-        shutil.copyfile(os.path.abspath(freq_str), target_file_path)
-        with open(freq_str) as f:
+    if os.path.exists(full_freq_dat):
+        shutil.copyfile(os.path.abspath(full_freq_dat), target_file_path)
+        with open(full_freq_dat) as f:
             f.readline()
             f.readline()
             var_line = f.readline()
             nFreq = list(map(int,var_line.split()))[0]
             max_freq = list(map(int,var_line.split()))[1]
     else:
-        freq_grid = match_freq_str(freq_str)
+        raise NotImplementedError("Automatic generation of frequency grid noch implemented yet. \
+                Use EquivalencyClassesConstructor.jl in order to generate a FreqList.jld2 file.")
+        sys.exit(1)
+        freq_grid = match_freq_str(full_freq_dat)
         with open(target_file_path, "w") as fp:
             nFreq, freq_str = parse_freq_list(freq_grid)
             fp.write(freq_str)
@@ -442,6 +449,10 @@ def run_ed_dmft(cwd, config):
 def run_ed_vertex(cwd, config, ed_jobid=None):
     filename = "ed_vertex_run.sh"
     fp = os.path.join(cwd, filename)
+    freq_path = config['Vertex']['freqList']
+    if freq_path.endswith("freqList.dat"):
+        freq_path = os.path.dirname(freq_path)
+    freq_path = os.path.abspath(freq_path))
     if config['general']['cluster'] == "berlin":
         cores_per_node = 96
         procs = config['Vertex']['nprocs']
@@ -449,11 +460,17 @@ def run_ed_vertex(cwd, config, ed_jobid=None):
     else:
         print("WARNING: unrecognized cluster configuration!")
         procs = config['Vertex']['nprocs']
-    cmd = "echo \"--- start checks ---- \n\" > run.out\n"
-    cmd+= "~/.conda/envs/p3/bin/python checks.py > run.out\n"
-    cmd+= "echo \"--- end checks ---- \n\" > run.out\n"
+    cmd = "echo \"--- start checks ---- \" > run.out\n"
+    cmd+= "~/.conda/envs/p3/bin/python checks.py >> run.out\n"
+    cmd+= "res=$?\n"
+    cmd+= "if [\"$res\" -eq \"1\"]; then\n"
+    cmd+= "echo \"Checks Successful\" >> run.out;\n"
+    cmd+= "else\necho \"Checks unsuccessful\" >> run.out;\nfi;\n"
+    cmd+= "echo \"--- end checks ---- \" >> run.out\n"
     cmd+= "mpiifort ver_tpri_run.f90 -o run.x -mkl " + config['general']['CFLAGS']+"\n"
-    cmd+= "mpirun -np " + str(procs) + " ./run.x > run.out 2> run.err"
+    cmd+= "mpirun -np " + str(procs) + " ./run.x > run.out 2> run.err\n"
+    cmd+= "julia " + os.path.join(config['general']['codeDir'], "SparseVertex/run2.jl") + \
+          " "  + freq_path + " " + cwd + "\n"
     cslurm = config['general']['custom_slurm_lines']
     if not ed_jobid:
         run_cmd = "sbatch " + filename
@@ -463,6 +480,9 @@ def run_ed_vertex(cwd, config, ed_jobid=None):
     with open(fp, 'w') as f:
         job_func = globals()["job_" + config['general']['cluster']]
         f.write(job_func(config, procs, cslurm, cmd))
+    st = os.stat(fp)
+    os.chmod(fp, st.st_mode | stat.S_IEXEC)
+
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
     if not (process.returncode == 0):
         print("Vertex submit did not work as expected:")
@@ -551,29 +571,15 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,
     cp_script_path = os.path.abspath(os.path.join(cwd, "copy_data.sh"))
     with open(cp_script_path, 'w') as f:
         f.write(cp_script)
-    split_script = split_files(config)
-    split_script_path = os.path.abspath(os.path.join(dataDir,
-                                                     "split_files.sh"))
-    with open(split_script_path, 'w') as f:
-        f.write(split_script)
-    st = os.stat(split_script_path)
-    os.chmod(split_script_path, st.st_mode | stat.S_IEXEC)
-
     storage_py_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                    "storage_io.py")
     storage_py_target = os.path.abspath(os.path.join(cwd, "storage_io.py"))
     print("copy from " + storage_py_path + " to " + storage_py_target)
     shutil.copyfile(storage_py_path, storage_py_target)
     data_path = os.path.abspath(os.path.join(cwd, "data"))
-    clean_script_path = os.path.abspath(os.path.join(subRunDir_vert,
-                                                     "clean_script_auto"))
-    #content = "cp " + os.path.join(subRunDir_ED, "gm_wim") + " " +\
     #          subRunDir_vert + "\n"
-    content = str(clean_script_path) + "\n"
-    content += str(cp_script_path) + "\n"
+    content = str(cp_script_path) + "\n"
     outf_lst = config['Postprocess']['output_format'].split(',')
-    if 'text' in map(str.strip, outf_lst):
-        content += str(split_script_path) + "\n"
     conda_env = config['general']['custom_conda_env']
     if conda_env:
         content += "eval \"$(conda shell.bash hook)\"\n"
@@ -586,10 +592,6 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,
 
     st = os.stat(cp_script_path)
     os.chmod(cp_script_path, st.st_mode | stat.S_IEXEC)
-    st = os.stat(clean_script_path)
-    os.chmod(clean_script_path, st.st_mode | stat.S_IEXEC)
-    st = os.stat(split_script_path)
-    os.chmod(split_script_path, st.st_mode | stat.S_IEXEC)
 
     run_cmd = "sbatch " + filename
     if jobids and any(jobids):
@@ -718,8 +720,6 @@ def run_results_pp(runDir, dataDir, subRunDir_ED, subRunDir_vert,
     content += str(clean_script_path) + "\n"
     content += str(cp_script_path) + "\n"
     outf_lst = config['Postprocess']['output_format'].split(',')
-    if 'text' in map(str.strip, outf_lst):
-        content += str(split_script_path) + "\n"
     conda_env = config['general']['custom_conda_env']
     if conda_env:
         content += "eval \"$(conda shell.bash hook)\"\n"
@@ -734,8 +734,6 @@ def run_results_pp(runDir, dataDir, subRunDir_ED, subRunDir_vert,
     os.chmod(cp_script_path, st.st_mode | stat.S_IEXEC)
     st = os.stat(clean_script_path)
     os.chmod(clean_script_path, st.st_mode | stat.S_IEXEC)
-    st = os.stat(split_script_path)
-    os.chmod(split_script_path, st.st_mode | stat.S_IEXEC)
 
     run_cmd = "sbatch " + filename
     if jobids and any(jobids):
@@ -805,8 +803,7 @@ def build_collect_data(target_dir, dmft_dir, vertex_dir, susc_dir, trilex_dir,
                        mode):
     dmft_files = ["hubb.dat", "hubb.andpar", "g0m", "g0mand", "gm_wim"]
     susc_files = ["chi_asympt", "matrix"]
-    vertex_files = ["t.tar.gz", "parameters.dat", "GAMMA_DM_FULLRANGE", "F_DM",
-                    "vert_chi"]
+    vertex_files = ["ED_out.jld2", "vert_chi"]
     trilex_dirs = ["tripamp_omega", "trip_omega", "trilex_omega"]
 
     copy_script_str = bak_files_script(dmft_dir, target_dir, dmft_files,

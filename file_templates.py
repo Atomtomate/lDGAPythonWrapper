@@ -196,23 +196,6 @@ read_bubble = true
     return out
 
 
-def split_files(config):
-    out = '''#!/bin/bash
-cwd=$(pwd)
-cd "$(dirname "$0")"
-mkdir -p gamma_dir
-cd gamma_dir
-split --suffix-length=3 -d --lines={0} ../GAMMA_DM_FULLRANGE gamma
-cd ..
-mkdir -p chi_dir
-cd chi_dir
-split --suffix-length=3 -d --lines={1} ../vert_chi chi
-cd $cwd
-'''
-    nBoseFreq = config['Vertex']['boseFreq_max']-config['Vertex']['boseFreq_min']+1
-    lines = (nBoseFreq)**2
-    out = out.format(lines, lines)
-    return out
 
 def tpri_dat(config, mode=None):
     t = 0.5/np.sqrt(2*config['parameters']['Dimensions'])
