@@ -30,11 +30,15 @@ export SLURM_CPU_BIND=none
 def bak_files_script(source_dir, target_dir, files_list, header=False,
                      mode="mv"):
     out = "#!/bin/bash \n" if header else ""
-    out = out + mode + " " + os.path.abspath(source_dir) + "/{"
-    for filename in files_list:
-        out = out + filename + ","
-    out = out[:-1] + "} " + os.path.abspath(target_dir)
-    out += "\n"
+    out = out + mode + " " + os.path.abspath(source_dir) 
+    if len(files_list) > 1:
+        out += "/{"
+        for filename in files_list:
+            out = out + filename + ","
+        out = out[:-1] + "} " 
+    else:
+        out += "/" + files_list[0] + " "
+    out += os.path.abspath(target_dir)+"\n"
     return out
 
 

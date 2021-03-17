@@ -18,8 +18,8 @@ def isnumber(x):
 
 def run_conversion(path, out_formats):
     files = [os.path.join(path, f) for f in
-             ["hubb.andpar", "hubb.dat", "split_files.sh", "chi_asympt",
-              "F_DM", "GAMMA_DM_FULLRANGE", "vert_chi", "g0m", "g0mand",
+             ["hubb.andpar", "hubb.dat",  "chi_asympt",
+              "vert_chi", "g0m", "g0mand",
               "gm_wim"]]
     dirs = [os.path.join(path, f) for f in ["trilex_omega", "tripamp_omega",
                                             "trip_omega"]]
@@ -71,31 +71,6 @@ def run_conversion(path, out_formats):
     except pandas.io.common.EmptyDataError:
         print("WARNING: "+fn+" not found!")
         # files_n.append(fn)
-
-    # ========================================================================
-    # =                                F_DM                                  =
-    # ========================================================================
-    fn = "F_DM"
-    hn = ["Re_F_density", "Im_F_density", "Re_F_magnetic", "Im_F_magnetic"]
-    print("storing " + fn)
-    try:
-        read_and_convert(path, fn, hn, out_formats)
-    except pandas.io.common.EmptyDataError:
-        print("WARNING: "+fn+" not found!")
-        # files_n.append(fn)
-
-    # ========================================================================
-    # =                         GAMMA_DM_FULLRANGE                           =
-    # ========================================================================
-    fn = "GAMMA_DM_FULLRANGE"
-    hn = ["Re_Gamma_density", "Im_Gamma_density", "Re_Gamma_magnetic",
-          "Im_Gamma_magnetic"]
-    print("storing " + fn)
-    try:
-        read_and_convert(path, fn, hn, out_formats)
-    except pandas.io.common.EmptyDataError:
-        print("WARNING: "+fn+" not found!")
-        files_not_found.append(fn)
 
     # ========================================================================
     # =                              vert_chi                                =

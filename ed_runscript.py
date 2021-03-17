@@ -127,6 +127,8 @@ def run_single(config, config_path):
             jobid_ed = run_ed_dmft(subRunDir_ED, config)
             if not jobid_ed:
                 raise Exception("Job submit failed")
+            if os.path.isfile(dmft_logfile):
+                os.remove(dmft_logfile)
             _ = dmft_log(dmft_logfile, jobid_ed, subRunDir_ED, config)
         else:
             print("Skipping dmft computation, due to completed job. "
@@ -161,6 +163,8 @@ def run_single(config, config_path):
 
             # ----------------- save job info --------------------------------
             vert_logfile = os.path.join(runDir, "job_vertex.log")
+            if os.path.isfile(vert_logfile):
+                os.remove(vert_logfile)
             dmft_log(vert_logfile, jobid_vert, subRunDir_vert, config)
         else:
             print("Skipping vertex computation, due to completed job. "
@@ -202,6 +206,8 @@ def run_single(config, config_path):
 
             # ----------------- save job info --------------------------------
             susc_logfile = os.path.join(runDir, "job_susc.log")
+            if os.path.isfile(susc_logfile):
+                os.remove(susc_logfile)
             dmft_log(susc_logfile, jobid_susc, subRunDir_susc, config)
         else:
             print("Skipping susceptibility computation, due to completed job."
@@ -247,6 +253,8 @@ def run_single(config, config_path):
 
             # ----------------- save job info --------------------------------
             trilex_logfile = os.path.join(runDir, "job_trilex.log")
+            if os.path.isfile(trilex_logfile):
+                os.remove(trilex_logfile)
             _ = dmft_log(trilex_logfile, jobid_trilex, subRunDir_trilex,
                          config)
         else:
@@ -324,6 +332,8 @@ def run_single(config, config_path):
 
             # ----------------- save job info --------------------------------
             lDGA_logfile = os.path.join(runDir, "job_lDGA.log")
+            if os.path.isfile(lDGA_logfile):
+                os.remove(lDGA_logfile)
             _ = dmft_log(lDGA_logfile, jobid_lDGA_f, subRunDir_lDGA_f, config)
         else:
             print("Skipping fortran lDGA computation, due to completed job. "
@@ -365,6 +375,8 @@ def run_single(config, config_path):
 
                 # ----------------- save job info ----------------------------
                 lDGA_logfile = os.path.join(runDir, "job_lDGA_j"+postf+".log")
+                if os.path.isfile(lDGA_logfile):
+                    os.remove(lDGA_logfile)
                 _ = dmft_log(lDGA_logfile, jobid_lDGA_j_tc,
                              subRunDir_lDGA_j_tc, config)
             else:
@@ -408,6 +420,8 @@ def run_single(config, config_path):
 
                 # ----------------- save job info ----------------------------
                 lDGA_logfile = os.path.join(runDir, "job_lDGA_j"+postf+".log")
+                if os.path.isfile(lDGA_logfile):
+                    os.remove(lDGA_logfile)
                 _ = dmft_log(lDGA_logfile, jobid_lDGA_j_naive,
                              subRunDir_lDGA_j_naive, config)
             else:

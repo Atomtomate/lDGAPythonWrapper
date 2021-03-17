@@ -449,10 +449,6 @@ def run_ed_dmft(cwd, config):
 def run_ed_vertex(cwd, config, ed_jobid=None):
     filename = "ed_vertex_run.sh"
     fp = os.path.join(cwd, filename)
-    freq_path = config['Vertex']['freqList']
-    if freq_path.endswith("freqList.dat"):
-        freq_path = os.path.dirname(freq_path)
-    freq_path = os.path.abspath(freq_path))
     if config['general']['cluster'] == "berlin":
         cores_per_node = 96
         procs = config['Vertex']['nprocs']
@@ -469,8 +465,6 @@ def run_ed_vertex(cwd, config, ed_jobid=None):
     cmd+= "echo \"--- end checks ---- \" >> run.out\n"
     cmd+= "mpiifort ver_tpri_run.f90 -o run.x -mkl " + config['general']['CFLAGS']+"\n"
     cmd+= "mpirun -np " + str(procs) + " ./run.x > run.out 2> run.err\n"
-    cmd+= "julia " + os.path.join(config['general']['codeDir'], "SparseVertex/run2.jl") + \
-          " "  + freq_path + " " + cwd + "\n"
     cslurm = config['general']['custom_slurm_lines']
     if not ed_jobid:
         run_cmd = "sbatch " + filename
@@ -551,12 +545,18 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,
                     subRunDir_susc, subRunDir_trilex, config, jobids=None):
     filename = "postprocess.sh"
     cslurm = config['general']['custom_slurm_lines']
-    # procs = 1
     if not os.path.exists(dataDir):
         os.mkdir(dataDir)
     fp_config = os.path.join(dataDir, "config.toml")
     with open(fp_config, 'w') as f:
         toml.dump(config, f)
+
+    freq_path = config['Vertex']['freqList']
+    if freq_path.endswith("freqList.dat"):
+        freq_path = os.path.dirname(freq_path)
+    freq_path = os.path.abspath(freq_path)
+    cmd= "julia " + os.path.join(config['general']['codeDir'], "SparseVertex/run2.jl") + \
+          " "  + freq_path + " " + dataDir + "\n"
 
     full_remove_script = "rm " + os.path.abspath(subRunDir_ED) + " " + \
                          os.path.abspath(subRunDir_vert) +\
@@ -587,6 +587,7 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,
     content += "python storage_io.py " + data_path + " " +\
         config['Postprocess']['output_format'].replace(" ", "") + " && "
     content += "rm storage_io.py \n"
+    content += cmd + "\n"
     if config['Postprocess']['keep_only_data']:
         content += full_remove_script
 
@@ -803,7 +804,7 @@ def build_collect_data(target_dir, dmft_dir, vertex_dir, susc_dir, trilex_dir,
                        mode):
     dmft_files = ["hubb.dat", "hubb.andpar", "g0m", "g0mand", "gm_wim"]
     susc_files = ["chi_asympt", "matrix"]
-    vertex_files = ["ED_out.jld2", "vert_chi"]
+    vertex_files = ["vert_chi"]
     trilex_dirs = ["tripamp_omega", "trip_omega", "trilex_omega"]
 
     copy_script_str = bak_files_script(dmft_dir, target_dir, dmft_files,
