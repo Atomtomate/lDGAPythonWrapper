@@ -279,6 +279,42 @@ def run_single(config, config_path):
                                     jobid_trilex])
         if not jobid_pp:
             raise Exception("Postprocessing job submit failed")
+    # ========================================================================
+    # =                          lDGA Julia                                  =
+    # ========================================================================
+
+    # ------------------------- definitions ----------------------------------
+    subCodeDir = os.path.join(config['general']['codeDir'], "LadderDGA.jl")
+    subRunDir_lDGA_j = os.path.join(runDir, "lDGA_julia")
+    jobid_lDGA_j = None
+
+    if not config['lDGAJulia']['skip']:
+        # ------------------ create dirs ---------------------------------
+        if not os.path.exists(subRunDir_lDGA_j):
+            os.mkdir(subRunDir_lDGA_j)
+
+        # ----------------- save job info --------------------------------
+        lDGA_logfile = os.path.join(runDir, "job_lDGA_j.log")
+        cont = dmft_log(lDGA_logfile, jobid_lDGA_j, subRunDir_lDGA_j, config)
+        if cont:
+            # ------------------- copy/edit ------------------------------
+            copy_and_edit_lDGA_j(subRunDir_lDGA_j, dataDir, config)
+
+            # ------------------ compile/run -----------------------------
+            jobid_lDGA_j = run_lDGA_j(subRunDir_lDGA_j, dataDir, subCodeDir,
+                                             config, jobid_pp)
+            if not jobid_lDGA_j:
+                raise Exception("Job submit failed")
+
+            # ----------------- save job info ----------------------------
+            lDGA_logfile = os.path.join(runDir, "job_lDGA_j.log")
+            if os.path.isfile(lDGA_logfile):
+                os.remove(lDGA_logfile)
+            _ = dmft_log(lDGA_logfile, jobid_lDGA_j,
+                         subRunDir_lDGA_j, config)
+        else:
+            print("Skipping Julia lDGA computation, due to completed job."
+                  "This behavor can be changed in the config.")
 
     # ========================================================================
     # =                        lDGA Fortran                                  =
@@ -339,95 +375,6 @@ def run_single(config, config_path):
             print("Skipping fortran lDGA computation, due to completed job. "
                   "This behavor can be changed in the config.")
 
-    # ========================================================================
-    # =                        lDGA Julia tc                                 =
-    # ========================================================================
-
-    # ------------------------- definitions ----------------------------------
-    subCodeDir = os.path.join(config['general']['codeDir'], "ladderDGA_Julia")
-    subRunDir_lDGA_j_tc = os.path.join(runDir, "lDGA_julia_tc")
-    jobid_lDGA_j_tc = None
-    cont = True
-
-    if not config['lDGAJulia']['skip']:
-        if config['lDGAJulia']['tail_corrected'].casefold() == "both" or \
-           config['lDGAJulia']['tail_corrected'].casefold() == "yes":
-            tc = "true"
-            postf = "_tc"
-
-            # ------------------ create dirs ---------------------------------
-            if not os.path.exists(subRunDir_lDGA_j_tc):
-                os.mkdir(subRunDir_lDGA_j_tc)
-
-            # ----------------- save job info --------------------------------
-            lDGA_logfile = os.path.join(runDir, "job_lDGA_j"+postf+".log")
-            _ = dmft_log(lDGA_logfile, jobid_lDGA_j_tc, subRunDir_lDGA_j_tc,
-                         config)
-            if cont:
-                # ------------------- copy/edit ------------------------------
-                copy_and_edit_lDGA_j(subRunDir_lDGA_j_tc, dataDir, config, tc)
-
-                # ------------------ compile/run -----------------------------
-                jobid_lDGA_j_tc = run_lDGA_j(subRunDir_lDGA_j_tc, subCodeDir,
-                                             config, jobid_pp)
-                if not jobid_lDGA_j_tc:
-                    raise Exception("Job submit failed")
-
-                # ----------------- save job info ----------------------------
-                lDGA_logfile = os.path.join(runDir, "job_lDGA_j"+postf+".log")
-                if os.path.isfile(lDGA_logfile):
-                    os.remove(lDGA_logfile)
-                _ = dmft_log(lDGA_logfile, jobid_lDGA_j_tc,
-                             subRunDir_lDGA_j_tc, config)
-            else:
-                print("Skipping tail corrected Julia lDGA computation, due to "
-                      "completed job. This behavor can be changed in the "
-                      "config.")
-
-    # ========================================================================
-    # =                      lDGA Julia naive                                =
-    # ========================================================================
-
-    # ------------------------- definitions ----------------------------------
-    subCodeDir = os.path.join(config['general']['codeDir'], "ladderDGA_Julia")
-    subRunDir_lDGA_j_naive = os.path.join(runDir, "lDGA_julia")
-    jobid_lDGA_j_naive = None
-
-    if not config['lDGAJulia']['skip']:
-        if config['lDGAJulia']['tail_corrected'].casefold() == "both" or\
-           config['lDGAJulia']['tail_corrected'].casefold() == "no":
-            postf = "_naive"
-            tc = "false"
-
-            # ------------------ create dirs ---------------------------------
-            if not os.path.exists(subRunDir_lDGA_j_naive):
-                os.mkdir(subRunDir_lDGA_j_naive)
-
-            # ----------------- save job info --------------------------------
-            lDGA_logfile = os.path.join(runDir, "job_lDGA_j"+postf+".log")
-            _ = dmft_log(lDGA_logfile, jobid_lDGA_j_naive,
-                         subRunDir_lDGA_j_naive, config)
-            if cont:
-                # ------------------- copy/edit ------------------------------
-                copy_and_edit_lDGA_j(subRunDir_lDGA_j_naive, dataDir, config,
-                                     tc)
-
-                # ------------------ compile/run -----------------------------
-                jobid_lDGA_j_naive = run_lDGA_j(subRunDir_lDGA_j_naive,
-                                                subCodeDir, config, jobid_pp)
-                if not jobid_lDGA_j_naive:
-                    raise Exception("Job submit failed")
-
-                # ----------------- save job info ----------------------------
-                lDGA_logfile = os.path.join(runDir, "job_lDGA_j"+postf+".log")
-                if os.path.isfile(lDGA_logfile):
-                    os.remove(lDGA_logfile)
-                _ = dmft_log(lDGA_logfile, jobid_lDGA_j_naive,
-                             subRunDir_lDGA_j_naive, config)
-            else:
-                print("Skipping tail corrected Julia lDGA computation, due to "
-                      "completed job. This behavor can be changed in the "
-                      "config.")
 
     # ========================================================================
     # =                           results                                    =
@@ -438,9 +385,9 @@ def run_single(config, config_path):
     # jobid_results = None
     # jobid_pp = run_results_pp(runDir, dataDir, subRunDir_ED, subRunDir_vert,\
     #                subRunDir_susc, subRunDir_trilex, config,
-    #                 subRunDir_lDGA_j_tc, subRunDir_lDGA_j_naive,
+    #                 subRunDir_lDGA_j, subRunDir_lDGA_j_naive,
     #                 jobids = [jobid_ed, jobid_vert, jobid_susc, jobid_trilex,
-    #                         jobid_lDGA_j_naive, jobid_lDGA_j_tc])
+    #                         jobid_lDGA_j_naive, jobid_lDGA_j])
 
 
 if __name__ == "__main__":

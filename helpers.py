@@ -413,8 +413,8 @@ def copy_and_edit_lDGA_f(subCodeDir, subRunDir, dataDir, config):
         f.write(q_sum)
 
 
-def copy_and_edit_lDGA_j(subRunDir, dataDir, config, tc):
-    lDGA_in = lDGA_julia(config, os.path.abspath(dataDir), tc)
+def copy_and_edit_lDGA_j(subRunDir, dataDir, config):
+    lDGA_in = lDGA_julia(config, os.path.abspath(dataDir))
     lDGA_in_path = os.path.abspath(os.path.join(subRunDir, "config.toml"))
     with open(lDGA_in_path, 'w') as f:
         f.write(lDGA_in)
@@ -673,14 +673,17 @@ def run_lDGA_f(cwd, config, jobid=None):
     return jobid
 
 
-def run_lDGA_j(cwd, codeDir, config, jobid=None):
+def run_lDGA_j(cwd, dataDir, codeDir, config, jobid=None):
     filename = "lDGA_j.sh"
     fp = os.path.join(cwd, filename)
-    # q_number = config['lDGA']['LQ']
-    # + str(procs)
-    procs = 1
-    cmd = "julia " + " " + codeDir + "/src/ladderDGA_Julia.jl > run.out 2> "\
-          "run.err"
+    procs = config["lDGAJulia"]["nprocs"]
+    lDGA_config_file = os.path.abspath(os.path.join(cwd, "config.toml"))
+
+    outf = os.path.abspath(os.path.join(dataDir,config['lDGAJulia']['outfile']))
+    runf = os.path.abspath(os.path.join(codeDir,"run_batch.jl"))
+    cmd = "julia " + runf + " " + lDGA_config_file + " " + \
+          outf + " " + str(procs) +  " > run.out 2> run.err"
+    #" -p " + str(procs) +
     cslurm = config['general']['custom_slurm_lines']
     if not jobid:
         run_cmd = "sbatch " + filename

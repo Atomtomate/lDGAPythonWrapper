@@ -145,8 +145,7 @@ c Should the summation over the bosonic frequency in the charge-/spin-channel be
     return out
 
 #TODO: some fixed parameters
-def lDGA_julia(config, dataDir, tc):
-    raise NotImplementedError("No longer working on a grid! Cannot start JuliaLDGA")
+def lDGA_julia(config, dataDir):
     out = """[Model]
 U    = {0}
 mu   = {1}
@@ -155,47 +154,52 @@ nden = 1.0
 Dimensions = {3}
 
 [Simulation]
-nFermFreq = {4}
-= {5}
-= {6}
-shift     = 0       # shift of center of bosonic frequency range
-Nk        = {7}     # IMPORTANT: in Fortran this is Nk x Nk and generated bei make_klist. TODO: adaptiv mesh
-NkInt     = {8}
-Nq        = {9}
-tail_corrected = {10}
-chi_only = true          # Should only chis_omega and chich_omega be calculated?
-kInt = "{11}"
+Nk = {4}
+tail_correction = "{5}"                # "Richardson" # Nothing, Richardson, Shanks
+lambda_correction = "{6}"              # nothing, spin, spin_charge
+bosonic_sum = "{7}"                    # common (intersection of individual ranges), individual (max range in each channel; fortran def    ault), full (all frequencies), fixed:N:M (always sum from N to (including) M, indexing starts at 0)
+force_full_bosonic_chi = {8}           # compute all omega frequencies for chi and trilex
+chi_unusable_fill_value = "{9}"        # can be "0", "chi_lambda" or "chi". sets either 0, lambda corrected or non lambda corrected     values outside usable omega range
+chi_only = {10}                        # Should only chis_omega and chich_omega be calculated?
+rhs  = "{11}"                           # native (fixed for tc, error_comp for naive), fixed (n/2 (1 - n/2) - sum(chi_ch)), error_comp (chi    _loc_ch + chi_loc_sp - chi_ch)
+fermionic_tail_coeffs = {12}
+bosonic_tail_coeffs = {13}
 
 [Environment]
-loadFortran = "text"    # julia, text, parquet, TODO: implement hdf5
+inputDataType = "jld2"      # jld2, text, parquet, TODO: implement hdf5
 writeFortran = false
 loadAsymptotics = false
-inputDir = "{12}"
-inputVars = "vars.jld"
+inputDir = "{14}"
+freqFile = "{15}"
+inputVars = "ED_out.jld2"
 asymptVars = "vars_asympt_sums.jld"
-force_full_bosonic_sum = false
+cast_to_real = false             # TODO: not implemented. cast all arrays with vanishing imaginary part to real
+loglevel = "debug"        # error, warn, info, debug
+logfile = "lDGA.log"
+progressbar = false
 
 [legacy]
-lambda_correction = true    # Should a lambda-correction be performed only in the spin-channel?
 
 [Debug]
-read_bubble = true
+
 """
-    k_number = config['lDGA']['k_range'] + 1
-    q_number = config['lDGA']['LQ']
-    kIntType = config['lDGA']['kInt']
     out = out.format(
         config['parameters']['U'],
         config['parameters']['mu'],
         config['parameters']['beta'],
         config['parameters']['Dimensions'],
-        0,0,0,
-        int(k_number),
-        config['lDGA']['Nint'],
-        q_number,#int(q_number * ( q_number + 1 ) * ( q_number + 2 ) / 6),
-        tc,
-        kIntType,
-        dataDir
+        config['lDGAJulia']['Nk'],
+        config['lDGAJulia']['tail_correction'],
+        config['lDGAJulia']['lambda_correction'],
+        config['lDGAJulia']['bosonic_sum'],
+        str(config['lDGAJulia']['force_full_bosonic_chi']).lower(),
+        config['lDGAJulia']['chi_unusable_fill_value'],
+        str(config['lDGAJulia']['chi_only']).lower(),
+        config['lDGAJulia']['rhs'],
+        config['lDGAJulia']['fermionic_tail_coeffs'],
+        config['lDGAJulia']['bosonic_tail_coeffs'],
+        dataDir,
+        os.path.abspath(config['Vertex']['freqList'][:-3] + "jld2")
     )
     return out
 
@@ -356,82 +360,3 @@ Eps(k)
     )
     return out
 
-
-def parameters_dat(config, mode=None):
-    out = '''c Iwbox_bose_ph   Iwbox_fermi_ph   Iwbox_bose_pp   Iwbox_fermi_pp   Iwbox_bose_gamma   Iwbox_fermi_gamma    Iwbox_bose_lambda   Iwbox_fermi_lambda   Iwbox_green_function
-  {0}                 {1}              0                0                0                 0                   0                   0                    {2}
-c Frequencies for up_down particle-particle vertex: Iwbox_bose_up_down   Iwbox_fermi_up_down   Iwbox_bose_up_down_backshift   Iwbox_fermi_up_down_backshift
-   0     0     0     0
-c beta     U
-  {3}d0     {4}d0
-c vert_pp-> .FALSE.:file vert_chi_pp does not exist, .TRUE.: vert_chi_pp exists; calc_gamma->.TRUE. Gamma's are calculated; calc_lambda ->.TRUE. Lambda's are calculated; calc_up_down->up_down particle-particle vertex is calculated separately; calc_F_only->only F is calculated
-   .FALSE.     .TRUE.     .FALSE.     .FALSE.   .FALSE.
-c eps: threshold for the smallest eigenvalue of the matrices that are inverted
-  1.d-15
-
-
-COMMENTS about the frequency ranges (or to be more precise about the ranges for the indices for the frequencies):
-
-The frequencies are defined in the following way:
-Bosonic frequency: omege=pi*T*(2*i), -Iwbox_bose <= i <= +Iwbox_bose
-Fermionic frequency: nu=pi*T*(2*j+1), -Iwbox_fermi <= j <= +Iwbox_fermi-1
-Ferminoic frequency: nu_prime=pi*T*(2*k+1), -Iwbox_fermi<= k <= +Iwbox_fermi-1
-
--) Iwbox_bose_ph, Iwbox_fermi_ph: The number of frequencies for which chi_up_up and chi_up_down are given in the file 'vert_chi'
-
-
--) Iwbox_bose_pp, Iwbox_fermi_pp
-   a) 'vert_chi_pp' exists: The number of frequencies for which chi_up_up and chi_up_down are given in the file 'vert_chi_pp' 
-   b) 'vert_chi_pp' does not exit: in that case one has to calculate the chi's in the pp-notation from the ph-notation by a frequency
-      shift: chi_pp(omega,nu,nu_prime)=chi(omega-n-nu_prime,nu,nu_prime).
-      omega-nu-nu_prime=pi*T*(2*(i-k-j-1)), so the shifted bosonic frequency corresponds to an index shift i-j-k-1 of the bosonic
-      index i.
-      Now -Iwbox_bose_ph <= i-j-k-1 <= +Iwbox_bose_ph. The largest value for (i-j-k-1) is reached if i takes the largest value
-      Iwbox_bose_pp and j and k take the smallest value -Iwbox_fermi_pp. This leads to the condition: 
-
-      (Iwbox_bose_pp+2*Iwbox_fermi_pp-1) <= Iwbox_bose_ph.
-
-      The smallest value for (i-j-k-1) you get for i=-Iwbox_bose_pp and j,k=Iwbox_fermi_pp-1. This leads to the condition:
-      -Iwbox_bose_ph >= (-Iwbox_bose_pp-2*Iwbox_fermi_pp+1) which is - after multiplying with -1 - the same condition as above. 
-      So this condition has to  be fullfilled for Iwbox_bose_pp and Iwbox_fermi_pp. In addition you have:
-
-      Iwbox_fermi_pp <= Iwbox_ferm_ph.
-      One possible choice for Iwbox_bose_pp and Iwbox_fermi_pp (where the number of bosonic frequencies is nearly the same
-
-      as the number of fermionic frequencies) is:
-      Iwbox_fermi_pp=int((Iwbox_bose_ph-1)/3)
-      Iwbox_bose_pp=Iwbox_bose_ph-1-2*Iwbox_fermi_pp
-   c) Iwbox_bose_gamma and Iwbox_fermi_gamma set the frequency ranges for the output of the Gamma's. The output is given
-      in the ph-notation, so the singlet- and the triplet-gamma have to be shifted. 
-      Therefore the relation of Iwbox_bose_gamma and Iwbox_fermi_gamma to Iwbox_bose_pp is the same as for Iwbox_bose_pp  and Iwbox_fermi_pp to 
-      Iwbox_bose_ph in paragraph b). 
-
-      (Iwbox_bose_gamma+2*Iwbox_fermi_gamm-1)<=Iwbox_bose_pp
-      
-      This is due to the fact that the frequency shift is simply reversed, in order to get all gammas 
-      in the ph-notation: i -> i+j+k+1
-      In addition you have:
-
-      Iwbox_bose_gamma<=Iwbox_bose_ph
-      Iwbox_fermi_gamma<=Iwbox_fermi_ph
-
-   d) In the lambdas frequency shift of the form: i -> k-j and k -> i+j appear - but only in the ph-channels. That means that:
-      2*Iwbox_fermi_lambda-1 <= Iwbox_bose_ph
-      Iwbox_bose_lambda+Iwbox_fermi_lambda <= Iwbox_fermi_ph
-      In addition it is clear that one has the restriction that 
-      Iwbox_fermi_lambda <= Iwbox_fermi_gamma
-      Iwbox_bose_lambda <= Iwbox_bose_gamma
-      since the Gamma's are only defined on this small intervall when one uses the ph-notation. 
-   e) For the up-down particle-particle vertex the shift nu_prime->omega-nu_prime has to be performed.
-      Therefore one has as condition for the frequency ranges:
-      (Iwbox_bose_up_down+Iwbox_fermi_up_down)<=Iwbox_fermi_pp
-      (Iwbox_bose_up_down_backshift+Iwbox_fermi_up_down_backshift)<=Iwbox_fermi_up_down
-   f) Iwbox_green_function is the range of the Green function. Since it appear in chi_0 in the combination i+j or i-j-1 it has to fullfill:
-      Iwbox_green_function >= Iwbox_fermi_ph+Iwbox_bose_ph   (if Iwbox_ph >= Iwbox_pp, otherwise the same condition hold for Iwbox_..._pp)
-'''
-    #nBoseFreq = config['Vertex']['boseFreq_max']-config['Vertex']['boseFreq_min']+1
-    #out = out.format(nBoseFreq, config['Vertex']['nFermiFreq'],
-    #                 config['Vertex']['nFermiFreq']+nBoseFreq,
-    #                 config['parameters']['beta'], config['parameters']['U'])
-    out = "TODO: not supported yet!\n"
-    return out

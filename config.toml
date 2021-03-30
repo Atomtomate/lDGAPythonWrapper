@@ -77,9 +77,23 @@ kInt = "FFT" # possible values are naive, gl-n (n being the order of the Gauss L
 skip = true
 
 [lDGAJulia]
-skip = true
-tail_corrected = "both" # possible values are "yes/no/both"
+skip = false
+nprocs = 96
+outfile   = "lDGA_out"
+Nk        = 4                           # IMPORTANT: in Fortran this is Nk x Nk and generated bei make_klist. TODO: adaptiv mesh
+tail_correction = "nothing"             #"Richardson" # Nothing, Richardson, Shanks
+lambda_correction = "sp"                # nothing, sp, sp_ch
+bosonic_sum = "common"                  # common (intersection of individual ranges), individual (max range in each channel; fortran def    ault), full (all frequencies), fixed:N:M (always sum from N to (including) M, indexing starts at 0)
+force_full_bosonic_chi = false          # compute all omega frequencies for chi and trilex
+chi_unusable_fill_value = "chi_lambda"  # can be "0", "chi_lambda" or "chi". sets either 0, lambda corrected or non lambda corrected values outside usable omega range
+chi_only = false                        # Should only chis_omega and chich_omega be calculated?
+rhs  = "native"                         # TODO: implement possible modes: native (fixed for tc, error_comp for naive), 
+                          #                                 fixed (n/2 (1 - n/2) - sum(chi_ch)), 
+                          #                                 error_comp (chi_loc_ch + chi_loc_sp - chi_ch)
+fermionic_tail_coeffs = [0,1,3,4,5]
+bosonic_tail_coeffs = [0,1,2,3,4]
+
+
 
 [lDGAPost]
-delete_calc = false # WARNING: this will delete all logfiles and intermediate results such as F and chi
-result_vars = "chi_q"
+
