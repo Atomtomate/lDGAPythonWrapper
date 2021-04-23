@@ -270,15 +270,26 @@ def run_single(config, config_path):
 
     # TODO: check all run.err for errors (later also use sacct with job_ids)
     if not config['Postprocess']['skip']:
-
-        # ---------------------- compile/run ---------------------------------
-        jobid_pp = run_postprocess(runDir, dataDir, subRunDir_ED,
-                                   subRunDir_vert, subRunDir_susc,
-                                   subRunDir_trilex, config, jobids=[
-                                    jobid_ed, jobid_vert, jobid_susc,
-                                    jobid_trilex])
-        if not jobid_pp:
-            raise Exception("Postprocessing job submit failed")
+        pp_logfile = os.path.join(runDir, "job_pp.log")
+        cont = dmft_log(pp_logfile, jobid_pp, runDir, config)
+        if cont:
+            pp_logfile = os.path.join(runDir, "job_pp.log")
+            # ---------------------- compile/run ---------------------------------
+            jobid_pp = run_postprocess(runDir, dataDir, subRunDir_ED,
+                                       subRunDir_vert, subRunDir_susc,
+                                       subRunDir_trilex, config, jobids=[
+                                        jobid_ed, jobid_vert, jobid_susc,
+                                        jobid_trilex])
+            if not jobid_pp:
+                raise Exception("Postprocessing job submit failed")
+            # ----------------- save job info --------------------------------
+            pp_logfile = os.path.join(runDir, "job_trilex.log")
+            if os.path.isfile(pp_logfile):
+                os.remove(pp_logfile)
+            _ = dmft_log(pp_logfile, jobid_pp, runDir, config)
+        else:
+            print("Skipping postprocessing, due to completed job. "
+                  "This behavor can be changed in the config.")
     # ========================================================================
     # =                          lDGA Julia                                  =
     # ========================================================================

@@ -249,7 +249,7 @@ def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
 
 
 def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
-    files_dmft_list = ["hubb.andpar", "tpri.dat", "zpart.dat", "g0mand","hubb.dat", "gm_wim"]
+    files_dmft_list = ["hubb.andpar", "zpart.dat", "hubb.dat"]
     src_files_list = ["ver_tpri_run.f90"]
     scripts = ["copy_dmft_files", "copy_data_files", "checks.py"]
     files_list = ["init_vertex.h"]
@@ -283,7 +283,8 @@ def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
             nFreq = list(map(int,var_line.split()))[0]
             max_freq = list(map(int,var_line.split()))[1]
     else:
-        raise NotImplementedError("Automatic generation of frequency grid noch implemented yet. \
+        raise NotImplementedError(str(full_freq_dat)+" not found! \
+                Automatic generation of frequency grid noch implemented yet. \
                 Use EquivalencyClassesConstructor.jl in order to generate a FreqList.jld2 file.")
         sys.exit(1)
         freq_grid = match_freq_str(full_freq_dat)
@@ -555,8 +556,8 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,
     if freq_path.endswith("freqList.dat"):
         freq_path = os.path.dirname(freq_path)
     freq_path = os.path.abspath(freq_path)
-    cmd= "julia " + os.path.join(config['general']['codeDir'], "SparseVertex/run2.jl") + \
-          " "  + freq_path + " " + dataDir + "\n"
+    cmd= "julia " + os.path.join(config['general']['codeDir'], "SparseVertex/expand_vertex.jl") + \
+          " "  + freq_path + " " + dataDir + " " + str(config['parameters']['beta']) + "\n"
 
     full_remove_script = "rm " + os.path.abspath(subRunDir_ED) + " " + \
                          os.path.abspath(subRunDir_vert) +\
@@ -806,8 +807,8 @@ def dmft_log(fn, jobid, loc, config):
 def build_collect_data(target_dir, dmft_dir, vertex_dir, susc_dir, trilex_dir,
                        mode):
     dmft_files = ["hubb.dat", "hubb.andpar", "g0m", "g0mand", "gm_wim"]
-    susc_files = ["chi_asympt", "matrix"]
-    vertex_files = ["vert_chi"]
+    susc_files = ["chi_asympt"]
+    vertex_files = ["2_part_gf_red"]
     trilex_dirs = ["tripamp_omega", "trip_omega", "trilex_omega"]
 
     copy_script_str = bak_files_script(dmft_dir, target_dir, dmft_files,

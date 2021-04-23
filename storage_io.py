@@ -19,7 +19,7 @@ def isnumber(x):
 def run_conversion(path, out_formats):
     files = [os.path.join(path, f) for f in
              ["hubb.andpar", "hubb.dat",  "chi_asympt",
-              "vert_chi", "g0m", "g0mand",
+              "2_part_gf_red", "g0m", "g0mand",
               "gm_wim"]]
     dirs = [os.path.join(path, f) for f in ["trilex_omega", "tripamp_omega",
                                             "trip_omega"]]
@@ -75,7 +75,7 @@ def run_conversion(path, out_formats):
     # ========================================================================
     # =                              vert_chi                                =
     # ========================================================================
-    fn = "vert_chi"
+    fn = "2_part_gf_red"
     hn = ["Re_Chi_density", "Im_Chi_density", "Re_Chi_magnetic",
           "Im_Chi_magnetic"]
     print("storing " + fn)
