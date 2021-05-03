@@ -165,13 +165,14 @@ chi_only = {10}                        # Should only chis_omega and chich_omega 
 rhs  = "{11}"                           # native (fixed for tc, error_comp for naive), fixed (n/2 (1 - n/2) - sum(chi_ch)), error_comp (chi    _loc_ch + chi_loc_sp - chi_ch)
 fermionic_tail_coeffs = {12}
 bosonic_tail_coeffs = {13}
+usable_prct_reduction = {14}
 
 [Environment]
 inputDataType = "jld2"      # jld2, text, parquet, TODO: implement hdf5
 writeFortran = false
 loadAsymptotics = false
-inputDir = "{14}"
-freqFile = "{15}"
+inputDir = "{15}"
+freqFile = "{16}"
 inputVars = "ED_out.jld2"
 asymptVars = "vars_asympt_sums.jld"
 cast_to_real = false             # TODO: not implemented. cast all arrays with vanishing imaginary part to real
@@ -198,6 +199,7 @@ progressbar = false
         str(config['lDGAJulia']['chi_only']).lower(),
         config['lDGAJulia']['rhs'],
         config['lDGAJulia']['fermionic_tail_coeffs'],
+        config['lDGAJulia']['usable_prct_reduction'],
         config['lDGAJulia']['bosonic_tail_coeffs'],
         dataDir,
         os.path.abspath(config['Vertex']['freqList'][:-3] + "jld2")
