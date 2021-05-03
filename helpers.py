@@ -682,8 +682,15 @@ def run_lDGA_j(cwd, dataDir, codeDir, config, jobid=None):
 
     outf = os.path.abspath(os.path.join(dataDir,config['lDGAJulia']['outfile']))
     runf = os.path.abspath(os.path.join(codeDir,"run_batch.jl"))
+    cc_dbg = """
+TMPDIR=`mktemp -d`
+mkdir "$TMPDIR/compiled"
+rsync -au "$JULIA_DEPOT_PATH/compiled/v1.6" "$TMPDIR/compiled/"
+export JULIA_DEPOT_PATH="$TMPDIR:$JULIA_DEPOT_PATH"
+"""
     cmd = "julia " + runf + " " + lDGA_config_file + " " + \
           outf + " " + str(procs) +  " > run.out 2> run.err"
+    cmd = cc_dbg + cmd
     #" -p " + str(procs) +
     cslurm = config['general']['custom_slurm_lines']
     if not jobid:
