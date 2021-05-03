@@ -199,8 +199,8 @@ progressbar = false
         str(config['lDGAJulia']['chi_only']).lower(),
         config['lDGAJulia']['rhs'],
         config['lDGAJulia']['fermionic_tail_coeffs'],
-        config['lDGAJulia']['usable_prct_reduction'],
         config['lDGAJulia']['bosonic_tail_coeffs'],
+        config['lDGAJulia']['usable_prct_reduction'],
         dataDir,
         os.path.abspath(config['Vertex']['freqList'][:-3] + "jld2")
     )
