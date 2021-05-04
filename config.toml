@@ -1,16 +1,16 @@
 [general]
-runDir = "/scratch/usr/hhpstobb/lDGA/tests/runscript_test_01"
-codeDir = "/scratch/usr/hhpstobb/lDGA/codes"
+runDir = "/scratch/projects/hhp00048/PD_test/data_20_20_s0/beta{beta}_U{U}"
+codeDir = "/scratch/projects/hhp00048/codes"
 CFLAGS = "-O3 -xHost"
 verbose = false
 cluster = "berlin"
 custom_slurm_lines = "-A hhp00048"
-custom_init_andpar_file = ""
+custom_init_andpar_file = "/scratch/usr/hhpstobb/old_work/lDGA/data/b15.0_U2.0/data/hubb.andpar"
 custom_init_andpar_vals_only = true
 custom_module_load = "module restore ed"
 custom_conda_env = "p3"
 auto_continue = true
-restart_after_success = false   # do not attempt to restart already completed jobs
+restart_after_success = true   # do not attempt to restart already completed jobs
 
 [parameters]
 beta = 25
@@ -42,16 +42,16 @@ check_behavior = "break"   # possible options: ignore (continue on check fail), 
 skip = false
 # freqList can be either a path to a frequency list or
 # "F1:F2,B1:B2" for N1 to N2 (integer) fermionic and B1 to B2 bosonic.
-freqList = "/scratch/usr/hhpstobb/grids/b10_f20_s1"
-nprocs = 384
+freqList = "/scratch/projects/hhp00048/grids/b20_f20_s0/freqList.dat"
+nprocs = 960
 
 [Susc]
-skip = false
+skip = true
 nmpara = 30
 nBoseFreq = 10000
 
 [Trilex]
-skip = false
+skip = true
 nmpara = 30
 nFermiFreq = 41
 nBoseFreq = 40
@@ -79,9 +79,9 @@ skip = true
 [lDGAJulia]
 skip = false
 nprocs = 96
-outfile   = "lDGA_out"
-Nk        = 4                           # IMPORTANT: in Fortran this is Nk x Nk and generated bei make_klist. TODO: adaptiv mesh
-tail_correction = "nothing"             #"Richardson" # Nothing, Richardson, Shanks
+outfile   = "lDGA_out_sp_40"
+Nk        = 40                          # IMPORTANT: in Fortran this is Nk x Nk and generated bei make_klist. TODO: adaptiv mesh
+tail_correction = "Nothing"             #"Richardson" # Nothing, Richardson, Shanks
 lambda_correction = "sp"                # nothing, sp, sp_ch
 bosonic_sum = "common"                  # common (intersection of individual ranges), individual (max range in each channel; fortran def    ault), full (all frequencies), fixed:N:M (always sum from N to (including) M, indexing starts at 0)
 force_full_bosonic_chi = false          # compute all omega frequencies for chi and trilex
@@ -90,10 +90,10 @@ chi_only = false                        # Should only chis_omega and chich_omega
 rhs  = "native"                         # TODO: implement possible modes: native (fixed for tc, error_comp for naive), 
                           #                                 fixed (n/2 (1 - n/2) - sum(chi_ch)), 
                           #                                 error_comp (chi_loc_ch + chi_loc_sp - chi_ch)
-fermionic_tail_coeffs = [0,1,3,4,5]
+fermionic_tail_coeffs = [0,1,2,3,4,5,6]
 bosonic_tail_coeffs = [0,1,2,3,4]
-
-
+usable_prct_reduction = 0.1
 
 [lDGAPost]
-
+delete_calc = false # WARNING: this will delete all logfiles and intermediate results such as F and chi
+result_vars = "chi_q"
