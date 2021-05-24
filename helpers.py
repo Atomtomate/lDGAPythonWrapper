@@ -460,7 +460,7 @@ def run_ed_vertex(cwd, config, ed_jobid=None):
     cmd = "echo \"--- start checks ---- \" > run.out\n"
     cmd+= "~/.conda/envs/p3/bin/python checks.py >> run.out\n"
     cmd+= "res=$?\n"
-    cmd+= "if [\"$res\" -eq \"1\"]; then\n"
+    cmd+= "if [ \"$res\" -eq \"1\" ]; then\n"
     cmd+= "echo \"Checks Successful\" >> run.out;\n"
     cmd+= "else\necho \"Checks unsuccessful\" >> run.out;\nfi;\n"
     cmd+= "echo \"--- end checks ---- \" >> run.out\n"
@@ -680,7 +680,7 @@ def run_lDGA_j(cwd, dataDir, codeDir, config, jobid=None):
     procs = config["lDGAJulia"]["nprocs"]
     lDGA_config_file = os.path.abspath(os.path.join(cwd, "config.toml"))
 
-    outf = os.path.abspath(os.path.join(dataDir,config['lDGAJulia']['outfile']))
+    outf = os.path.abspath(dataDir)
     runf = os.path.abspath(os.path.join(codeDir,"run_batch.jl"))
     cc_dbg = """
 TMPDIR=`mktemp -d`
@@ -830,12 +830,4 @@ def build_collect_data(target_dir, dmft_dir, vertex_dir, susc_dir, trilex_dir,
 
 
 def cleanup(config):
-    pass
-
-
-def consistency_checks(config):
-    print("WARNING: consistency checks not implemented yet.")
-    # TODO: check hubb.andpar for equal energies
-    # TODO: hopping 0
-    # TODO: check if all 8 ed_vertex are present
     pass

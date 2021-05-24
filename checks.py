@@ -1,5 +1,6 @@
 import toml
 import numpy as np
+import sys
 
 def check_config_consistency(config):
     mu = config['parameters']['mu']
@@ -43,4 +44,4 @@ if __name__ == "__main__":
     print("No bath site cancel eps: ", hubb_res[0], "\n")
     print("No bath site cancel V: ", hubb_res[1], "\n")
     print("No small onsite e: ", hubb_res[2], "\n")
-    print(all(hubb_res))
+    sys.exit(0 if all(hubb_res) else 1)

@@ -76,7 +76,7 @@ def run_single(config, config_path):
     print(os.path.abspath(config_path))
     dataDir = os.path.join(runDir, "data")
     if not os.path.exists(runDir):
-        os.mkdir(runDir)
+        os.makedirs(runDir, exist_ok=True)
         print("Directory ", runDir,  " Created ")
     else:
         if not config['general']['auto_continue']:
