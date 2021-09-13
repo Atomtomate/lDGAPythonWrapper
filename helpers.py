@@ -677,18 +677,19 @@ def run_lDGA_f(cwd, config, jobid=None):
 def run_lDGA_j(cwd, dataDir, codeDir, config, jobid=None):
     filename = "lDGA_j.sh"
     fp = os.path.join(cwd, filename)
-    procs = config["lDGAJulia"]["nprocs"]
+    procs = "1" # config["lDGAJulia"]["nprocs"]
     lDGA_config_file = os.path.abspath(os.path.join(cwd, "config.toml"))
 
     outf = os.path.abspath(dataDir)
     runf = os.path.abspath(os.path.join(codeDir,"run_batch.jl"))
-    cc_dbg = """
+    cc_dbg = ""
+    tmp = """
 TMPDIR=`mktemp -d`
 mkdir "$TMPDIR/compiled"
 rsync -au "$JULIA_DEPOT_PATH/compiled/v1.6" "$TMPDIR/compiled/"
 export JULIA_DEPOT_PATH="$TMPDIR:$JULIA_DEPOT_PATH"
 """
-    cmd = "julia " + runf + " " + lDGA_config_file + " " + \
+    cmd = "julia --project=" + os.path.abspath(codeDir) + " " + runf + " " + lDGA_config_file + " " + \
           outf + " " + str(procs) +  " > run.out 2> run.err"
     cmd = cc_dbg + cmd
     #" -p " + str(procs) +
@@ -700,7 +701,7 @@ export JULIA_DEPOT_PATH="$TMPDIR:$JULIA_DEPOT_PATH"
     print("running: " + run_cmd)
     with open(fp, 'w') as f:
         job_func = globals()["job_" + config['general']['cluster']]
-        f.write(job_func(config, procs, cslurm, cmd, False))
+        f.write(job_func(config, procs, cslurm, cmd, copy_from_ed=False, queue="standard96", custom_lines=False))
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
     if not (process.returncode == 0):
         print("Julia lDGA submit did not work as expected:")

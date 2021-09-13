@@ -8,22 +8,32 @@ import os
 # ============================================================================
 # =                        Job File Templates                                =
 # ============================================================================
-def job_berlin(config, procs, custom, cmd, copy_from_ed=True):
+def job_berlin(config, procs, custom, cmd, queue="standard96", copy_from_ed=True, custom_lines=True):
     out = '''#!/bin/bash
 #SBATCH -t 12:00:00
 #SBATCH --ntasks {0}
-#SBATCH -p standard96
-#SBATCH {1}
-{2}
+#SBATCH -p {1}
+#SBATCH {2}
+{3}
 export SLURM_CPU_BIND=none
 '''
-    # large96
-    if copy_from_ed:
-        out = out + "./copy_dmft_files \n"
-        out = out + "./copy_data_files || true \n"
-    out = out + "{3}\n"
-    out = out.format(procs, custom, config['general']['custom_module_load'],
-                     cmd)
+    if not custom_lines:
+        out = '''#!/bin/bash
+#SBATCH -t 12:00:00
+#SBATCH --ntasks {0}
+#SBATCH -p {1}
+#SBATCH {2}
+'''
+        out = out + "{3}\n"
+        out = out.format(procs, queue, custom, cmd)
+    else:
+        # large96
+        if copy_from_ed:
+            out = out + "./copy_dmft_files \n"
+            out = out + "./copy_data_files || true \n"
+        out = out + "{4}\n"
+        out = out.format(procs, queue, custom, config['general']['custom_module_load'],
+                         cmd)
     return out
 
 
@@ -35,7 +45,7 @@ def bak_files_script(source_dir, target_dir, files_list, header=False,
         out += "/{"
         for filename in files_list:
             out = out + filename + ","
-        out = out[:-1] + "} " 
+        out = out[:-1] + "} "
     else:
         out += "/" + files_list[0] + " "
     out += os.path.abspath(target_dir)+"\n"
@@ -152,27 +162,28 @@ U    = {0}
 mu   = {1}
 beta = {2}
 nden = 1.0
-Dimensions = {3}
+kGrid = \"{3}Dsc-{4}\"
 
 [Simulation]
-Nk = {4}
-tail_correction = "{5}"                # "Richardson" # Nothing, Richardson, Shanks
-lambda_correction = "{6}"              # nothing, spin, spin_charge
-bosonic_sum = "{7}"                    # common (intersection of individual ranges), individual (max range in each channel; fortran def    ault), full (all frequencies), fixed:N:M (always sum from N to (including) M, indexing starts at 0)
-force_full_bosonic_chi = {8}           # compute all omega frequencies for chi and trilex
-chi_unusable_fill_value = "{9}"        # can be "0", "chi_lambda" or "chi". sets either 0, lambda corrected or non lambda corrected     values outside usable omega range
-chi_only = {10}                        # Should only chis_omega and chich_omega be calculated?
+Nk = {5}
+fermionic_tail_correction = "{6}"                # "Richardson" # Nothing, Richardson, Shanks
+bosonic_tail_correction = "{7}"      # nothing (normal sum), Richardson, Shanks, coeffs (known tail coefficients, this should be the default)
+lambda_correction = "{8}"              # nothing, spin, spin_charge
+force_full_bosonic_chi = {9}           # compute all omega frequencies for chi and trilex
+chi_unusable_fill_value = "{10}"        # can be "0", "chi_lambda" or "chi". sets either 0, lambda corrected or non lambda corrected     values outside usable omega range
 rhs  = "{11}"                           # native (fixed for tc, error_comp for naive), fixed (n/2 (1 - n/2) - sum(chi_ch)), error_comp (chi    _loc_ch + chi_loc_sp - chi_ch)
 fermionic_tail_coeffs = {12}
 bosonic_tail_coeffs = {13}
 usable_prct_reduction = {14}
+omega_smoothing = "{15}"             # nothing, range, full. Smoothes data after nu, nu' sums. Set range to only     use smoothing in order to find the usable range (default)
+bosonic_sum_range = "{16}"
 
 [Environment]
 inputDataType = "jld2"      # jld2, text, parquet, TODO: implement hdf5
 writeFortran = false
 loadAsymptotics = false
-inputDir = "{15}"
-freqFile = "{16}"
+inputDir = "{17}"
+freqFile = "{18}"
 inputVars = "ED_out.jld2"
 asymptVars = "vars_asympt_sums.jld"
 cast_to_real = false             # TODO: not implemented. cast all arrays with vanishing imaginary part to real
@@ -183,6 +194,8 @@ progressbar = false
 [legacy]
 
 [Debug]
+read_bubble = false
+full_EoM_omega = false
 
 """
     out = out.format(
@@ -190,17 +203,19 @@ progressbar = false
         config['parameters']['mu'],
         config['parameters']['beta'],
         config['parameters']['Dimensions'],
+        config['parameters']['t'],
         config['lDGAJulia']['Nk'],
         config['lDGAJulia']['tail_correction'],
+        str(config['lDGAJulia']['bosonic_tail_correction']).lower(),
         config['lDGAJulia']['lambda_correction'],
-        config['lDGAJulia']['bosonic_sum'],
         str(config['lDGAJulia']['force_full_bosonic_chi']).lower(),
         config['lDGAJulia']['chi_unusable_fill_value'],
-        str(config['lDGAJulia']['chi_only']).lower(),
         config['lDGAJulia']['rhs'],
         config['lDGAJulia']['fermionic_tail_coeffs'],
         config['lDGAJulia']['bosonic_tail_coeffs'],
         config['lDGAJulia']['usable_prct_reduction'],
+        "nothing",
+        config['lDGAJulia']['bosonic_sum_range'],
         dataDir,
         os.path.abspath(config['Vertex']['freqList'][:-3] + "jld2")
     )
@@ -209,8 +224,16 @@ progressbar = false
 
 
 def tpri_dat(config, mode=None):
-    t = 0.5/np.sqrt(2*config['parameters']['Dimensions'])
-    return "      t=" + str(t) + "d0\n      t1=0.0d0\n      t2=0d0"
+    if not 't' in config['parameters']:
+        print("WARNING: hopping parameter t not found. Assuming t = 0.5/sqrt(2D)")
+        t = 0.5/np.sqrt(2*config['parameters']['Dimensions'])
+    else:
+        t = 2*config['parameters']['t']
+        t1 = config['parameters']['t1']
+        t2 = config['parameters']['t2']
+
+    return "      t="+str(t)+"d0\n      t1="+str(t1)+"d0\n      t2="+\
+        str(t2)+"0d0"
 
 def init_h(config, mode=None):
     ns = config['parameters']['ns']

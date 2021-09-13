@@ -1,4 +1,5 @@
 [general]
+runTag = "PD_expl"
 runDir = "/scratch/projects/hhp00048/PD_test/data_20_20_s0/beta{beta}_U{U}"
 codeDir = "/scratch/projects/hhp00048/codes"
 CFLAGS = "-O3 -xHost"
@@ -20,6 +21,9 @@ ns = 5
 bethe = false
 Dimensions = 3
 symm = true
+t=1
+t1=0
+t2=0
 
 [ED]
 skip = false
