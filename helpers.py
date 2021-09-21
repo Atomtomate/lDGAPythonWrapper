@@ -677,7 +677,7 @@ def run_lDGA_f(cwd, config, jobid=None):
 def run_lDGA_j(cwd, dataDir, codeDir, config, jobid=None):
     filename = "lDGA_j.sh"
     fp = os.path.join(cwd, filename)
-    procs = "1" # config["lDGAJulia"]["nprocs"]
+    procs = config["lDGAJulia"]["nprocs"]
     lDGA_config_file = os.path.abspath(os.path.join(cwd, "config.toml"))
 
     outf = os.path.abspath(dataDir)
