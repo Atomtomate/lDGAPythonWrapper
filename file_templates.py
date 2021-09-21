@@ -228,7 +228,7 @@ def tpri_dat(config, mode=None):
         print("WARNING: hopping parameter t not found. Assuming t = 0.5/sqrt(2D)")
         t = 0.5/np.sqrt(2*config['parameters']['Dimensions'])
     else:
-        t = 2*config['parameters']['t']
+        t = config['parameters']['t']
         t1 = config['parameters']['t1']
         t2 = config['parameters']['t2']
 
