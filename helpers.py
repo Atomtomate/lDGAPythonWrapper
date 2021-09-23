@@ -311,9 +311,8 @@ def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
 
 
 def copy_and_edit_susc(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
-    files_dmft_list = ["hubb.andpar", "hubb.dat", "gm_wim"]
-    files_list = ["calc_chi_asymptotics_gfortran.f", "idw.dat",
-                  "tpri.dat"]
+    files_dmft_list = ["hubb.andpar", "hubb.dat"]
+    files_list = ["calc_chi_asymptotics_gfortran.f90"]
     scripts = ["copy_dmft_files", "copy_data_files"]
     fp = os.path.join(subRunDir, "init.h")
     with open(fp, 'w') as f:
@@ -677,7 +676,7 @@ def run_lDGA_f(cwd, config, jobid=None):
 def run_lDGA_j(cwd, dataDir, codeDir, config, jobid=None):
     filename = "lDGA_j.sh"
     fp = os.path.join(cwd, filename)
-    procs = "1" # config["lDGAJulia"]["nprocs"]
+    procs = config["lDGAJulia"]["nprocs"]
     lDGA_config_file = os.path.abspath(os.path.join(cwd, "config.toml"))
 
     outf = os.path.abspath(dataDir)
