@@ -311,9 +311,8 @@ def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
 
 
 def copy_and_edit_susc(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
-    files_dmft_list = ["hubb.andpar", "hubb.dat", "gm_wim"]
-    files_list = ["calc_chi_asymptotics_gfortran.f", "idw.dat",
-                  "tpri.dat"]
+    files_dmft_list = ["hubb.andpar", "hubb.dat"]
+    files_list = ["calc_chi_asymptotics_gfortran.f90"]
     scripts = ["copy_dmft_files", "copy_data_files"]
     fp = os.path.join(subRunDir, "init.h")
     with open(fp, 'w') as f:
