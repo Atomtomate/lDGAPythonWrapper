@@ -177,7 +177,7 @@ def run_single(config, config_path):
     # ------------------------- definitions ----------------------------------
     subCodeDir = os.path.join(config['general']['codeDir'],
                               "ED_physical_suscpetibility")
-    compile_command = "gfortran calc_chi_asymptotics_gfortran.f -o run.x "\
+    compile_command = "gfortran calc_chi_asymptotics_gfortran.f90 -o run.x "\
                       "-llapack -lblas " + config['general']['CFLAGS']
     subRunDir_susc = os.path.join(runDir, "ed_susc")
     jobid_susc = None

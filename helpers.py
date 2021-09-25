@@ -314,7 +314,7 @@ def copy_and_edit_susc(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
     files_dmft_list = ["hubb.andpar", "hubb.dat"]
     files_list = ["calc_chi_asymptotics_gfortran.f90"]
     scripts = ["copy_dmft_files", "copy_data_files"]
-    fp = os.path.join(subRunDir, "init.h")
+    fp = os.path.join(subRunDir, "init_susc.h")
     with open(fp, 'w') as f:
         f.write(init_susc_h(config))
     fp = os.path.join(subRunDir, "copy_dmft_files")
@@ -564,6 +564,14 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,
                          os.path.abspath(subRunDir_trilex) + " -r\n"
     full_remove_script += "rm " + os.path.abspath(os.path.join(cwd, "*.sh")) +\
                           " " + os.path.abspath(os.path.join(cwd, "*.log")) +\
+                          " " + os.path.abspath(os.path.join(cwd, "*.mod")) +\
+                          " " + os.path.abspath(os.path.join(cwd, "*.f")) +\
+                          " " + os.path.abspath(os.path.join(cwd, "*.f90")) +\
+                          " " + os.path.abspath(os.path.join(cwd, "*.x")) +\
+                          " " + os.path.abspath(os.path.join(cwd, "*.h")) +\
+                          " " + os.path.abspath(os.path.join(cwd, "*.py")) +\
+                          " " + os.path.abspath(os.path.join(cwd, "copy_dmft_files")) +\
+                          " " + os.path.abspath(os.path.join(cwd, "copy_data_files")) +\
                           " -r\n"
     cp_script = build_collect_data(dataDir, subRunDir_ED, subRunDir_vert,
                                    subRunDir_susc, subRunDir_trilex,

@@ -267,10 +267,10 @@ def init_2_h(config, mode=None):
 def init_susc_h(config, mode=None):
     ns = config['parameters']['ns']
     nmax = int(comb(ns, int(ns/2)) ** 2)
-    out = "      parameter (nmaxx = {0})\n"
-    out += "      parameter (nss={1})\n"
-    out += "      parameter (Iwmax={2})\n"
-    out += "      parameter (nmpara={3})\n"
+    out = "integer, parameter :: nmax = {0}\n"
+    out += "integer, parameter :: ns={1}\n"
+    out += "integer, parameter :: Iwmax={2}\n"
+    out += "integer, parameter :: nmpara={3}\n"
     out = out.format(nmax, ns, int(config['Susc']['nBoseFreq']),
                                 int(config['Susc']['nmpara']))
     return out
