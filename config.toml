@@ -18,6 +18,16 @@ lattice = "3Dsc-0.2041241452319315"    # 3Dsc-[t], 2Dsc-[t], FCC-[t], TODO: link
 beta = 14.0
 U = 1.0
 mu = "HF"
+<<<<<<< HEAD
+=======
+ns = 5
+bethe = false
+Dimensions = 3
+symm = true
+t=1
+t1=0
+t2=0
+>>>>>>> 4cc4848b918a37460b1a8350a48e96a303caf211
 
 [ED]
 skip = false

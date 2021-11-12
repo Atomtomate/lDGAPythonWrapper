@@ -262,6 +262,30 @@ def init_h(config, mode=None):
                      config['ED']['Iwmaxreal'],lattice_int,\
                      to_fortran_bool(config['ED']['gwcalc']),\
                      config['ED']['nmpara'])
+    out = out.format(nmax, ns)
+    return out
+
+def init_2_h(config, mode=None):
+    out =  "      logical, parameter :: bethe={0}\n"
+    out += "      logical, parameter :: twodim={1}\n"
+    out += "      logical, parameter :: symm={2}\n"
+    bethe = ".true." if config['parameters']['bethe']  else ".false."
+    twodim = ".true." if config['parameters']['Dimensions'] == 2 else ".false."
+    symm = ".true." if config['parameters']['symm'] else ".false."
+    out = out.format(bethe, twodim, symm)
+    return out
+
+
+def init_susc_h(config, mode=None):
+    ns = config['parameters']['ns']
+    nmax = int(comb(ns, int(ns/2)) ** 2)
+    out = "integer, parameter :: nmax = {0}\n"
+    out += "integer, parameter :: ns={1}\n"
+    out += "integer, parameter :: Iwmax={2}\n"
+    out += "integer, parameter :: nmpara={3}\n"
+    out = out.format(nmax, ns, int(config['Susc']['nBoseFreq']),
+                                int(config['Susc']['nmpara']))
+>>>>>>> 4cc4848b918a37460b1a8350a48e96a303caf211
     return out
 
 def init_trilex_h(config, mode=None):
