@@ -12,7 +12,7 @@ def check_config_consistency(config):
               ))
 
 def check_andpar_result(config, andpar_lines):
-    ns = config['parameters']['ns']
+    ns = config['ED']['ns']
     eps = np.zeros(ns)
     tpar = np.zeros(ns)
     for i in range(ns-1):

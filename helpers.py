@@ -8,12 +8,6 @@ import stat
 from math import isclose, ceil
 from file_templates import *
 # flake8:  noqa: F405
-# from file_templates import , init_vertex_h,\
-#                           bak_files_script, init_susc_h,\
-#                           init_trilex_h, ladderDGA_in, q_sum_h, lDGA_julia,\
-#                           split_files, tpri_dat, init_h, hubb_dat,\
-#                           hubb_andpar
-
 
 # TODO: refactor replicated code
 # ============================================================================
@@ -84,7 +78,7 @@ def check_config_consistency(config):
               ))
 
 def check_andpar_result(config, andpar_lines):
-    ns = config['parameters']['ns']
+    ns = config['ED']['ns']
     eps = np.zeros(ns)
     tpar = np.zeros(ns)
     for i in range(ns):
@@ -211,8 +205,9 @@ def check_env(config):
 # =                          copy functions                                  =
 # ============================================================================
 def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
-    files_list = ["tpri.dat", "init.h", "init_2.h", "hubb.dat", "hubb.andpar"]
-    src_files = ["ed_dmft_parallel_frequencies.f"]
+    files_list = ["tpri.dat", "init.h", "hubb.dat", "hubb.andpar"]
+    src_files = ["aux_routines.f90", "lattice_routines.f90",
+                 "ed_dmft_parallel_frequencies.f90"]
 
     old_andpar = config["general"]["custom_init_andpar_file"]
     if old_andpar:
@@ -252,7 +247,7 @@ def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
     files_dmft_list = ["hubb.andpar", "zpart.dat", "hubb.dat"]
     src_files_list = ["ver_tpri_run.f90"]
     scripts = ["copy_dmft_files", "copy_data_files", "checks.py"]
-    files_list = ["init_vertex.h"]
+    files_list = ["init.h"]
     for fn in files_list:
         fp = os.path.abspath(os.path.join(subRunDir, fn))
         with open(fp, 'w') as f:
@@ -316,7 +311,7 @@ def copy_and_edit_susc(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
     scripts = ["copy_dmft_files", "copy_data_files"]
     fp = os.path.join(subRunDir, "init.h")
     with open(fp, 'w') as f:
-        f.write(init_susc_h(config))
+        f.write(init_h(config))
     fp = os.path.join(subRunDir, "copy_dmft_files")
     with open(fp, 'w') as f:
         f.write(bak_files_script(subRunDir_ED, subRunDir,
@@ -426,7 +421,7 @@ def copy_and_edit_lDGA_j(subRunDir, dataDir, config):
 def run_ed_dmft(cwd, config):
     fp = cwd + "/" + "ed_dmft_run.sh"
     cmd = "mpirun ./run.x > run.out 2> run.err"
-    procs = (config['parameters']['ns']+1)**2
+    procs = (config['ED']['ns']+1)**2
     cslurm = config['general']['custom_slurm_lines']
     with open(fp, 'w') as f:
         job_func = globals()["job_" + config['general']['cluster']]
@@ -555,7 +550,7 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,
     if freq_path.endswith("freqList.dat"):
         freq_path = os.path.dirname(freq_path)
     freq_path = os.path.abspath(freq_path)
-    cmd= "julia " + os.path.join(config['general']['codeDir'], "SparseVertex/expand_vertex.jl") + \
+    cmd= "julia " + os.path.join(config['general']['codeDir'], "lDGAPostprocessing/expand_vertex.jl") + \
           " "  + freq_path + " " + dataDir + " " + str(config['parameters']['beta']) + "\n"
 
     full_remove_script = "rm " + os.path.abspath(subRunDir_ED) + " " + \
@@ -564,6 +559,14 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,
                          os.path.abspath(subRunDir_trilex) + " -r\n"
     full_remove_script += "rm " + os.path.abspath(os.path.join(cwd, "*.sh")) +\
                           " " + os.path.abspath(os.path.join(cwd, "*.log")) +\
+                          " " + os.path.abspath(os.path.join(cwd, "*.mod")) +\
+                          " " + os.path.abspath(os.path.join(cwd, "*.f")) +\
+                          " " + os.path.abspath(os.path.join(cwd, "*.f90")) +\
+                          " " + os.path.abspath(os.path.join(cwd, "*.x")) +\
+                          " " + os.path.abspath(os.path.join(cwd, "*.h")) +\
+                          " " + os.path.abspath(os.path.join(cwd, "*.py")) +\
+                          " " + os.path.abspath(os.path.join(cwd, "copy_dmft_files")) +\
+                          " " + os.path.abspath(os.path.join(cwd, "copy_data_files")) +\
                           " -r\n"
     cp_script = build_collect_data(dataDir, subRunDir_ED, subRunDir_vert,
                                    subRunDir_susc, subRunDir_trilex,

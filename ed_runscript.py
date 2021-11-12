@@ -9,7 +9,8 @@ from helpers import run_bash, check_env, query_yn, reset_dir, dmft_log, \
                     run_ed_vertex, copy_and_edit_susc, run_ed_susc, \
                     copy_and_edit_trilex, run_ed_trilex, run_postprocess,\
                     copy_and_edit_lDGA_f, run_lDGA_f_makeklist, run_lDGA_f,\
-                    copy_and_edit_lDGA_j, run_lDGA_j, read_preprocess_config
+                    copy_and_edit_lDGA_j, run_lDGA_j, read_preprocess_config,\
+                    grid_pattern
 
 # TODO: obtain compiler and modify clean_script etc
 # TODO: IMPORTANT! shift compilation task to job itself (include in jobfile)
@@ -100,9 +101,10 @@ def run_single(config, config_path):
     # ========================================================================
 
     # -------------------------- definitions ---------------------------------
-    subCodeDir = os.path.join(config['general']['codeDir'], "ED_dmft")
+    subCodeDir = os.path.join(config['general']['codeDir'], "ED_codes/ED_dmft")
     subRunDir_ED = os.path.join(runDir, "ed_dmft")
-    src_files = ["ed_dmft_parallel_frequencies.f"]
+    src_files = ["aux_routines.f90", "lattice_routines.f90",
+                 "ed_dmft_parallel_frequencies.f90"]
     compile_command = "mpiifort " + ' '.join(src_files) + \
                       " -o run.x -llapack -lblas " + \
                       config['general']['CFLAGS']
@@ -140,7 +142,7 @@ def run_single(config, config_path):
 
     # ------------------------- definitions ----------------------------------
     subRunDir_vert = runDir + "/ed_vertex"
-    subCodeDir = config['general']['codeDir'] + "/ED_vertex"
+    subCodeDir = config['general']['codeDir'] + "/ED_codes/ED_vertex"
     jobid_vert = None
 
     if not config['Vertex']['skip']:
@@ -176,8 +178,8 @@ def run_single(config, config_path):
 
     # ------------------------- definitions ----------------------------------
     subCodeDir = os.path.join(config['general']['codeDir'],
-                              "ED_physical_suscpetibility")
-    compile_command = "gfortran calc_chi_asymptotics_gfortran.f -o run.x "\
+                              "ED_codes/ED_physical_suscpetibility")
+    compile_command = "gfortran calc_chi_asymptotics_gfortran.f90 -o run.x "\
                       "-llapack -lblas " + config['general']['CFLAGS']
     subRunDir_susc = os.path.join(runDir, "ed_susc")
     jobid_susc = None
@@ -219,7 +221,7 @@ def run_single(config, config_path):
 
     # ------------------------- definitions ----------------------------------
     subCodeDir = os.path.join(config['general']['codeDir'],
-                              "ED_Trilex_Parallel")
+                              "ED_codes/ED_Trilex_Parallel")
     compile_command = "mpiifort ver_twofreq_parallel.f -o run.x -llapack " \
                       "-lblas " + config['general']['CFLAGS']
     output_dirs = ["trip_omega", "tripamp_omega", "trilex_omega"]
@@ -332,12 +334,6 @@ def run_single(config, config_path):
     # ========================================================================
 
     # ------------------------- definitions ----------------------------------
-    if config['parameters']['Dimensions'] == 2:
-        subCodeDir = os.path.join(config['general']['codeDir'], "ladderDGA2D")
-    elif config['parameters']['Dimensions'] == 3:
-        subCodeDir = os.path.join(config['general']['codeDir'], "ladderDGA3D")
-    if config['lDGA']['kInt'].lower() == "fft":
-        subCodeDir += "_FFT"
 
     compile_command_kl = "gfortran dispersion.f90 make_klist.f90 -llapack -o "\
                          "klist.x"

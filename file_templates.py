@@ -4,6 +4,17 @@ import re
 from math import ceil
 import os
 
+grid_pattern = re.compile(r'-(-?\d+\.\d+)', re.M)
+lattice_f90 = {
+      "3dsc": 1,
+      "fcc":  2,
+      "2dsc": 3,
+      "bethe": 4
+}
+
+def to_fortran_bool(val):
+    return ".true." if val else ".false."
+
 
 # ============================================================================
 # =                        Job File Templates                                =
@@ -146,10 +157,10 @@ c Should the summation over the bosonic frequency in the charge-/spin-channel be
         config['lDGA']['LQ'],
         config['lDGA']['Nint'],
         int(k_number * ( k_number + 1 ) * ( k_number + 2 ) / 6),
-        ".TRUE." if config['lDGA']['only_chisp_ch'] else ".FALSE.",
-        ".TRUE." if config['lDGA']['only_lambda_sp'] else ".FALSE.",
-        ".FALSE." if config['lDGA']['only_positive_ch'] else ".TRUE.",
-        ".FALSE." if config['lDGA']['only_positive_sp'] else ".TRUE."
+        to_fortran_bool(config['lDGA']['only_chisp_ch']),
+        to_fortran_bool(config['lDGA']['only_lambda_sp']),
+        to_fortran_bool(config['lDGA']['only_positive_ch']),
+        to_fortran_bool(config['lDGA']['only_positive_sp'])
     )
     if config['lDGA']['kInt'].lower() == "fft":
         out += "c fft_bubble, fft_real(not implemented)\n.TRUE.     .FALSE.\n"
@@ -162,28 +173,28 @@ U    = {0}
 mu   = {1}
 beta = {2}
 nden = 1.0
-kGrid = \"{3}Dsc-{4}\"
+kGrid = \"{3}\"
 
 [Simulation]
-Nk = {5}
-fermionic_tail_correction = "{6}"                # "Richardson" # Nothing, Richardson, Shanks
-bosonic_tail_correction = "{7}"      # nothing (normal sum), Richardson, Shanks, coeffs (known tail coefficients, this should be the default)
-lambda_correction = "{8}"              # nothing, spin, spin_charge
-force_full_bosonic_chi = {9}           # compute all omega frequencies for chi and trilex
-chi_unusable_fill_value = "{10}"        # can be "0", "chi_lambda" or "chi". sets either 0, lambda corrected or non lambda corrected     values outside usable omega range
-rhs  = "{11}"                           # native (fixed for tc, error_comp for naive), fixed (n/2 (1 - n/2) - sum(chi_ch)), error_comp (chi    _loc_ch + chi_loc_sp - chi_ch)
-fermionic_tail_coeffs = {12}
-bosonic_tail_coeffs = {13}
-usable_prct_reduction = {14}
-omega_smoothing = "{15}"             # nothing, range, full. Smoothes data after nu, nu' sums. Set range to only     use smoothing in order to find the usable range (default)
-bosonic_sum_range = "{16}"
+Nk = {4}
+fermionic_tail_correction = "{5}"                # "Richardson" # Nothing, Richardson, Shanks
+bosonic_tail_correction = "{6}"      # nothing (normal sum), Richardson, Shanks, coeffs (known tail coefficients, this should be the default)
+lambda_correction = "{7}"              # nothing, spin, spin_charge
+force_full_bosonic_chi = {8}           # compute all omega frequencies for chi and trilex
+chi_unusable_fill_value = "{9}"        # can be "0", "chi_lambda" or "chi". sets either 0, lambda corrected or non lambda corrected     values outside usable omega range
+rhs  = "{10}"                           # native (fixed for tc, error_comp for naive), fixed (n/2 (1 - n/2) - sum(chi_ch)), error_comp (chi    _loc_ch + chi_loc_sp - chi_ch)
+fermionic_tail_coeffs = {11}
+bosonic_tail_coeffs = {12}
+usable_prct_reduction = {13}
+omega_smoothing = "{14}"             # nothing, range, full. Smoothes data after nu, nu' sums. Set range to only     use smoothing in order to find the usable range (default)
+bosonic_sum_range = "{15}"
 
 [Environment]
 inputDataType = "jld2"      # jld2, text, parquet, TODO: implement hdf5
 writeFortran = false
 loadAsymptotics = false
-inputDir = "{17}"
-freqFile = "{18}"
+inputDir = "{16}"
+freqFile = "{17}"
 inputVars = "ED_out.jld2"
 asymptVars = "vars_asympt_sums.jld"
 cast_to_real = false             # TODO: not implemented. cast all arrays with vanishing imaginary part to real
@@ -202,8 +213,7 @@ full_EoM_omega = false
         config['parameters']['U'],
         config['parameters']['mu'],
         config['parameters']['beta'],
-        config['parameters']['Dimensions'],
-        config['parameters']['t'],
+        config['parameters']['lattice'],
         config['lDGAJulia']['Nk'],
         config['lDGAJulia']['tail_correction'],
         str(config['lDGAJulia']['bosonic_tail_correction']).lower(),
@@ -224,59 +234,38 @@ full_EoM_omega = false
 
 
 def tpri_dat(config, mode=None):
-    if not 't' in config['parameters']:
-        print("WARNING: hopping parameter t not found. Assuming t = 0.5/sqrt(2D)")
-        t = 0.5/np.sqrt(2*config['parameters']['Dimensions'])
-    else:
-        t = config['parameters']['t']
-        t1 = config['parameters']['t1']
-        t2 = config['parameters']['t2']
+    t = float(config['parameters']['lattice'].partition("-")[2])
+    t1 = 0.0
+    t2 = 0.0
 
     return "      t="+str(t)+"d0\n      t1="+str(t1)+"d0\n      t2="+\
         str(t2)+"0d0"
 
 def init_h(config, mode=None):
-    ns = config['parameters']['ns']
+    ns = config['ED']['ns']
     nmax = int(comb(ns, int(ns/2)) ** 2)
-    out = "      parameter (nmaxx = {0})\n"
-    out += "      parameter (nss={1})\n"
-    out += "      parameter (prozessoren={2})\n"
-    out = out.format(nmax, ns, (ns+1)**2)
-    return out
+    lattice_str = config['parameters']['lattice'].partition("-")[0].lower()
+    lattice_int = lattice_f90[lattice_str]
 
-#TODO: unify init files using modes
-def init_vertex_h(config, mode=None):
-    ns = config['parameters']['ns']
-    nmax = int(comb(ns, int(ns/2)) ** 2)
     out =  "      integer, parameter :: nmax = {0}\n"
     out += "      integer, parameter :: ns={1}\n"
-    out = out.format(nmax, ns)
-    return out
-
-def init_2_h(config, mode=None):
-    out =  "      logical, parameter :: bethe={0}\n"
-    out += "      logical, parameter :: twodim={1}\n"
-    out += "      logical, parameter :: symm={2}\n"
-    bethe = ".true." if config['parameters']['bethe']  else ".false."
-    twodim = ".true." if config['parameters']['Dimensions'] == 2 else ".false."
-    symm = ".true." if config['parameters']['symm'] else ".false."
-    out = out.format(bethe, twodim, symm)
-    return out
-
-
-def init_susc_h(config, mode=None):
-    ns = config['parameters']['ns']
-    nmax = int(comb(ns, int(ns/2)) ** 2)
-    out = "      parameter (nmaxx = {0})\n"
-    out += "      parameter (nss={1})\n"
-    out += "      parameter (Iwmax={2})\n"
-    out += "      parameter (nmpara={3})\n"
-    out = out.format(nmax, ns, int(config['Susc']['nBoseFreq']),
-                                int(config['Susc']['nmpara']))
+    out += "      integer, parameter :: prozessoren={2}\n"
+    out += "      logical, parameter :: symm={3}\n"
+    out += "      integer, parameter :: ksteps={4}\n"
+    out += "      integer, parameter :: Iwmax={5}\n"
+    out += "      integer, parameter :: Iwmaxreal={6}\n"
+    out += "      integer, parameter :: lattice_type={7}\n"
+    out += "      integer, parameter :: gwcalc={8}\n"
+    out += "      integer, parameter :: nmpara={9}\n"
+    out = out.format(nmax,ns,(ns+1)**2,to_fortran_bool(config['ED']['symm']),\
+                     config['ED']['ksteps'], config['ED']['Iwmax'],\
+                     config['ED']['Iwmaxreal'],lattice_int,\
+                     to_fortran_bool(config['ED']['gwcalc']),\
+                     config['ED']['nmpara'])
     return out
 
 def init_trilex_h(config, mode=None):
-    ns = config['parameters']['ns']
+    ns = config['ED']['ns']
     nmax = int(comb(ns, int(ns/2)) ** 2)
     out = "      parameter (nmaxx = {0})\n"
     out += "      parameter (nss={1})\n"
@@ -284,7 +273,7 @@ def init_trilex_h(config, mode=None):
     out += "      parameter (Iwbox_bose={3})\n"
     out += "      parameter (nmpara={4})\n"
     out = out.format(nmax, ns, int(config['Trilex']['nFermiFreq']),
-        int(config['Trilex']['nBoseFreq']), int(config['Trilex']['nmpara']))
+        int(config['Trilex']['nBoseFreq']), int(config['ED']['nmpara']))
     return out
 
 def q_sum_h(config, mode=None):
@@ -338,7 +327,7 @@ c lambda, w0, nph
     out = out.format( config['parameters']['U'],
         config['parameters']['beta'], config['ED']['w_min'],
         config['ED']['w_max'], #config['ED']['conv_param'],
-        config['parameters']['ns'], #TODO: important params?
+        config['ED']['ns'], #TODO: important params?
         config['ED']['iterations'], config['ED']['conv_param']
     )
     return out
@@ -357,31 +346,31 @@ Eps(k)
 '''
     if eps_k:
         ns_eps = len(eps_k.splitlines())
-        if not (ns_eps == config['parameters']['ns']-1):
+        if not (ns_eps == config['ED']['ns']-1):
             raise InputError("Number of sites in Eps(k) ({0}) does not \
             correspond to ns ({1})".format(
-                ns_eps, config['parameters']['ns']-1
+                ns_eps, config['ED']['ns']-1
             ))
         out += eps_k
     else:
-        for i in range(config['parameters']['ns']-1):
+        for i in range(config['ED']['ns']-1):
             out += "  0."+str(3*(i+1))+"00000000000\n"
     out += " tpar(k)\n"
     if tpar_k:
         tp_eps = len(tpar_k.splitlines())
-        if not (tp_eps == config['parameters']['ns']-1):
+        if not (tp_eps == config['ED']['ns']-1):
             raise InputError("Number of sites in tpar(k) ({0}) does not \
             correspond to ns ({1})".format(
-                tp_eps, config['parameters']['ns']-1
+                tp_eps, config['ED']['ns']-1
             ))
         out += tpar_k
     else:
-        for i in range(config['parameters']['ns']-1):
+        for i in range(config['ED']['ns']-1):
             out += "  0.250000000000\n"
     out += "  {3}                      #chemical potential\n"
     out = out.format(
         config['parameters']['beta'], #config['ED']['conv_param'],
-        config['parameters']['ns'], config['ED']['iterations'],
+        config['ED']['ns'], config['ED']['iterations'],
         config['parameters']['mu']
     )
     return out
