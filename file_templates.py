@@ -285,7 +285,6 @@ def init_susc_h(config, mode=None):
     out += "integer, parameter :: nmpara={3}\n"
     out = out.format(nmax, ns, int(config['Susc']['nBoseFreq']),
                                 int(config['Susc']['nmpara']))
->>>>>>> 4cc4848b918a37460b1a8350a48e96a303caf211
     return out
 
 def init_trilex_h(config, mode=None):
