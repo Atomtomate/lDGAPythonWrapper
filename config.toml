@@ -1,33 +1,22 @@
 [general]
-runTag = "PD_expl"
-runDir = "/scratch/projects/hhp00048/PD_test/data_20_20_s0/beta{beta}_U{U}"
-codeDir = "/scratch/projects/hhp00048/codes"
-CFLAGS = "-O3 -xHost"
-verbose = false
-cluster = "berlin"
-custom_slurm_lines = "-A hhp00048"
-custom_init_andpar_file = ""
-custom_init_andpar_vals_only = true
-custom_module_load = "module restore ed"
-custom_conda_env = "p3"
-auto_continue = true
-restart_after_success = true   # do not attempt to restart already completed jobs
+runDir = "/scratch/projects/hhp00048/PD_test/bse_sc/small/b{beta}_U{U}"     # Directory for calculations, {beta} and {U} will be replaced by the values set in [parameters] 
+codeDir = "/scratch/projects/hhp00048/codes"                                # Directory for ED Codes
+CFLAGS = "-O3 -xHost"                                                       # Compilation flags for ifort, mpiif90
+verbose = false                                                             # Print additional information during compilations
+cluster = "berlin"                                                          # This can only be set to berlin for now. Placeholder for PhysNet/local options
+custom_slurm_lines = ""                                                     # Custom line in slurm start script, e.g. -A hhp00048
+custom_init_andpar_file = ""                                                # Path to anderson parameter file to start calculation with. Otherwise eps(i) = 0.1*i is used
+custom_init_andpar_vals_only = true                                         # If true only values are copied, otherwise the file is copied 1:1
+custom_module_load = "module restore ed"                                    # Module restore command. This will restore needed modules such as ifort. See installation instructions
+custom_conda_env = "p3"                                                     # Anaconda restore command. See installation instructions
+auto_continue = true                                                        # TODO: remove
+restart_after_success = false                                               # true: will not restart already finished calculations, false: will override finished calculations
 
 [parameters]
-lattice = "3Dsc-0.2041241452319315"    # 3Dsc-[t], 2Dsc-[t], FCC-[t], TODO: link to docu for kgrid strings
+lattice = "3Dsc-0.2041241452319315"                                         # 3Dsc-[t], 2Dsc-[t], FCC-[t], TODO: link to docu for kgrid strings
 beta = 14.0
 U = 1.0
 mu = "HF"
-<<<<<<< HEAD
-=======
-ns = 5
-bethe = false
-Dimensions = 3
-symm = true
-t=1
-t1=0
-t2=0
->>>>>>> 4cc4848b918a37460b1a8350a48e96a303caf211
 
 [ED]
 skip = false
@@ -65,7 +54,7 @@ skip = false
 nBoseFreq = 10000
 
 [Trilex]
-skip = false
+skip = true
 nFermiFreq = 41
 nBoseFreq = 40
 
@@ -90,7 +79,7 @@ kInt = "FFT" # possible values are naive, gl-n (n being the order of the Gauss L
 skip = true
 
 [lDGAJulia]
-skip = false
+skip = true
 nprocs = 96
 outfile   = "lDGA_out"
 Nk        = [10]   # IMPORTANT: in Fortran this is Nk x Nk and generated bei make_klist. TODO: adaptiv mesh
