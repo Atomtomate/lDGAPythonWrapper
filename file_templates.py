@@ -255,7 +255,7 @@ def init_h(config, mode=None):
     out += "      integer, parameter :: Iwmax={5}\n"
     out += "      integer, parameter :: Iwmaxreal={6}\n"
     out += "      integer, parameter :: lattice_type={7}\n"
-    out += "      integer, parameter :: gwcalc={8}\n"
+    out += "      logical, parameter :: gwcalc={8}\n"
     out += "      integer, parameter :: nmpara={9}\n"
     out = out.format(nmax,ns,(ns+1)**2,to_fortran_bool(config['ED']['symm']),\
                      config['ED']['ksteps'], config['ED']['Iwmax'],\
