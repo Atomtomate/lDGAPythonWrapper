@@ -1,5 +1,5 @@
 [general]
-runDir = "/scratch/projects/hhp00048/PD_test/bse_sc/small/b{beta}_U{U}"     # Directory for calculations, {beta} and {U} will be replaced by the values set in [parameters] 
+runDir = "/scratch/projects/hhp00048/PD_test/bse_sc/georg_test_2/b{beta}_U{U}"     # Directory for calculations, {beta} and {U} will be replaced by the values set in [parameters] 
 codeDir = "/scratch/projects/hhp00048/codes"                                # Directory for ED Codes
 CFLAGS = "-O3 -xHost"                                                       # Compilation flags for ifort, mpiif90
 verbose = false                                                             # Print additional information during compilations
@@ -46,7 +46,7 @@ check_behavior = "break"   # possible options: ignore (continue on check fail), 
 skip = false
 # freqList can be either a path to a frequency list or
 # "F1:F2,B1:B2" for N1 to N2 (integer) fermionic and B1 to B2 bosonic.
-freqList = "/scratch/projects/hhp00048/grids/b50_f50_s1/freqList.dat"
+freqList = "/scratch/projects/hhp00048/grids/b40_f40_s1/freqList.dat"
 nprocs = 1920
 
 [Susc]

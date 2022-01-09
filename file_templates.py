@@ -177,24 +177,26 @@ kGrid = \"{3}\"
 
 [Simulation]
 Nk = {4}
-fermionic_tail_correction = "{5}"                # "Richardson" # Nothing, Richardson, Shanks
-bosonic_tail_correction = "{6}"      # nothing (normal sum), Richardson, Shanks, coeffs (known tail coefficients, this should be the default)
-lambda_correction = "{7}"              # nothing, spin, spin_charge
-force_full_bosonic_chi = {8}           # compute all omega frequencies for chi and trilex
-chi_unusable_fill_value = "{9}"        # can be "0", "chi_lambda" or "chi". sets either 0, lambda corrected or non lambda corrected     values outside usable omega range
-rhs  = "{10}"                           # native (fixed for tc, error_comp for naive), fixed (n/2 (1 - n/2) - sum(chi_ch)), error_comp (chi    _loc_ch + chi_loc_sp - chi_ch)
-fermionic_tail_coeffs = {11}
-bosonic_tail_coeffs = {12}
-usable_prct_reduction = {13}
-omega_smoothing = "{14}"             # nothing, range, full. Smoothes data after nu, nu' sums. Set range to only     use smoothing in order to find the usable range (default)
-bosonic_sum_range = "{15}"
+chi_asympt_method = "{5}"
+chi_asympt_shell = "{6}"
+fermionic_tail_correction = "{7}"                # "Richardson" # Nothing, Richardson, Shanks
+bosonic_tail_correction = "{8}"      # nothing (normal sum), Richardson, Shanks, coeffs (known tail coefficients, this should be the default)
+lambda_correction = "{9}"              # nothing, spin, spin_charge
+force_full_bosonic_chi = {10}           # compute all omega frequencies for chi and trilex
+chi_unusable_fill_value = "{11}"        # can be "0", "chi_lambda" or "chi". sets either 0, lambda corrected or non lambda corrected     values outside usable omega range
+rhs  = "{12}"                           # native (fixed for tc, error_comp for naive), fixed (n/2 (1 - n/2) - sum(chi_ch)), error_comp (chi    _loc_ch + chi_loc_sp - chi_ch)
+fermionic_tail_coeffs = {13}
+bosonic_tail_coeffs = {14}
+usable_prct_reduction = {15}
+omega_smoothing = "{16}"             # nothing, range, full. Smoothes data after nu, nu' sums. Set range to only     use smoothing in order to find the usable range (default)
+bosonic_sum_range = "{17}"
 
 [Environment]
 inputDataType = "jld2"      # jld2, text, parquet, TODO: implement hdf5
 writeFortran = false
 loadAsymptotics = false
-inputDir = "{16}"
-freqFile = "{17}"
+inputDir = "{18}"
+freqFile = "{19}"
 inputVars = "ED_out.jld2"
 asymptVars = "vars_asympt_sums.jld"
 cast_to_real = false             # TODO: not implemented. cast all arrays with vanishing imaginary part to real
@@ -215,6 +217,8 @@ full_EoM_omega = false
         config['parameters']['beta'],
         config['parameters']['lattice'],
         config['lDGAJulia']['Nk'],
+        config['lDGAJulia']['chi_asympt_method'],
+        config['lDGAJulia']['chi_asympt_shell'],
         config['lDGAJulia']['tail_correction'],
         str(config['lDGAJulia']['bosonic_tail_correction']).lower(),
         config['lDGAJulia']['lambda_correction'],
