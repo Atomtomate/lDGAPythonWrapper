@@ -781,7 +781,6 @@ def run_results_pp(runDir, dataDir, subRunDir_ED, subRunDir_vert,
 def dmft_log(fn, jobid, loc, config):
     old_id = None
     continue_status = True
-
     if os.path.exists(fn):               # job has been run before
         with open(fn, 'r') as f:
             old_file = f.readlines()

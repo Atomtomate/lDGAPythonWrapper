@@ -133,7 +133,7 @@ def run_single(config, config_path):
                 os.remove(dmft_logfile)
             _ = dmft_log(dmft_logfile, jobid_ed, subRunDir_ED, config)
         else:
-            print("Skipping dmft computation, due to completed job. "
+            print("Skipping dmft computation, due to completed or active job. "
                   "This behavor can be changed in the config.")
 
     # ========================================================================
@@ -169,7 +169,7 @@ def run_single(config, config_path):
                 os.remove(vert_logfile)
             dmft_log(vert_logfile, jobid_vert, subRunDir_vert, config)
         else:
-            print("Skipping vertex computation, due to completed job. "
+            print("Skipping vertex computation, due to completed or active job. "
                   "This behavor can be changed in the config.")
 
     # ========================================================================
@@ -212,7 +212,7 @@ def run_single(config, config_path):
                 os.remove(susc_logfile)
             dmft_log(susc_logfile, jobid_susc, subRunDir_susc, config)
         else:
-            print("Skipping susceptibility computation, due to completed job."
+            print("Skipping susceptibility computation, due to completed or active job."
                   " This behavor can be changed in the config.")
 
     # ========================================================================
@@ -260,7 +260,7 @@ def run_single(config, config_path):
             _ = dmft_log(trilex_logfile, jobid_trilex, subRunDir_trilex,
                          config)
         else:
-            print("Skipping trilex computation, due to completed job. "
+            print("Skipping trilex computation, due to completed or active job. "
                   "This behavor can be changed in the config.")
 
     # ========================================================================
@@ -285,12 +285,11 @@ def run_single(config, config_path):
             if not jobid_pp:
                 raise Exception("Postprocessing job submit failed")
             # ----------------- save job info --------------------------------
-            pp_logfile = os.path.join(runDir, "job_trilex.log")
             if os.path.isfile(pp_logfile):
                 os.remove(pp_logfile)
             _ = dmft_log(pp_logfile, jobid_pp, runDir, config)
         else:
-            print("Skipping postprocessing, due to completed job. "
+            print("Skipping postprocessing, due to completed or active job. "
                   "This behavor can be changed in the config.")
     # ========================================================================
     # =                          lDGA Julia                                  =
@@ -326,7 +325,7 @@ def run_single(config, config_path):
             _ = dmft_log(lDGA_logfile, jobid_lDGA_j,
                          subRunDir_lDGA_j, config)
         else:
-            print("Skipping Julia lDGA computation, due to completed job."
+            print("Skipping Julia lDGA computation, due to completed or active job."
                   "This behavor can be changed in the config.")
 
     # ========================================================================
@@ -379,7 +378,7 @@ def run_single(config, config_path):
                 os.remove(lDGA_logfile)
             _ = dmft_log(lDGA_logfile, jobid_lDGA_f, subRunDir_lDGA_f, config)
         else:
-            print("Skipping fortran lDGA computation, due to completed job. "
+            print("Skipping fortran lDGA computation, due to completed or active job. "
                   "This behavor can be changed in the config.")
 
 

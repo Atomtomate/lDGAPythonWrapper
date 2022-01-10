@@ -178,7 +178,7 @@ kGrid = \"{3}\"
 [Simulation]
 Nk = {4}
 chi_asympt_method = "{5}"
-chi_asympt_shell = "{6}"
+chi_asympt_shell = {6}
 fermionic_tail_correction = "{7}"                # "Richardson" # Nothing, Richardson, Shanks
 bosonic_tail_correction = "{8}"      # nothing (normal sum), Richardson, Shanks, coeffs (known tail coefficients, this should be the default)
 lambda_correction = "{9}"              # nothing, spin, spin_charge
