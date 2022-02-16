@@ -19,14 +19,32 @@ def to_fortran_bool(val):
 # ============================================================================
 # =                        Job File Templates                                =
 # ============================================================================
-def job_berlin(config, procs, custom, cmd, queue="standard96", copy_from_ed=True, custom_lines=True):
+def postprocessing_berlin(content, custom, config, jobname=""):
+    jn = "#SBATCH -J " + jobname + "\n" if len(jobname) else ""
+    out = '''#!/bin/bash
+#SBATCH -t 01:00:00
+#SBATCH --ntasks=1
+#SBATCH -p standard96
+#SBATCH --requeue
+{0}
+#SBATCH {1}
+{2}
+export SLURM_CPU_BIND=none
+'''.format(jn, custom, config['general']['custom_module_load'])
+    out += content
+    return out
+
+def job_berlin(config, procs, custom, cmd, queue="standard96", copy_from_ed=True,
+               custom_lines=True, jobname=""):
+    jn = "#SBATCH -J " + jobname + "\n" if len(jobname) else ""
+    cl = "#SBATCH " + custom + "\n" if len(custom) else ""
     out = '''#!/bin/bash
 #SBATCH -t 12:00:00
 #SBATCH --ntasks {0}
 #SBATCH -p {1}
 #SBATCH {2}
 {3}
-export SLURM_CPU_BIND=none
+{4}
 '''
     if not custom_lines:
         out = '''#!/bin/bash
@@ -34,16 +52,19 @@ export SLURM_CPU_BIND=none
 #SBATCH --ntasks {0}
 #SBATCH -p {1}
 #SBATCH {2}
+{3}
+{4}
 '''
-        out = out + "{3}\n"
-        out = out.format(procs, queue, custom, cmd)
+        out = out + "{4}\n"
+        out = out + "export SLURM_CPU_BIND=none\n"
+        out = out.format(procs, queue, cl, jn, cmd)
     else:
-        # large96
+        out = out + "export SLURM_CPU_BIND=none\n"
         if copy_from_ed:
             out = out + "./copy_dmft_files \n"
             out = out + "./copy_data_files || true \n"
-        out = out + "{4}\n"
-        out = out.format(procs, queue, custom, config['general']['custom_module_load'],
+        out = out + "{5}\n"
+        out = out.format(procs, queue, cl, jn, config['general']['custom_module_load'],
                          cmd)
     return out
 
@@ -73,20 +94,6 @@ def bak_dirs_script(source_dir, target_dir, dirs_list, header=False,
     return out
 
 
-def postprocessing_berlin(content, custom, config):
-    out = '''#!/bin/bash
-#SBATCH -t 10:00:00
-#SBATCH --ntasks=1
-#SBATCH -p large96:shared
-#SBATCH --requeue
-#SBATCH {0}
-{1}
-export SLURM_CPU_BIND=none
-'''.format(custom, config['general']['custom_module_load'])
-    out += content
-    return out
-
-
 # Either read list form file or generate string for new file
 def parse_freq_list(freq_grid):
     nFreq = len(range(*freq_grid[1])) * len(range(*freq_grid[0])) * \
@@ -109,6 +116,8 @@ def freq_list_h(config, nFreq, max_freq, mode=None):
     max_line_length = 3500
     out = "      real(dp), parameter :: beta="+str(config['parameters']['beta'])+"\n"
     out += "      real(dp), parameter :: uhub="+str(config['parameters']['U'])+"\n"
+    out += "      real(dp), parameter :: hmag="+str(0.0)+"\n"
+    out += "      real(dp), parameter :: xmu="+str(config['parameters']['mu'])+"\n"
     out += "      integer(id), parameter :: nFreq = "+str(nFreq) + "\n"
     out += "      integer(id), parameter :: maxFreq = "+str(max_freq) + "\n"
 #    if max_freq < 3500:
@@ -261,22 +270,16 @@ def init_h(config, mode=None):
     out += "      integer, parameter :: lattice_type={7}\n"
     out += "      logical, parameter :: gwcalc={8}\n"
     out += "      integer, parameter :: nmpara={9}\n"
+    out += "      real, parameter :: Traw={10}\n"
+    out += "      real, parameter :: small={11}\n"
+    out += "      real, parameter :: approx={12}\n"
     out = out.format(nmax,ns,(ns+1)**2,to_fortran_bool(config['ED']['symm']),\
                      config['ED']['ksteps'], config['ED']['Iwmax'],\
                      config['ED']['Iwmaxreal'],lattice_int,\
                      to_fortran_bool(config['ED']['gwcalc']),\
-                     config['ED']['nmpara'])
+                     config['ED']['nmpara'],config['ED']['Traw'],\
+                     config['ED']['small'],config['ED']['approx'])
     out = out.format(nmax, ns)
-    return out
-
-def init_2_h(config, mode=None):
-    out =  "      logical, parameter :: bethe={0}\n"
-    out += "      logical, parameter :: twodim={1}\n"
-    out += "      logical, parameter :: symm={2}\n"
-    bethe = ".true." if config['parameters']['bethe']  else ".false."
-    twodim = ".true." if config['parameters']['Dimensions'] == 2 else ".false."
-    symm = ".true." if config['parameters']['symm'] else ".false."
-    out = out.format(bethe, twodim, symm)
     return out
 
 

@@ -34,6 +34,9 @@ deltino = 0.01      # unwichtig
 imaxmu = 0          # unwichtig        
 deltamu = 0.0       # unwichtig
 conv_param = "1.d-13"
+Traw = "1.d-9"
+small = "1.d-10"
+approx = "1.d-10"
 # thresholds for anderson parameters checks
 square_sum_diff = 1.0      # maximal allowed value for sum_k (eps^2_k - tpar^2_k)
 bathsite_cancel_eps = 0.01 # minimal allowed value for |eps_k - eps_l| 

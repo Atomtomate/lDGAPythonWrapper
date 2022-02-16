@@ -244,9 +244,9 @@ def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
 
 
 def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
-    files_dmft_list = ["hubb.andpar", "zpart.dat", "hubb.dat"]
+    files_dmft_list = ["hubb.andpar"]
     src_files_list = ["ver_tpri_run.f90"]
-    scripts = ["copy_dmft_files", "copy_data_files", "checks.py"]
+    scripts = ["copy_dmft_files", "copy_data_files"]
     files_list = ["init.h"]
     for fn in files_list:
         fp = os.path.abspath(os.path.join(subRunDir, fn))
@@ -423,9 +423,12 @@ def run_ed_dmft(cwd, config):
     cmd = "mpirun ./run.x > run.out 2> run.err"
     procs = (config['ED']['ns']+1)**2
     cslurm = config['general']['custom_slurm_lines']
+    jn = "DMFT_b{:.1f}U{:.1f}".format(config['parameters']['beta'],
+                                    config['parameters']['U'])
     with open(fp, 'w') as f:
         job_func = globals()["job_" + config['general']['cluster']]
-        f.write(job_func(config, procs, cslurm, cmd, copy_from_ed=False))
+        f.write(job_func(config, procs, cslurm, cmd, copy_from_ed=False,
+                         jobname=jn))
     run_cmd = "sbatch ./ed_dmft_run.sh"
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
 
@@ -444,6 +447,8 @@ def run_ed_dmft(cwd, config):
 def run_ed_vertex(cwd, config, ed_jobid=None):
     filename = "ed_vertex_run.sh"
     fp = os.path.join(cwd, filename)
+    jn = "VER_b{:.1f}U{:.1f}".format(config['parameters']['beta'],
+                                    config['parameters']['U'])
     if config['general']['cluster'] == "berlin":
         cores_per_node = 96
         procs = config['Vertex']['nprocs']
@@ -468,7 +473,7 @@ def run_ed_vertex(cwd, config, ed_jobid=None):
     print("running: " + run_cmd)
     with open(fp, 'w') as f:
         job_func = globals()["job_" + config['general']['cluster']]
-        f.write(job_func(config, procs, cslurm, cmd))
+        f.write(job_func(config, procs, cslurm, cmd, jobname=jn))
     st = os.stat(fp)
     os.chmod(fp, st.st_mode | stat.S_IEXEC)
 
@@ -486,6 +491,8 @@ def run_ed_vertex(cwd, config, ed_jobid=None):
 
 def run_ed_susc(cwd, config, ed_jobid=None):
     filename = "ed_susc_run.sh"
+    jn = "SUSC_b{:.1f}U{:.1f}".format(config['parameters']['beta'],
+                                    config['parameters']['U'])
     fp = os.path.join(cwd, filename)
     cmd = "./run.x > run.out 2> run.err"
     cslurm = config['general']['custom_slurm_lines']
@@ -496,7 +503,7 @@ def run_ed_susc(cwd, config, ed_jobid=None):
     print("running: " + run_cmd)
     with open(fp, 'w') as f:
         job_func = globals()["job_" + config['general']['cluster']]
-        f.write(job_func(config, 1, cslurm, cmd))
+        f.write(job_func(config, 1, cslurm, cmd, jobname=jn))
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
     if not (process.returncode == 0):
         print("Vertex submit did not work as expected:")
@@ -511,6 +518,8 @@ def run_ed_susc(cwd, config, ed_jobid=None):
 
 def run_ed_trilex(cwd, config, ed_jobid=None):
     filename = "ed_trilex_run.sh"
+    jn = "TRIL_b{:.1f}U{:.1f}".format(config['parameters']['beta'],
+                                    config['parameters']['U'])
     cmd = "mpirun ./run.x > run.out 2> run.err"
     procs = 2*int(config['Trilex']['nBoseFreq']) + 1
     cslurm = config['general']['custom_slurm_lines']
@@ -522,7 +531,7 @@ def run_ed_trilex(cwd, config, ed_jobid=None):
     fp = os.path.join(cwd, filename)
     with open(fp, 'w') as f:
         job_func = globals()["job_" + config['general']['cluster']]
-        f.write(job_func(config, procs, cslurm, cmd))
+        f.write(job_func(config, procs, cslurm, cmd, jobname=jn))
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
 
     if not (process.returncode == 0):
@@ -538,6 +547,8 @@ def run_ed_trilex(cwd, config, ed_jobid=None):
 
 def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,
                     subRunDir_susc, subRunDir_trilex, config, jobids=None):
+    jn = "PP_b{:.1f}U{:.1f}".format(config['parameters']['beta'],
+                                    config['parameters']['U'])
     filename = "postprocess.sh"
     cslurm = config['general']['custom_slurm_lines']
     if not os.path.exists(dataDir):
@@ -609,7 +620,7 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,
     fp = os.path.join(cwd, filename)
     with open(fp, 'w') as f:
         job_func = globals()["postprocessing_" + config['general']['cluster']]
-        f.write(job_func(content, cslurm, config))
+        f.write(job_func(content, cslurm, config, jobname=jn))
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
 
     if not (process.returncode == 0):
@@ -678,6 +689,8 @@ def run_lDGA_f(cwd, config, jobid=None):
 
 def run_lDGA_j(cwd, dataDir, codeDir, config, jobid=None):
     filename = "lDGA_j.sh"
+    jn = "lDGAj_b{:.1f}U{:.1f}".format(config['parameters']['beta'],
+                                    config['parameters']['U'])
     fp = os.path.join(cwd, filename)
     procs = config["lDGAJulia"]["nprocs"]
     lDGA_config_file = os.path.abspath(os.path.join(cwd, "config.toml"))
@@ -691,7 +704,7 @@ mkdir "$TMPDIR/compiled"
 rsync -au "$JULIA_DEPOT_PATH/compiled/v1.6" "$TMPDIR/compiled/"
 export JULIA_DEPOT_PATH="$TMPDIR:$JULIA_DEPOT_PATH"
 """
-    cmd = "julia --project=" + os.path.abspath(codeDir) + " " + runf + " " + lDGA_config_file + " " + \
+    cmd = "julia --check-bounds=no --project=" + os.path.abspath(codeDir) + " " + runf + " " + lDGA_config_file + " " + \
           outf + " " + str(procs) +  " > run.out 2> run.err"
     cmd = cc_dbg + cmd
     #" -p " + str(procs) +
@@ -703,7 +716,9 @@ export JULIA_DEPOT_PATH="$TMPDIR:$JULIA_DEPOT_PATH"
     print("running: " + run_cmd)
     with open(fp, 'w') as f:
         job_func = globals()["job_" + config['general']['cluster']]
-        f.write(job_func(config, procs, cslurm, cmd, copy_from_ed=False, queue="standard96", custom_lines=False))
+        f.write(job_func(config, procs, cslurm, cmd, copy_from_ed=False,
+                         queue="standard96", custom_lines=False,
+                         jobname=jn))
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
     if not (process.returncode == 0):
         print("Julia lDGA submit did not work as expected:")
