@@ -21,16 +21,17 @@ def to_fortran_bool(val):
 # ============================================================================
 def postprocessing_berlin(content, custom, config, jobname=""):
     jn = "#SBATCH -J " + jobname + "\n" if len(jobname) else ""
+    cl = "#SBATCH " + custom + "\n" if len(custom) else ""
     out = '''#!/bin/bash
 #SBATCH -t 01:00:00
 #SBATCH --ntasks=1
 #SBATCH -p standard96
 #SBATCH --requeue
 {0}
-#SBATCH {1}
+{1}
 {2}
 export SLURM_CPU_BIND=none
-'''.format(jn, custom, config['general']['custom_module_load'])
+'''.format(jn, cl, config['general']['custom_module_load'])
     out += content
     return out
 
@@ -42,7 +43,7 @@ def job_berlin(config, procs, custom, cmd, queue="standard96", copy_from_ed=True
 #SBATCH -t 12:00:00
 #SBATCH --ntasks {0}
 #SBATCH -p {1}
-#SBATCH {2}
+{2}
 {3}
 {4}
 '''
@@ -51,7 +52,7 @@ def job_berlin(config, procs, custom, cmd, queue="standard96", copy_from_ed=True
 #SBATCH -t 12:00:00
 #SBATCH --ntasks {0}
 #SBATCH -p {1}
-#SBATCH {2}
+{2}
 {3}
 {4}
 '''
