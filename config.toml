@@ -6,6 +6,7 @@ verbose = false                                                             # Pr
 cluster = "berlin"                                                          # This can only be set to berlin for now. Placeholder for PhysNet/local options
 custom_slurm_lines = ""                                                     # Custom line in slurm start script, e.g. -A hhp00048
 custom_init_andpar_file = ""                                                # Path to anderson parameter file to start calculation with. Otherwise eps(i) = 0.1*i is used
+start_from = ""                                                             # ALTERNATIVE to custom_init_andpar_file! Setting this to a prvious folder containing a jobid, also checks for completion of dmft
 custom_init_andpar_vals_only = true                                         # If true only values are copied, otherwise the file is copied 1:1
 custom_module_load = "module restore ed"                                    # Module restore command. This will restore needed modules such as ifort. See installation instructions
 custom_conda_env = "p3"                                                     # Anaconda restore command. See installation instructions
@@ -84,6 +85,7 @@ skip = true
 [lDGAJulia]
 skip = true
 nprocs = 96
+sysimage = "/scratch/projects/hhp00048/codes/TestRuns_LadderDGA.jl/LadderDGA_Precompile.so"
 outfile   = "lDGA_out"
 Nk        = [10]   # IMPORTANT: in Fortran this is Nk x Nk and generated bei make_klist. TODO: adaptiv mesh
 chi_asympt_method = "direct"            # direct/sc/nothong, see BSE_SC module for more

@@ -120,13 +120,13 @@ def run_single(config, config_path):
                 os.mkdir(subRunDir_ED)
 
             # ---------------------- copy/edit -------------------------------
-            copy_and_edit_dmft(subCodeDir, subRunDir_ED, config)
+            prev_id = copy_and_edit_dmft(subCodeDir, subRunDir_ED, config)
 
             # --------------------- compile/run ------------------------------
             if not run_bash(compile_command, cwd=subRunDir_ED,
                            verbose=config['general']['verbose']):
                 raise Exception("Compilation Failed")
-            jobid_ed = run_ed_dmft(subRunDir_ED, config)
+            jobid_ed = run_ed_dmft(subRunDir_ED, config, prev_id)
             if not jobid_ed:
                 raise Exception("Job submit failed")
             if os.path.isfile(dmft_logfile):

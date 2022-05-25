@@ -209,7 +209,28 @@ def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
     src_files = ["aux_routines.f90", "lattice_routines.f90",
                  "ed_dmft_parallel_frequencies.f90"]
 
-    old_andpar = config["general"]["custom_init_andpar_file"]
+    prev_id = None
+    if "start_from" in config["general"]:
+        p1 = os.path.join(config["general"]["start_from"], "data/hubb.andpar")
+        p2 = os.path.join(config["general"]["start_from"], "ed_dmft/hubb.andpar")
+        jid_path = os.path.join(config["general"]["start_from"], "job_dmft.log")
+        prev_id = get_id_log(jid_path)
+        if os.path.exists(p1):
+            old_andpar = os.path.abspath(p1)
+        elif os.path.exists(p2):
+            old_andpar = os.path.abspath(p2)
+        else:
+            old_andpar = None
+        if not os.path.exists(old_andpar):
+            raise ValueError("hubb.andpar not found at given location: " + str(old_andpar))
+    if "custom_init_andpar_file" in config["general"] and "start_from" in config["general"]:
+        print("Warning, both 'custom_init_andpar_file' and 'start_from' set. Ignoring 'start_from'!")
+    if "custom_init_andpar_file" in config["general"]:
+        old_andpar = config["general"]["custom_init_andpar_file"]
+        if not os.path.exists(old_andpar):
+            raise ValueError("hubb.andpar not found at given location: " + str(old_andpar))
+
+
     if old_andpar:
         source_file_path = os.path.abspath(old_andpar)
         target_file_path = os.path.abspath(os.path.join(subRunDir_ED,
@@ -241,6 +262,7 @@ def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
         target_file_path = os.path.abspath(os.path.join(subRunDir_ED,
                                                         src_file))
         shutil.copyfile(source_file_path, target_file_path)
+    return prev_id
 
 
 def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
@@ -418,7 +440,7 @@ def copy_and_edit_lDGA_j(subRunDir, dataDir, config):
 # ============================================================================
 # =                           run functions                                  =
 # ============================================================================
-def run_ed_dmft(cwd, config):
+def run_ed_dmft(cwd, config, prev_jobid=None):
     fp = cwd + "/" + "ed_dmft_run.sh"
     cmd = "mpirun ./run.x > run.out 2> run.err"
     procs = (config['ED']['ns']+1)**2
@@ -429,7 +451,11 @@ def run_ed_dmft(cwd, config):
         job_func = globals()["job_" + config['general']['cluster']]
         f.write(job_func(config, procs, cslurm, cmd, copy_from_ed=False,
                          jobname=jn))
-    run_cmd = "sbatch ./ed_dmft_run.sh"
+    filename = "./ed_dmft_run.sh"
+    if not prev_jobid:
+        run_cmd = "sbatch " + filename
+    else:
+        run_cmd = "sbatch" + " --dependency=afterok:"+ str(prev_jobid) + " " + filename
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
 
     print("running: " + run_cmd)
@@ -698,15 +724,22 @@ def run_lDGA_j(cwd, dataDir, codeDir, config, jobid=None):
     outf = os.path.abspath(dataDir)
     runf = os.path.abspath(os.path.join(codeDir,"run_batch.jl"))
     cc_dbg = ""
+    if "sysimage" in config["lDGAJulia"] and os.path.exists(config["lDGAJulia"]["sysimage"]):
+        jobfile = " -J" + config["lDGAJulia"]["sysimage"]
+    else:
+        jobfile = ""
+        print("Warning: no sysimage for julia process found. Execute create_sysimage.jl and point lDGA/sysimage setting to resulting .so file")
+
     tmp = """
 TMPDIR=`mktemp -d`
 mkdir "$TMPDIR/compiled"
 rsync -au "$JULIA_DEPOT_PATH/compiled/v1.6" "$TMPDIR/compiled/"
 export JULIA_DEPOT_PATH="$TMPDIR:$JULIA_DEPOT_PATH"
 """
-    cmd = "julia --check-bounds=no --project=" + os.path.abspath(codeDir) + " " + runf + " " + lDGA_config_file + " " + \
+    cmd = "julia " +jobfile+ " --check-bounds=no --project=" + os.path.abspath(codeDir) + " " + runf + " " + lDGA_config_file + " " + \
           outf + " " + str(procs) +  " > run.out 2> run.err"
     cmd = cc_dbg + cmd
+    print("jLDGA cmd: ", cmd)
     #" -p " + str(procs) +
     cslurm = config['general']['custom_slurm_lines']
     if not jobid:
@@ -745,7 +778,6 @@ def run_results_pp(runDir, dataDir, subRunDir_ED, subRunDir_vert,
                          "rm " + os.path.abspath(subRunDir_lDGA_j_naive) +\
                          "/vars.jl\n"
     return
-    # TODO: copy chi from julia and fortran
     content = "cp " + " " + "\n"
     content += str(clean_script_path) + "\n"
     content += str(cp_script_path) + "\n"
@@ -793,6 +825,18 @@ def run_results_pp(runDir, dataDir, subRunDir_ED, subRunDir_vert,
 # ============================================================================
 # =                   Log and Postprocess Functions                          =
 # ============================================================================
+def get_id_log(fn):
+    if os.path.exists(fn):
+        with open(fn, 'r') as f:
+            old_file = f.readlines()
+        try:
+            old_id = int(old_file[1][8:])
+        except ValueError:
+            old_id = None
+    else:
+        old_id = None
+    return old_id
+
 def dmft_log(fn, jobid, loc, config):
     old_id = None
     continue_status = True
