@@ -725,7 +725,8 @@ def run_lDGA_j(cwd, dataDir, codeDir, config, jobid=None):
     runf = os.path.abspath(os.path.join(codeDir,"run_batch.jl"))
     cc_dbg = ""
     if "sysimage" in config["lDGAJulia"] and os.path.exists(config["lDGAJulia"]["sysimage"]):
-        jobfile = " -J" + config["lDGAJulia"]["sysimage"]
+        jobfile = ""
+        #jobfile = " -J" + config["lDGAJulia"]["sysimage"]
     else:
         jobfile = ""
         print("Warning: no sysimage for julia process found. Execute create_sysimage.jl and point lDGA/sysimage setting to resulting .so file")
