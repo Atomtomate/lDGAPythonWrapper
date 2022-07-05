@@ -752,7 +752,7 @@ export JULIA_DEPOT_PATH="$TMPDIR:$JULIA_DEPOT_PATH"
         job_func = globals()["job_" + config['general']['cluster']]
         f.write(job_func(config, procs, cslurm, cmd, copy_from_ed=False,
                          queue="standard96", custom_lines=False,
-                         jobname=jn))
+                         jobname=jn, timelimit="00:40:00"))
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
     if not (process.returncode == 0):
         print("Julia lDGA submit did not work as expected:")

@@ -307,7 +307,8 @@ def run_single(config, config_path):
 
         # ----------------- save job info --------------------------------
         lDGA_logfile = os.path.join(runDir, "job_lDGA_j.log")
-        cont = dmft_log(lDGA_logfile, jobid_lDGA_j, subRunDir_lDGA_j, config)
+        print("Warning: ommiting skip check for lDGA")
+        cont = True #dmft_log(lDGA_logfile, jobid_lDGA_j, subRunDir_lDGA_j, config)
         if cont:
             # ------------------- copy/edit ------------------------------
             copy_and_edit_lDGA_j(subRunDir_lDGA_j, dataDir, config)

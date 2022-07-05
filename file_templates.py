@@ -36,36 +36,26 @@ export SLURM_CPU_BIND=none
     return out
 
 def job_berlin(config, procs, custom, cmd, queue="standard96", copy_from_ed=True,
-               custom_lines=True, jobname=""):
+               custom_lines=True, jobname="", timelimit="12:00:00"):
     jn = "#SBATCH -J " + jobname + "\n" if len(jobname) else ""
     cl = "#SBATCH " + custom + "\n" if len(custom) else ""
     out = '''#!/bin/bash
-#SBATCH -t 12:00:00
-#SBATCH --ntasks {0}
-#SBATCH -p {1}
-{2}
+#SBATCH -t {0}
+#SBATCH --ntasks {1}
+#SBATCH -p {2}
 {3}
 {4}
+
+export SLURM_CPU_BIND=none
+
+{5}
 '''
-    if not custom_lines:
-        out = '''#!/bin/bash
-#SBATCH -t 12:00:00
-#SBATCH --ntasks {0}
-#SBATCH -p {1}
-{2}
-{3}
-export SLURM_CPU_BIND=none\n
-{4}
-'''
-        out = out.format(procs, queue, cl, jn, cmd)
-    else:
-        out = out + "export SLURM_CPU_BIND=none\n"
-        if copy_from_ed:
-            out = out + "./copy_dmft_files \n"
-            out = out + "./copy_data_files || true \n"
-        out = out + "{5}\n"
-        out = out.format(procs, queue, cl, jn, config['general']['custom_module_load'],
-                         cmd)
+    if copy_from_ed:
+        out = out + "./copy_dmft_files \n"
+        out = out + "./copy_data_files || true \n"
+    out = out + "{6}\n"
+    out = out.format(timelimit, procs, queue, cl, jn, config['general']['custom_module_load'],
+                     cmd)
     return out
 
 
