@@ -436,6 +436,9 @@ def copy_and_edit_lDGA_j(subRunDir, dataDir, config):
     with open(lDGA_in_path, 'w') as f:
         f.write(lDGA_in)
 
+def copy_and_edit_lDGA_kConv(subRunDir, dataDir, config):
+    copy_and_edit_lDGA_j(subRunDir, dataDir, config)
+
 
 # ============================================================================
 # =                           run functions                                  =
@@ -731,12 +734,6 @@ def run_lDGA_j(cwd, dataDir, codeDir, config, jobid=None):
         jobfile = ""
         print("Warning: no sysimage for julia process found. Execute create_sysimage.jl and point lDGA/sysimage setting to resulting .so file")
 
-    tmp = """
-TMPDIR=`mktemp -d`
-mkdir "$TMPDIR/compiled"
-rsync -au "$JULIA_DEPOT_PATH/compiled/v1.6" "$TMPDIR/compiled/"
-export JULIA_DEPOT_PATH="$TMPDIR:$JULIA_DEPOT_PATH"
-"""
     cmd = "julia " +jobfile+ " --check-bounds=no --project=" + os.path.abspath(codeDir) + " " + runf + " " + lDGA_config_file + " " + \
           outf + " " + str(procs) +  " > run.out 2> run.err"
     cmd = cc_dbg + cmd
@@ -753,6 +750,44 @@ export JULIA_DEPOT_PATH="$TMPDIR:$JULIA_DEPOT_PATH"
         f.write(job_func(config, procs, cslurm, cmd, copy_from_ed=False,
                          queue="standard96", custom_lines=False,
                          jobname=jn, timelimit="00:40:00"))
+    process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
+    if not (process.returncode == 0):
+        print("Julia lDGA submit did not work as expected:")
+        print(process.stdout.decode("utf-8"))
+        print(process.stderr.decode("utf-8"))
+        return False
+    else:
+        res = process.stdout.decode("utf-8")
+        jobid = re.findall(r'job \d+', res)[-1].split()[1]
+    return jobid
+
+
+#TODO: remove code replication
+def run_lDGA_kConv(cwd, dataDir, codeDir, config, jobid=None):
+    filename = "lDGA_kConv.sh"
+    jn = "kConv_b{:.1f}U{:.1f}".format(config['parameters']['beta'],
+                                    config['parameters']['U'])
+    fp = os.path.join(cwd, filename)
+    procs = 20  #TODO: remove fixed nprocs
+    lDGA_config_file = os.path.abspath(os.path.join(cwd, "config.toml"))
+
+    outf = os.path.abspath(dataDir)
+    runf = os.path.abspath(os.path.join(codeDir, "run_kConv.jl"))
+    cmd = "julia --check-bounds=no --project=" + os.path.abspath(codeDir) + " " + runf + " " + lDGA_config_file + " " + \
+          outf + " " + str(procs) +  " > run_kConv.out 2> run_kConv.err"
+    print("jLDGA cmd: ", cmd)
+    #" -p " + str(procs) +
+    cslurm = config['general']['custom_slurm_lines']
+    if not jobid:
+        run_cmd = "sbatch " + filename
+    else:
+        run_cmd = "sbatch" + " --dependency=afterok:"+jobid + " " + filename
+    print("running: " + run_cmd)
+    with open(fp, 'w') as f:
+        job_func = globals()["job_" + config['general']['cluster']]
+        f.write(job_func(config, procs, cslurm, cmd, copy_from_ed=False,
+                         queue="standard96", custom_lines=False,
+                         jobname=jn, timelimit="12:00:00"))
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
     if not (process.returncode == 0):
         print("Julia lDGA submit did not work as expected:")

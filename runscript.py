@@ -10,6 +10,7 @@ from helpers import run_bash, check_env, query_yn, reset_dir, dmft_log, \
                     copy_and_edit_trilex, run_ed_trilex, run_postprocess,\
                     copy_and_edit_lDGA_f, run_lDGA_f_makeklist, run_lDGA_f,\
                     copy_and_edit_lDGA_j, run_lDGA_j, read_preprocess_config,\
+                    copy_and_edit_lDGA_kConv, run_lDGA_kConv,\
                     grid_pattern
 
 # TODO: obtain compiler and modify clean_script etc
@@ -307,8 +308,7 @@ def run_single(config, config_path):
 
         # ----------------- save job info --------------------------------
         lDGA_logfile = os.path.join(runDir, "job_lDGA_j.log")
-        print("Warning: ommiting skip check for lDGA")
-        cont = True #dmft_log(lDGA_logfile, jobid_lDGA_j, subRunDir_lDGA_j, config)
+        cont = dmft_log(lDGA_logfile, jobid_lDGA_j, subRunDir_lDGA_j, config)
         if cont:
             # ------------------- copy/edit ------------------------------
             copy_and_edit_lDGA_j(subRunDir_lDGA_j, dataDir, config)
@@ -325,6 +325,43 @@ def run_single(config, config_path):
                 os.remove(lDGA_logfile)
             _ = dmft_log(lDGA_logfile, jobid_lDGA_j,
                          subRunDir_lDGA_j, config)
+        else:
+            print("Skipping Julia lDGA computation, due to completed or active job."
+                  "This behavor can be changed in the config.")
+
+    # ========================================================================
+    # =                          lDGA kConv                                  =
+    # ========================================================================
+
+    # ------------------------- definitions ----------------------------------
+    subCodeDir = os.path.join(config['general']['codeDir'], "LadderDGA.jl")
+    subRunDir_lDGA_kConv = os.path.join(runDir, "lDGA_julia")
+    jobid_lDGA_kConv = None
+
+    if not config['run_kConv']['skip']:
+        # ------------------ create dirs ---------------------------------
+        if not os.path.exists(subRunDir_lDGA_kConv):
+            os.mkdir(subRunDir_lDGA_kConv)
+
+        # ----------------- save job info --------------------------------
+        lDGA_logfile = os.path.join(runDir, "job_lDGA_kConv.log")
+        cont = dmft_log(lDGA_logfile, jobid_lDGA_kConv, subRunDir_lDGA_kConv, config)
+        if cont:
+            # ------------------- copy/edit ------------------------------
+            copy_and_edit_lDGA_kConv(subRunDir_lDGA_kConv, dataDir, config)
+
+            # ------------------ compile/run -----------------------------
+            jobid_lDGA_kConv = run_lDGA_kConv(subRunDir_lDGA_kConv, dataDir, subCodeDir,
+                                             config, jobid_pp)
+            if not jobid_lDGA_kConv:
+                raise Exception("Job submit failed")
+
+            # ----------------- save job info ----------------------------
+            lDGA_logfile = os.path.join(runDir, "job_lDGA_kConv.log")
+            if os.path.isfile(lDGA_logfile):
+                os.remove(lDGA_logfile)
+            _ = dmft_log(lDGA_logfile, jobid_lDGA_kConv,
+                         subRunDir_lDGA_kConv, config)
         else:
             print("Skipping Julia lDGA computation, due to completed or active job."
                   "This behavor can be changed in the config.")

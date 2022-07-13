@@ -105,5 +105,7 @@ bosonic_tail_correction = "coeffs"
 usable_prct_reduction = 0.10
 
 [lDGAPost]
-delete_calc = false # WARNING: this will delete all logfiles and intermediate results such as F and chi
-result_vars = "chi_q"
+delete_calc = false     # WARNING: this will delete all logfiles and intermediate results such as F and chi
+
+[run_kConv]
+skip = false        # run k-grid convergence and write out order parameter at each iteration. This can take a very long time! 
