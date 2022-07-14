@@ -210,7 +210,8 @@ def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
                  "ed_dmft_parallel_frequencies.f90"]
 
     prev_id = None
-    if "start_from" in config["general"]:
+    old_andpar = None
+    if "start_from" in config["general"] and len(config["general"]["start_from"]) > 1:
         p1 = os.path.join(config["general"]["start_from"], "data/hubb.andpar")
         p2 = os.path.join(config["general"]["start_from"], "ed_dmft/hubb.andpar")
         jid_path = os.path.join(config["general"]["start_from"], "job_dmft.log")
@@ -225,7 +226,7 @@ def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
             raise ValueError("hubb.andpar not found at given location: " + str(old_andpar))
     if "custom_init_andpar_file" in config["general"] and "start_from" in config["general"]:
         print("Warning, both 'custom_init_andpar_file' and 'start_from' set. Ignoring 'start_from'!")
-    if "custom_init_andpar_file" in config["general"]:
+    if "custom_init_andpar_file" in config["general"] and len(config["general"]["start_from"]) > 1:
         old_andpar = config["general"]["custom_init_andpar_file"]
         if not os.path.exists(old_andpar):
             raise ValueError("hubb.andpar not found at given location: " + str(old_andpar))
@@ -301,7 +302,7 @@ def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
             max_freq = list(map(int,var_line.split()))[1]
     else:
         raise NotImplementedError(str(full_freq_dat)+" not found! \
-                Automatic generation of frequency grid noch implemented yet. \
+                Automatic generation of frequency grid not implemented yet. \
                 Use EquivalencyClassesConstructor.jl in order to generate a FreqList.jld2 file.")
         sys.exit(1)
         freq_grid = match_freq_str(full_freq_dat)
@@ -451,14 +452,14 @@ def run_ed_dmft(cwd, config, prev_jobid=None):
     jn = "DMFT_b{:.1f}U{:.1f}".format(config['parameters']['beta'],
                                     config['parameters']['U'])
     with open(fp, 'w') as f:
-        job_func = globals()["job_" + config['general']['cluster']]
+        job_func = globals()["job_" + config['general']['cluster'].lower()]
         f.write(job_func(config, procs, cslurm, cmd, copy_from_ed=False,
                          jobname=jn))
     filename = "./ed_dmft_run.sh"
     if not prev_jobid:
-        run_cmd = "sbatch " + filename
+        run_cmd = config['general']['submit_str'] + filename
     else:
-        run_cmd = "sbatch" + " --dependency=afterok:"+ str(prev_jobid) + " " + filename
+        run_cmd = config['general']['submit_str'] + " --dependency=afterok:"+ str(prev_jobid) + " " + filename
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
 
     print("running: " + run_cmd)
@@ -478,7 +479,7 @@ def run_ed_vertex(cwd, config, ed_jobid=None):
     fp = os.path.join(cwd, filename)
     jn = "VER_b{:.1f}U{:.1f}".format(config['parameters']['beta'],
                                     config['parameters']['U'])
-    if config['general']['cluster'] == "berlin":
+    if config['general']['cluster'].lower() == "berlin":
         cores_per_node = 96
         procs = config['Vertex']['nprocs']
         nodes = ceil(procs/cores_per_node)
@@ -496,12 +497,12 @@ def run_ed_vertex(cwd, config, ed_jobid=None):
     cmd+= "mpirun -np " + str(procs) + " ./run.x > run.out 2> run.err\n"
     cslurm = config['general']['custom_slurm_lines']
     if not ed_jobid:
-        run_cmd = "sbatch " + filename
+        run_cmd = config['general']['submit_str'] + filename
     else:
-        run_cmd = "sbatch" + " --dependency=afterok:"+ed_jobid + " " + filename
+        run_cmd = config['general']['submit_str'] + " --dependency=afterok:"+ed_jobid + " " + filename
     print("running: " + run_cmd)
     with open(fp, 'w') as f:
-        job_func = globals()["job_" + config['general']['cluster']]
+        job_func = globals()["job_" + config['general']['cluster'].lower()]
         f.write(job_func(config, procs, cslurm, cmd, jobname=jn))
     st = os.stat(fp)
     os.chmod(fp, st.st_mode | stat.S_IEXEC)
@@ -531,7 +532,7 @@ def run_ed_susc(cwd, config, ed_jobid=None):
         run_cmd = "sbatch" + " --dependency=afterok:"+ed_jobid + " " + filename
     print("running: " + run_cmd)
     with open(fp, 'w') as f:
-        job_func = globals()["job_" + config['general']['cluster']]
+        job_func = globals()["job_" + config['general']['cluster'].lower()]
         f.write(job_func(config, 1, cslurm, cmd, jobname=jn))
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
     if not (process.returncode == 0):
@@ -559,7 +560,7 @@ def run_ed_trilex(cwd, config, ed_jobid=None):
     print("running: " + run_cmd)
     fp = os.path.join(cwd, filename)
     with open(fp, 'w') as f:
-        job_func = globals()["job_" + config['general']['cluster']]
+        job_func = globals()["job_" + config['general']['cluster'].lower()]
         f.write(job_func(config, procs, cslurm, cmd, jobname=jn))
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
 
@@ -648,7 +649,7 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,
 
     fp = os.path.join(cwd, filename)
     with open(fp, 'w') as f:
-        job_func = globals()["postprocessing_" + config['general']['cluster']]
+        job_func = globals()["postprocessing_" + config['general']['cluster'].lower()]
         f.write(job_func(content, cslurm, config, jobname=jn))
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
 
@@ -670,7 +671,7 @@ def run_lDGA_f_makeklist(cwd, config, jobid=None):
     run_cmd = "sbatch " + filename
     print("running: " + run_cmd)
     with open(fp, 'w') as f:
-        job_func = globals()["job_" + config['general']['cluster']]
+        job_func = globals()["job_" + config['general']['cluster'].lower()]
         f.write(job_func(config, 1, cslurm, cmd))
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
     if not (process.returncode == 0):
@@ -702,7 +703,7 @@ def run_lDGA_f(cwd, config, jobid=None):
         run_cmd = "sbatch" + " --dependency=afterok:"+jobid + " " + filename
     print("running: " + run_cmd)
     with open(fp, 'w') as f:
-        job_func = globals()["job_" + config['general']['cluster']]
+        job_func = globals()["job_" + config['general']['cluster'].lower()]
         f.write(job_func(config, procs, cslurm, cmd, False))
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
     if not (process.returncode == 0):
@@ -746,7 +747,7 @@ def run_lDGA_j(cwd, dataDir, codeDir, config, jobid=None):
         run_cmd = "sbatch" + " --dependency=afterok:"+jobid + " " + filename
     print("running: " + run_cmd)
     with open(fp, 'w') as f:
-        job_func = globals()["job_" + config['general']['cluster']]
+        job_func = globals()["job_" + config['general']['cluster'].lower()]
         f.write(job_func(config, procs, cslurm, cmd, copy_from_ed=False,
                          queue="standard96", custom_lines=False,
                          jobname=jn, timelimit="00:40:00"))
@@ -784,7 +785,7 @@ def run_lDGA_kConv(cwd, dataDir, codeDir, config, jobid=None):
         run_cmd = "sbatch" + " --dependency=afterok:"+jobid + " " + filename
     print("running: " + run_cmd)
     with open(fp, 'w') as f:
-        job_func = globals()["job_" + config['general']['cluster']]
+        job_func = globals()["job_" + config['general']['cluster'].lower()]
         f.write(job_func(config, procs, cslurm, cmd, copy_from_ed=False,
                          queue="standard96", custom_lines=False,
                          jobname=jn, timelimit="12:00:00"))
@@ -844,7 +845,7 @@ def run_results_pp(runDir, dataDir, subRunDir_ED, subRunDir_vert,
 
     fp = os.path.join(cwd, filename)
     with open(fp, 'w') as f:
-        job_func = globals()["postprocessing_" + config['general']['cluster']]
+        job_func = globals()["postprocessing_" + config['general']['cluster'].lower()]
         f.write(job_func(content, cslurm, config))
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
     if not (process.returncode == 0):
@@ -876,35 +877,38 @@ def get_id_log(fn):
 def dmft_log(fn, jobid, loc, config):
     old_id = None
     continue_status = True
-    if os.path.exists(fn):               # job has been run before
-        with open(fn, 'r') as f:
-            old_file = f.readlines()
-        try:
-            old_id = int(old_file[1][8:])
-            out, old_status = format_log_from_sacct(fn, old_id, loc)
-        except ValueError:
-            old_id = None
-            old_status = ""
-        if jobid is None:                # determine previous status of job
-            if not(old_id is None):
-                out, status = format_log_from_sacct(fn, old_id, loc)
-                if ((not config["general"]["restart_after_success"]) and
-                   old_status == "COMPLETED") or\
-                   (old_status == "RUNNING"):
-                    continue_status = False
-        else:                            # compare if job ids match
-            if old_id is None:
-                out, status = format_log_from_sacct(fn, jobid, loc)
-            else:
-                if (int(jobid) == int(old_id)) or\
-                   ((not config["general"]["restart_after_success"]) and
-                   old_status == "COMPLETED") or\
-                   (old_status == "RUNNING"):
-                    continue_status = False
+    if config['general']['queue_system'] == "slurm":
+        if os.path.exists(fn):               # job has been run before
+            with open(fn, 'r') as f:
+                old_file = f.readlines()
+            try:
+                old_id = int(old_file[1][8:])
+                out, old_status = format_log_from_sacct(fn, old_id, loc)
+            except ValueError:
+                old_id = None
+                old_status = ""
+            if jobid is None:                # determine previous status of job
+                if not(old_id is None):
                     out, status = format_log_from_sacct(fn, old_id, loc)
-    else:                           # this is a new job
-        if not (jobid is None):     # we will write a log once the id is known
-            out, status = format_log_from_sacct(fn, jobid, loc)
+                    if ((not config["general"]["restart_after_success"]) and
+                       old_status == "COMPLETED") or\
+                       (old_status == "RUNNING"):
+                        continue_status = False
+            else:                            # compare if job ids match
+                if old_id is None:
+                    out, status = format_log_from_sacct(fn, jobid, loc)
+                else:
+                    if (int(jobid) == int(old_id)) or\
+                       ((not config["general"]["restart_after_success"]) and
+                       old_status == "COMPLETED") or\
+                       (old_status == "RUNNING"):
+                        continue_status = False
+                        out, status = format_log_from_sacct(fn, old_id, loc)
+        else:                           # this is a new job
+            if not (jobid is None):     # we will write a log once the id is known
+                out, status = format_log_from_sacct(fn, jobid, loc)
+    else:
+        print("Warning: cannot check for completed jobs without slurm queue system!")
     return continue_status
 
 

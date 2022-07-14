@@ -72,6 +72,14 @@ def run_single(config, config_path):
             raise RuntimeError("Environment check failed! "
                                "Please check the error log for more "
                                "information")
+        config['general']['queue_system'] = "slurm"
+        config['general']['submit_str'] = "sbatch "
+    elif config['general']['cluster'].lower() == "hamburg":
+        config['general']['queue_system'] = "gse"
+        config['general']['submit_str'] = "qsub "
+    else:
+        raise RuntimeError("Environment check failed! "
+                           "Unrecognized cluster!")
 
     # ------------------------ create directories ----------------------------
     runDir = config['general']['runDir']
@@ -106,7 +114,7 @@ def run_single(config, config_path):
     subRunDir_ED = os.path.join(runDir, "ed_dmft")
     src_files = ["aux_routines.f90", "lattice_routines.f90",
                  "ed_dmft_parallel_frequencies.f90"]
-    compile_command = "mpiifort " + ' '.join(src_files) + \
+    compile_command = "mpiifort -g " + ' '.join(src_files) + \
                       " -o run.x -llapack -lblas " + \
                       config['general']['CFLAGS']
     jobid_ed = None

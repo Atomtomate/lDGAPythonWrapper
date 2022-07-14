@@ -58,6 +58,42 @@ export SLURM_CPU_BIND=none
                      cmd)
     return out
 
+def postprocessing_hamburg(content, custom, config, jobname=""):
+    jn = "#$ -N " + jobname + "\n" if len(jobname) else ""
+    cl = "#$ " + custom + "\n" if len(custom) else ""
+    out = '''#!/bin/bash
+#$ -l h_rt=01:00:00
+#$ -cwd
+#$ -q th1prio.q
+{0}
+{1}
+{2}
+'''.format(jn, cl, config['general']['custom_module_load'])
+    out += content
+    return out
+
+def job_hamburg(config, procs, custom, cmd, queue="standard96", copy_from_ed=True,
+               custom_lines=True, jobname="", timelimit="12:00:00"):
+    jn = "#$ -N " + jobname + "\n" if len(jobname) else ""
+    cl = "#$ " + custom + "\n" if len(custom) else ""
+    out = '''#!/bin/bash
+#$ -l h_rt={0}
+#$ -cwd
+#$ -q th1prio.q
+#$ -pe mpi {1}
+{2}
+{3}
+
+{4}
+'''
+    if copy_from_ed:
+        out = out + "./copy_dmft_files \n"
+        out = out + "./copy_data_files || true \n"
+    out = out + "{5}\n"
+    out = out.format(timelimit, procs, cl, jn, config['general']['custom_module_load'],
+                     cmd)
+    return out
+
 
 def bak_files_script(source_dir, target_dir, files_list, header=False,
                      mode="mv"):
@@ -199,13 +235,12 @@ asymptVars = "vars_asympt_sums.jld"
 cast_to_real = false             # TODO: not implemented. cast all arrays with vanishing imaginary part to real
 loglevel = "debug"        # error, warn, info, debug
 logfile = "lDGA.log"
-progressbar = false
 
 [legacy]
 
 [Debug]
 read_bubble = false
-full_EoM_omega = false
+full_EoM_omega = true
 
 """
     out = out.format(
