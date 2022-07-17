@@ -72,24 +72,24 @@ def postprocessing_hamburg(content, custom, config, jobname=""):
     out += content
     return out
 
-def job_hamburg(config, procs, custom, cmd, queue="standard96", copy_from_ed=True,
+def job_hamburg(config, procs, custom, cmd, queue="th1prio.q,infinix.q", copy_from_ed=True,
                custom_lines=True, jobname="", timelimit="12:00:00"):
     jn = "#$ -N " + jobname + "\n" if len(jobname) else ""
     cl = "#$ " + custom + "\n" if len(custom) else ""
     out = '''#!/bin/bash
 #$ -l h_rt={0}
 #$ -cwd
-#$ -q th1prio.q
-#$ -pe mpi {1}
-{2}
+#$ -q {1}
+#$ -pe mpi {2}
 {3}
-
 {4}
+
+{5}
 '''
     if copy_from_ed:
         out = out + "./copy_dmft_files \n"
         out = out + "./copy_data_files || true \n"
-    out = out + "{5}\n"
+    out = out + "{6}\n"
     out = out.format(timelimit, procs, cl, jn, config['general']['custom_module_load'],
                      cmd)
     return out
@@ -427,3 +427,10 @@ Eps(k)
     )
     return out
 
+def w2dyn_submit(config):
+    out = '''
+eval "$(conda shell.bash hook)"
+conda activate p3
+
+mpirun -np 96 /scratch/projects/hhp00048/w2dyn/bin/DMFT_original.py
+'''

@@ -3,6 +3,7 @@ import os
 import re
 import numpy as np
 import shutil
+from config import *
 from helpers import run_bash, check_env, query_yn, reset_dir, dmft_log, \
                     copy_and_edit_dmft, run_ed_dmft, copy_and_edit_vertex, \
                     parse_freq_list, \
@@ -114,7 +115,7 @@ def run_single(config, config_path):
     subRunDir_ED = os.path.join(runDir, "ed_dmft")
     src_files = ["aux_routines.f90", "lattice_routines.f90",
                  "ed_dmft_parallel_frequencies.f90"]
-    compile_command = "mpiifort -g " + ' '.join(src_files) + \
+    compile_command = "mpifort " + ' '.join(src_files) + \
                       " -o run.x -llapack -lblas " + \
                       config['general']['CFLAGS']
     jobid_ed = None
@@ -231,7 +232,7 @@ def run_single(config, config_path):
     # ------------------------- definitions ----------------------------------
     subCodeDir = os.path.join(config['general']['codeDir'],
                               "ED_codes/ED_Trilex_Parallel")
-    compile_command = "mpiifort ver_twofreq_parallel.f -o run.x -llapack " \
+    compile_command = "mpifort ver_twofreq_parallel.f -o run.x -llapack " \
                       "-lblas " + config['general']['CFLAGS']
     output_dirs = ["trip_omega", "tripamp_omega", "trilex_omega"]
     subRunDir_trilex = os.path.join(runDir, "ed_trilex")

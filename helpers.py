@@ -6,6 +6,7 @@ import toml
 import re
 import stat
 from math import isclose, ceil
+from config import *
 from file_templates import *
 # flake8:  noqa: F405
 
@@ -27,45 +28,6 @@ def match_freq_str(freq_str):
                 be F1:F2,B1:B2 with N1 < N2, M1 < M2, but got ", freq_str)
         freq_grid[i] = [int(match[0]), int(match[1])+1]           # +1, we want to include upper lim
     return freq_grid
-
-def format_log_from_sacct(fn, jobid, loc):
-    out = """
-jobid = {0}
-result_dir = {1}
-last_check_stamp = {2}
-last_status = {3}
-run_time = {4}
-job_name = {5}
-    """
-    job_cmd = "sacct -j " + str(jobid) + " --format=User,JobID,Jobname,"\
-              "partition,state,elapsed,nnodes,ncpus,nodelist"
-    process = subprocess.run(job_cmd, shell=True, capture_output=True)
-    stdout = process.stdout.decode("utf-8")
-    stderr = process.stderr.decode("utf-8")
-    now = datetime.now()
-    timestamp = now.strftime("%Y-%m-%dT%H:%M:%S")
-    status = ""
-
-    if not (process.returncode == 0):
-        out = out.format(jobid, os.path.abspath(loc), timestamp,
-                         "sacct not accessible", "sacct not accessible",
-                         "sacct not accessible")
-        res = stderr
-        print("Warning: could not run sacct in order to check job completion! "
-              "Got: \n" + res)
-    else:
-        if len(stdout.splitlines()) < 3:
-            out = out.format(jobid, os.path.abspath(loc), timestamp,
-                             "Job not found", "Job not found", "Job not found")
-            status = ""
-        else:
-            res = list(map(str.strip, stdout.splitlines()[2].split()))
-            out = out.format(jobid, os.path.abspath(loc), timestamp,
-                             res[4], res[5], res[8])
-            status = res[4]
-    with open(fn, 'w') as f:
-        f.write(out)
-    return out, status
 
 
 def check_config_consistency(config):
@@ -493,13 +455,13 @@ def run_ed_vertex(cwd, config, ed_jobid=None):
     cmd+= "echo \"Checks Successful\" >> run.out;\n"
     cmd+= "else\necho \"Checks unsuccessful\" >> run.out;\nfi;\n"
     cmd+= "echo \"--- end checks ---- \" >> run.out\n"
-    cmd+= "mpiifort ver_tpri_run.f90 -o run.x -mkl " + config['general']['CFLAGS']+"\n"
+    cmd+= "mpifort ver_tpri_run.f90 -o run.x -llapack " + config['general']['CFLAGS']+"\n"
     cmd+= "mpirun -np " + str(procs) + " ./run.x > run.out 2> run.err\n"
     cslurm = config['general']['custom_slurm_lines']
     if not ed_jobid:
         run_cmd = config['general']['submit_str'] + filename
     else:
-        run_cmd = config['general']['submit_str'] + " --dependency=afterok:"+ed_jobid + " " + filename
+        run_cmd = get_submit_cmd(config, dependency_id=ed_jobid) + filename
     print("running: " + run_cmd)
     with open(fp, 'w') as f:
         job_func = globals()["job_" + config['general']['cluster'].lower()]
@@ -529,7 +491,7 @@ def run_ed_susc(cwd, config, ed_jobid=None):
     if not ed_jobid:
         run_cmd = "sbatch " + filename
     else:
-        run_cmd = "sbatch" + " --dependency=afterok:"+ed_jobid + " " + filename
+        run_cmd = get_submit_cmd(config, dependency_id=ed_jobid) + filename
     print("running: " + run_cmd)
     with open(fp, 'w') as f:
         job_func = globals()["job_" + config['general']['cluster'].lower()]
@@ -638,13 +600,8 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,
     st = os.stat(cp_script_path)
     os.chmod(cp_script_path, st.st_mode | stat.S_IEXEC)
 
-    run_cmd = "sbatch " + filename
-    if jobids and any(jobids):
-        run_cmd = "sbatch" + " --dependency=afterok"
-        for j in jobids:
-            if j:
-                run_cmd += ":"+j
-        run_cmd += " " + filename
+    run_cmd = get_submit_cmd(config, dependency_id = jobids)
+    run_cmd += filename
     print("running: " + run_cmd)
 
     fp = os.path.join(cwd, filename)
@@ -683,39 +640,6 @@ def run_lDGA_f_makeklist(cwd, config, jobid=None):
         res = process.stdout.decode("utf-8")
         jobid = re.findall(r'job \d+', res)[-1].split()[1]
     return jobid
-
-
-def run_lDGA_f(cwd, config, jobid=None):
-    filename = "lDGA_f.sh"
-    fp = os.path.join(cwd, filename)
-    procs = 2*int(config['Trilex']['nBoseFreq']) + 1
-    cmd = "export LD_LIBRARY_PATH=/sw/numerics/fftw3/impi/intel/3.3.8/skl/"\
-          "lib:$LD_LIBRARY_PATH\n"
-
-    cmd += "./klist.x > run_klist.out 2> run_klist.err\n"
-    cmd += "rm -f *.dat\n"
-    cmd += "./copy.sh\nmpirun -np " + str(procs) + " ./Selfk_LU_parallel_3D.x"\
-           " > run.out 2> run.err"
-    cslurm = config['general']['custom_slurm_lines']
-    if not jobid:
-        run_cmd = "sbatch " + filename
-    else:
-        run_cmd = "sbatch" + " --dependency=afterok:"+jobid + " " + filename
-    print("running: " + run_cmd)
-    with open(fp, 'w') as f:
-        job_func = globals()["job_" + config['general']['cluster'].lower()]
-        f.write(job_func(config, procs, cslurm, cmd, False))
-    process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
-    if not (process.returncode == 0):
-        print("lDGA submit did not work as expected:")
-        print(process.stdout.decode("utf-8"))
-        print(process.stderr.decode("utf-8"))
-        return False
-    else:
-        res = process.stdout.decode("utf-8")
-        jobid = re.findall(r'job \d+', res)[-1].split()[1]
-    return jobid
-
 
 def run_lDGA_j(cwd, dataDir, codeDir, config, jobid=None):
     filename = "lDGA_j.sh"
@@ -877,38 +801,35 @@ def get_id_log(fn):
 def dmft_log(fn, jobid, loc, config):
     old_id = None
     continue_status = True
-    if config['general']['queue_system'] == "slurm":
-        if os.path.exists(fn):               # job has been run before
-            with open(fn, 'r') as f:
-                old_file = f.readlines()
-            try:
-                old_id = int(old_file[1][8:])
-                out, old_status = format_log_from_sacct(fn, old_id, loc)
-            except ValueError:
-                old_id = None
-                old_status = ""
-            if jobid is None:                # determine previous status of job
-                if not(old_id is None):
-                    out, status = format_log_from_sacct(fn, old_id, loc)
-                    if ((not config["general"]["restart_after_success"]) and
-                       old_status == "COMPLETED") or\
-                       (old_status == "RUNNING"):
-                        continue_status = False
-            else:                            # compare if job ids match
-                if old_id is None:
-                    out, status = format_log_from_sacct(fn, jobid, loc)
-                else:
-                    if (int(jobid) == int(old_id)) or\
-                       ((not config["general"]["restart_after_success"]) and
-                       old_status == "COMPLETED") or\
-                       (old_status == "RUNNING"):
-                        continue_status = False
-                        out, status = format_log_from_sacct(fn, old_id, loc)
-        else:                           # this is a new job
-            if not (jobid is None):     # we will write a log once the id is known
-                out, status = format_log_from_sacct(fn, jobid, loc)
-    else:
-        print("Warning: cannot check for completed jobs without slurm queue system!")
+    if os.path.exists(fn):               # job has been run before
+        with open(fn, 'r') as f:
+            old_file = f.readlines()
+        try:
+            old_id = int(old_file[1][8:])
+            out, old_status = format_log(fn, old_id, loc, config)
+        except ValueError:
+            old_id = None
+            old_status = ""
+        if jobid is None:                # determine previous status of job
+            if not(old_id is None):
+                out, status = format_log(fn, old_id, loc, config)
+                if ((not config["general"]["restart_after_success"]) and
+                   old_status == "COMPLETED") or\
+                   (old_status == "RUNNING"):
+                    continue_status = False
+        else:                            # compare if job ids match
+            if old_id is None:
+                out, status = format_log(fn, jobid, loc, config)
+            else:
+                if (int(jobid) == int(old_id)) or\
+                   ((not config["general"]["restart_after_success"]) and
+                   old_status == "COMPLETED") or\
+                   (old_status == "RUNNING"):
+                    continue_status = False
+                    out, status = format_log(fn, old_id, loc, config)
+    else:                           # this is a new job
+        if not (jobid is None):     # we will write a log once the id is known
+            out, status = format_log(fn, jobid, loc, config)
     return continue_status
 
 

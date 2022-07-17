@@ -1,7 +1,7 @@
 [general]
 runDir = "/afs/physnet.uni-hamburg.de/users/th1_ro/jstobbe/lDGA/test_runs/b{beta}_U{U}"     # Directory for calculations, {beta} and {U} will be replaced by the values set in [parameters] 
 codeDir = "/afs/physnet.uni-hamburg.de/users/th1_ro/jstobbe/lDGA/codes"                                # Directory for ED Codes
-CFLAGS = "-O3 -xHost"                                                       # Compilation flags for ifort, mpiif90
+CFLAGS = " -O3 "                                                       # Compilation flags for ifort, mpif90
 verbose = false                                                             # Print additional information during compilations
 cluster = "Hamburg"                                                          # This can only be set to berlin for now. Placeholder for PhysNet/local options
 custom_slurm_lines = ""                                                     # Custom line in slurm start script, e.g. -A hhp00048
@@ -15,7 +15,7 @@ restart_after_success = false                                               # tr
 
 [parameters]
 lattice = "3Dsc-0.2041241452319315"                                         # 3Dsc-[t], 2Dsc-[t], FCC-[t], TODO: link to docu for kgrid strings
-beta = 14.0
+beta = 14.1
 U = 4.0
 mu = "HF"
 
@@ -51,7 +51,7 @@ skip = false
 # freqList can be either a path to a frequency list or
 # "F1:F2,B1:B2" for N1 to N2 (integer) fermionic and B1 to B2 bosonic.
 freqList = "/afs/physnet.uni-hamburg.de/users/th1_ro/jstobbe/lDGA/grids/b150_f150_s1"
-nprocs = 500
+nprocs = 256
 
 [Susc]
 skip = false
