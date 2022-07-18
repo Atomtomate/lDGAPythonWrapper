@@ -9,7 +9,6 @@ from helpers import run_bash, check_env, query_yn, reset_dir, dmft_log, \
                     parse_freq_list, \
                     run_ed_vertex, copy_and_edit_susc, run_ed_susc, \
                     copy_and_edit_trilex, run_ed_trilex, run_postprocess,\
-                    copy_and_edit_lDGA_f, run_lDGA_f_makeklist, run_lDGA_f,\
                     copy_and_edit_lDGA_j, run_lDGA_j, read_preprocess_config,\
                     copy_and_edit_lDGA_kConv, run_lDGA_kConv,\
                     grid_pattern
@@ -430,17 +429,42 @@ def run_single(config, config_path):
 
 
     # ========================================================================
-    # =                           results                                    =
+    # =                          DMFT W2Dyn                                  =
     # ========================================================================
 
     # ------------------------- definitions ----------------------------------
-    # subRunDir_results = os.path.join(runDir, "results")
-    # jobid_results = None
-    # jobid_pp = run_results_pp(runDir, dataDir, subRunDir_ED, subRunDir_vert,\
-    #                subRunDir_susc, subRunDir_trilex, config,
-    #                 subRunDir_lDGA_j, subRunDir_lDGA_j_naive,
-    #                 jobids = [jobid_ed, jobid_vert, jobid_susc, jobid_trilex,
-    #                         jobid_lDGA_j_naive, jobid_lDGA_j])
+    if 'w2dyn' in config.keys().lower():
+        subCodeDir = os.path.join(config['general']['codeDir'], "LadderDGA.jl")
+        subRunDir_lDGA_j = os.path.join(runDir, "lDGA_julia")
+        jobid_lDGA_j = None
+
+        if not config['lDGAJulia']['skip']:
+            # ------------------ create dirs ---------------------------------
+            if not os.path.exists(subRunDir_lDGA_j):
+                os.mkdir(subRunDir_lDGA_j)
+
+            # ----------------- save job info --------------------------------
+            lDGA_logfile = os.path.join(runDir, "job_lDGA_j.log")
+            cont = dmft_log(lDGA_logfile, jobid_lDGA_j, subRunDir_lDGA_j, config)
+            if cont:
+                # ------------------- copy/edit ------------------------------
+                copy_and_edit_lDGA_j(subRunDir_lDGA_j, dataDir, config)
+
+                # ------------------ compile/run -----------------------------
+                jobid_lDGA_j = run_lDGA_j(subRunDir_lDGA_j, dataDir, subCodeDir,
+                                                 config, jobid_pp)
+                if not jobid_lDGA_j:
+                    raise Exception("Job submit failed")
+
+                # ----------------- save job info ----------------------------
+                lDGA_logfile = os.path.join(runDir, "job_lDGA_j.log")
+                if os.path.isfile(lDGA_logfile):
+                    os.remove(lDGA_logfile)
+                _ = dmft_log(lDGA_logfile, jobid_lDGA_j,
+                             subRunDir_lDGA_j, config)
+            else:
+                print("Skipping Julia lDGA computation, due to completed or active job."
+                      "This behavor can be changed in the config.")
 
 
 if __name__ == "__main__":

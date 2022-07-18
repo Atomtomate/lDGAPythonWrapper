@@ -9,7 +9,6 @@ from datetime import datetime
 #       this class should provide all cluster and config dependent strings
 
 queue_system = {"hamburg": "slurm", "berlin": "sge"}
-qacct_jn = re.compile(r'jobname(\s+)(.*)')
 qacct_failed = re.compile(r'failed(\s+)(.*)')
 qacct_exit_stat = re.compile(r'exit_status(\s+)(.*)')
 
@@ -88,10 +87,12 @@ job_name = {5}
             process = subprocess.run(job_cmd, shell=True, capture_output=True)
             if process.returncode == 0:
                 stdout = process.stdout.decode("utf-8")
-                m = qacct_jn.match(stdout)
-                job_name = m.group().split()[1]
-                failed = qacct_failed.match(stdout).group().split()[1]
-                exit_stat = qacct_exit_stat.match(stdout).group().split()[1]
+                t = stdout[stdout.find("jobname"):]
+                job_name = t[:t.find("\n")].split(" ")[-1].strip()
+                t = stdout[stdout.find("failed"):]
+                failed = t[:t.find("\n")].split(" ")[-1].strip()
+                t = stdout[stdout.find("exit_status"):]
+                exit_stat = t[:t.find("\n")].split(" ")[-1].strip()
                 run_time = "???"
                 if failed == 0 and exit_stat == 0:
                     status = "COMPLETED"
