@@ -15,8 +15,8 @@ restart_after_success = false                                               # tr
 
 [parameters]
 lattice = "3Dsc-0.2041241452319315"                                         # 3Dsc-[t], 2Dsc-[t], FCC-[t], TODO: link to docu for kgrid strings
-beta = 14.1
-U = 4.0
+beta = 1.0
+U = 3.3
 mu = "HF"
 
 [ED]
@@ -52,7 +52,7 @@ skip = false
 # freqList can be either a path to a frequency list or
 # "F1:F2,B1:B2" for N1 to N2 (integer) fermionic and B1 to B2 bosonic.
 freqList = "/afs/physnet.uni-hamburg.de/users/th1_ro/jstobbe/lDGA/grids/b150_f150_s1"
-nprocs = 256
+nprocs = 1024
 
 [Susc]
 skip = false

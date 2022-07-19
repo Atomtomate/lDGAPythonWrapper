@@ -422,8 +422,7 @@ def run_ed_dmft(cwd, config, prev_jobid=None):
                                     config['parameters']['U'])
     with open(fp, 'w') as f:
         job_func = globals()["job_" + config['general']['cluster'].lower()]
-        f.write(job_func(config, procs, cslurm, cmd, copy_from_ed=False,
-                         jobname=jn))
+        f.write(job_func(config, procs, cslurm, cmd, copy_from_ed=False, jobname=jn))
     filename = "./ed_dmft_run.sh"
     if not prev_jobid:
         run_cmd = config['general']['submit_str'] + filename

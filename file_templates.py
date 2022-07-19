@@ -90,8 +90,7 @@ def job_hamburg(config, procs, custom, cmd, queue="th1prio.q,infinix.q", copy_fr
         out = out + "./copy_dmft_files \n"
         out = out + "./copy_data_files || true \n"
     out = out + "{6}\n"
-    out = out.format(timelimit, procs, cl, jn, config['general']['custom_module_load'],
-                     cmd)
+    out = out.format(timelimit, queue, procs, cl, jn, config['general']['custom_module_load'],cmd)
     return out
 
 

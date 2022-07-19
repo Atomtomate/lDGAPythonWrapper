@@ -110,13 +110,14 @@ def run_single(config, config_path):
     # ========================================================================
 
     # -------------------------- definitions ---------------------------------
-    subCodeDir = os.path.join(config['general']['codeDir'], "ED_codes/ED_dmft")
     subRunDir_ED = os.path.join(runDir, "ed_dmft")
     src_files = ["aux_routines.f90", "lattice_routines.f90",
                  "ed_dmft_parallel_frequencies.f90"]
     if 'old3d' in config['ED'] and config['ED']['old3d']:
+        subCodeDir = os.path.join(config['general']['codeDir'], "ED_codes/ED_dmft_old3D")
         compile_command = "gfortran -O3 ver_tprime.f -o run.x -llapack"
     else:
+        subCodeDir = os.path.join(config['general']['codeDir'], "ED_codes/ED_dmft")
         compile_command = "mpifort " + ' '.join(src_files) + \
                           " -o run.x -llapack -lblas " + \
                           config['general']['CFLAGS']
