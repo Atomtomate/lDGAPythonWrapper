@@ -168,8 +168,11 @@ def check_env(config):
 # ============================================================================
 def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
     files_list = ["tpri.dat", "init.h", "hubb.dat", "hubb.andpar"]
-    src_files = ["aux_routines.f90", "lattice_routines.f90",
-                 "ed_dmft_parallel_frequencies.f90"]
+    if 'old3d' in config['ED'] and config['ED']['old3d']:
+        src_files = ["ver_tprime.f"]
+    else:
+        src_files = ["aux_routines.f90", "lattice_routines.f90",
+                     "ed_dmft_parallel_frequencies.f90"]
 
     prev_id = None
     old_andpar = None
@@ -408,8 +411,12 @@ def copy_and_edit_lDGA_kConv(subRunDir, dataDir, config):
 # ============================================================================
 def run_ed_dmft(cwd, config, prev_jobid=None):
     fp = cwd + "/" + "ed_dmft_run.sh"
-    cmd = "mpirun ./run.x > run.out 2> run.err"
-    procs = (config['ED']['ns']+1)**2
+    if 'old3d' in config['ED'] and config['ED']['old3d']:
+        cmd = "./run.x > run.out 2> run.err"
+        procs = 1
+    else:
+        cmd = "mpirun ./run.x > run.out 2> run.err"
+        procs = 36
     cslurm = config['general']['custom_slurm_lines']
     jn = "DMFT_b{:.1f}U{:.1f}".format(config['parameters']['beta'],
                                     config['parameters']['U'])

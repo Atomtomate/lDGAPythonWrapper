@@ -114,9 +114,12 @@ def run_single(config, config_path):
     subRunDir_ED = os.path.join(runDir, "ed_dmft")
     src_files = ["aux_routines.f90", "lattice_routines.f90",
                  "ed_dmft_parallel_frequencies.f90"]
-    compile_command = "mpifort " + ' '.join(src_files) + \
-                      " -o run.x -llapack -lblas " + \
-                      config['general']['CFLAGS']
+    if 'old3d' in config['ED'] and config['ED']['old3d']:
+        compile_command = "gfortran -O3 ver_tprime.f -o run.x -llapack"
+    else:
+        compile_command = "mpifort " + ' '.join(src_files) + \
+                          " -o run.x -llapack -lblas " + \
+                          config['general']['CFLAGS']
     jobid_ed = None
 
     if not config['ED']['skip']:

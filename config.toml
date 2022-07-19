@@ -21,6 +21,7 @@ mu = "HF"
 
 [ED]
 skip = false
+old3d = true
 ns = 5
 symm = true
 iterations = 80
