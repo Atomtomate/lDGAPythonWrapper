@@ -424,10 +424,7 @@ def run_ed_dmft(cwd, config, prev_jobid=None):
         job_func = globals()["job_" + config['general']['cluster'].lower()]
         f.write(job_func(config, procs, cslurm, cmd, copy_from_ed=False, jobname=jn))
     filename = "./ed_dmft_run.sh"
-    if not prev_jobid:
-        run_cmd = config['general']['submit_str'] + filename
-    else:
-        run_cmd = config['general']['submit_str'] + " --dependency=afterok:"+ str(prev_jobid) + " " + filename
+    run_cmd = get_submit_cmd(config, dependency_id = prev_jobid) + " " + filename
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
 
     print("running: " + run_cmd)

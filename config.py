@@ -18,16 +18,16 @@ def get_submit_cmd(config, dependency_id = None):
         if isinstance(dependency_id, list):
             for el in dependency_id:
                 if not el is None:
-                    jid_str += el + ":"
+                    jid_str += str(el) + ":"
             jid_str = jid_str[:-1]
         else:
             jid_str = dependency_id
     if config['general']['cluster'].lower() == "hamburg":
         res = "qsub "
         if not dependency_id is None:
-            res += "-hold_jid "+jid_str+" "
+            res += "-hold_jid "+str(jid_str)+" "
     elif config['general']['cluster'].lower() == "berlin": 
-        res = "sbatch "+jid_str+" "
+        res = "sbatch "+str(jid_str)+" "
     else:
         raise ValueError("Unkown cluster `" +config['general']['cluster']+ "` !")
     return res
@@ -90,15 +90,16 @@ job_name = {5}
                 t = stdout[stdout.find("jobname"):]
                 job_name = t[:t.find("\n")].split(" ")[-1].strip()
                 t = stdout[stdout.find("failed"):]
-                failed = t[:t.find("\n")].split(" ")[-1].strip()
+                failed = t[:t.find("\n")].strip().split(" ")[-1].strip()
                 t = stdout[stdout.find("exit_status"):]
-                exit_stat = t[:t.find("\n")].split(" ")[-1].strip()
+                exit_stat = t[:t.find("\n")].strip().split(" ")[-1].strip()
                 run_time = "???"
                 if failed == 0 and exit_stat == 0:
                     status = "COMPLETED"
                 else:
                     status = "FAILED"
             else: 
+                print("Warning:  qacct and qstat failed!!!")
                 status = "qacct not accessible"
                 run_time = "qacct not accessible"
                 job_name = "qacct not accessible"
