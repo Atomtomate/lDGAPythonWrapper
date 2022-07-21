@@ -166,13 +166,18 @@ def check_env(config):
 # ============================================================================
 # =                          copy functions                                  =
 # ============================================================================
-def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
+def copy_and_edit_dmft(subCodeDir, subRunDir, config):
     files_list = ["tpri.dat", "init.h", "hubb.dat", "hubb.andpar"]
     if 'old3d' in config['ED'] and config['ED']['old3d']:
         src_files = ["ver_tprime.f"]
     else:
         src_files = ["aux_routines.f90", "lattice_routines.f90",
                      "ed_dmft_parallel_frequencies.f90"]
+    checks_py_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                   "checks.py")
+    checks_py_target = os.path.abspath(os.path.join(subRunDir, "checks.py"))
+    shutil.copyfile(checks_py_path, checks_py_target)
+
 
     prev_id = None
     old_andpar = None
@@ -199,7 +204,7 @@ def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
 
     if old_andpar:
         source_file_path = os.path.abspath(old_andpar)
-        target_file_path = os.path.abspath(os.path.join(subRunDir_ED,
+        target_file_path = os.path.abspath(os.path.join(subRunDir,
                                                         "hubb.andpar"))
         if not config["general"]["custom_init_andpar_vals_only"]:
             print("copying hubb.andpar but not checking for consistency!!")
@@ -215,7 +220,7 @@ def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
             tpar_str += "\n"
 
     for fn in files_list:
-        fp = os.path.abspath(os.path.join(subRunDir_ED, fn))
+        fp = os.path.abspath(os.path.join(subRunDir, fn))
         with open(fp, 'w') as f:
             if fn == "hubb.andpar" and old_andpar:
                 f.write(globals()[fn.replace(".", "_")](config, eps_str,
@@ -225,7 +230,7 @@ def copy_and_edit_dmft(subCodeDir, subRunDir_ED, config):
 
     for src_file in src_files:
         source_file_path = os.path.abspath(os.path.join(subCodeDir, src_file))
-        target_file_path = os.path.abspath(os.path.join(subRunDir_ED,
+        target_file_path = os.path.abspath(os.path.join(subRunDir,
                                                         src_file))
         shutil.copyfile(source_file_path, target_file_path)
     return prev_id
@@ -412,13 +417,17 @@ def copy_and_edit_lDGA_kConv(subRunDir, dataDir, config):
 def run_ed_dmft(cwd, config, prev_jobid=None):
     fp = cwd + "/" + "ed_dmft_run.sh"
     if 'old3d' in config['ED'] and config['ED']['old3d']:
-        cmd = "./run.x > run.out 2> run.err"
+        cmd = "./run.x > run.out 2> run.err\n"
         procs = 1
     else:
-        cmd = "mpirun ./run.x > run.out 2> run.err"
+        cmd = "mpirun ./run.x > run.out 2> run.err\n"
         procs = 36
+    cmd += "module add anaconda3\n"
+    cmd += "eval \"$(conda shell.bash hook)\"\n"
+    cmd += "python checks.py \n"
+    cmd += "python checks.py >> run.out \n"
     cslurm = config['general']['custom_slurm_lines']
-    jn = "DMFT_b{:.1f}U{:.1f}".format(config['parameters']['beta'],
+    jn = "b{:.1f}U{:.1f}_DMFT".format(config['parameters']['beta'],
                                     config['parameters']['U'])
     with open(fp, 'w') as f:
         job_func = globals()["job_" + config['general']['cluster'].lower()]
@@ -442,7 +451,7 @@ def run_ed_dmft(cwd, config, prev_jobid=None):
 def run_ed_vertex(cwd, config, ed_jobid=None):
     filename = "ed_vertex_run.sh"
     fp = os.path.join(cwd, filename)
-    jn = "VER_b{:.1f}U{:.1f}".format(config['parameters']['beta'],
+    jn = "b{:.1f}U{:.1f}_VER".format(config['parameters']['beta'],
                                     config['parameters']['U'])
     if config['general']['cluster'].lower() == "berlin":
         cores_per_node = 96
@@ -542,7 +551,7 @@ def run_ed_trilex(cwd, config, ed_jobid=None):
 
 def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,
                     subRunDir_susc, subRunDir_trilex, config, jobids=None):
-    jn = "PP_b{:.1f}U{:.1f}".format(config['parameters']['beta'],
+    jn = "b{:.1f}U{:.1f}_PP".format(config['parameters']['beta'],
                                     config['parameters']['U'])
     filename = "postprocess.sh"
     cslurm = config['general']['custom_slurm_lines']
@@ -646,7 +655,7 @@ def run_lDGA_f_makeklist(cwd, config, jobid=None):
 
 def run_lDGA_j(cwd, dataDir, codeDir, config, jobid=None):
     filename = "lDGA_j.sh"
-    jn = "lDGAj_b{:.1f}U{:.1f}".format(config['parameters']['beta'],
+    jn = "b{:.1f}U{:.1f}_lDGA".format(config['parameters']['beta'],
                                     config['parameters']['U'])
     fp = os.path.join(cwd, filename)
     procs = config["lDGAJulia"]["nprocs"]

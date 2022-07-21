@@ -91,6 +91,8 @@ def job_hamburg(config, procs, custom, cmd, queue="th1prio.q,infinix.q", copy_fr
         out = out + "./copy_data_files || true \n"
     out = out + "{6}\n"
     out = out.format(timelimit, queue, procs, cl, jn, config['general']['custom_module_load'],cmd)
+    if procs == 1:          # delete mpi requirement on single core calculations
+        out = "\n".join(np.array(out.split("\n"))[[0,1,2,3] + list(range(5,len(out.split("\n"))))])
     return out
 
 
@@ -404,8 +406,14 @@ Eps(k)
             ))
         out += eps_k
     else:
-        for i in range(config['ED']['ns']-1):
-            out += "  0."+str(3*(i+1))+"00000000000\n"
+        if config['ED']['ns'] == 5:
+            out +=  "  0.5\n"
+            out +=  "  1.0\n"
+            out +=  "  -0.5\n"
+            out +=  "  -1.0\n"
+        else:
+            for i in range(config['ED']['ns']-1):
+                out += "  0."+str(3*(i+1))+"00000000000\n"
     out += " tpar(k)\n"
     if tpar_k:
         tp_eps = len(tpar_k.splitlines())
