@@ -58,6 +58,43 @@ export SLURM_CPU_BIND=none
                      cmd)
     return out
 
+def postprocessing_hamburg(content, custom, config, jobname=""):
+    jn = "#$ -N " + jobname + "\n" if len(jobname) else ""
+    cl = "#$ " + custom + "\n" if len(custom) else ""
+    out = '''#!/bin/bash
+#$ -l h_rt=01:00:00
+#$ -cwd
+#$ -q th1prio.q
+{0}
+{1}
+{2}
+'''.format(jn, cl, config['general']['custom_module_load'])
+    out += content
+    return out
+
+def job_hamburg(config, procs, custom, cmd, queue="th1prio.q,infinix.q", copy_from_ed=True,
+               custom_lines=True, jobname="", timelimit="12:00:00"):
+    jn = "#$ -N " + jobname + "\n" if len(jobname) else ""
+    cl = "#$ " + custom + "\n" if len(custom) else ""
+    out = '''#!/bin/bash
+#$ -l h_rt={0}
+#$ -cwd
+#$ -q {1}
+#$ -pe mpi {2}
+{3}
+{4}
+
+{5}
+'''
+    if copy_from_ed:
+        out = out + "./copy_dmft_files \n"
+        out = out + "./copy_data_files || true \n"
+    out = out + "{6}\n"
+    out = out.format(timelimit, queue, procs, cl, jn, config['general']['custom_module_load'],cmd)
+    if procs == 1:          # delete mpi requirement on single core calculations
+        out = "\n".join(np.array(out.split("\n"))[[0,1,2,3] + list(range(5,len(out.split("\n"))))])
+    return out
+
 
 def bak_files_script(source_dir, target_dir, files_list, header=False,
                      mode="mv"):
@@ -199,13 +236,12 @@ asymptVars = "vars_asympt_sums.jld"
 cast_to_real = false             # TODO: not implemented. cast all arrays with vanishing imaginary part to real
 loglevel = "debug"        # error, warn, info, debug
 logfile = "lDGA.log"
-progressbar = false
 
 [legacy]
 
 [Debug]
 read_bubble = false
-full_EoM_omega = false
+full_EoM_omega = true
 
 """
     out = out.format(
@@ -370,8 +406,14 @@ Eps(k)
             ))
         out += eps_k
     else:
-        for i in range(config['ED']['ns']-1):
-            out += "  0."+str(3*(i+1))+"00000000000\n"
+        if config['ED']['ns'] == 5:
+            out +=  "  0.5\n"
+            out +=  "  1.0\n"
+            out +=  "  -0.5\n"
+            out +=  "  -1.0\n"
+        else:
+            for i in range(config['ED']['ns']-1):
+                out += "  0."+str(3*(i+1))+"00000000000\n"
     out += " tpar(k)\n"
     if tpar_k:
         tp_eps = len(tpar_k.splitlines())
@@ -392,3 +434,10 @@ Eps(k)
     )
     return out
 
+def w2dyn_submit(config):
+    out = '''
+eval "$(conda shell.bash hook)"
+conda activate p3
+
+mpirun -np 96 /scratch/projects/hhp00048/w2dyn/bin/DMFT_original.py
+'''
