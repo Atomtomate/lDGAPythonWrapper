@@ -28,7 +28,7 @@ def get_submit_cmd(config, dependency_id = None):
             res += "-hold_jid "+str(jid_str)+" "
     elif config['general']['cluster'].lower() == "berlin": 
         res = "sbatch "
-        if len(jid_str) > 0:
+        if isinstance(jid_str,int) or len(jid_str) > 0:
             res += "--dependency=afterok:"+str(jid_str)+" "
     else:
         raise ValueError("Unkown cluster `" +config['general']['cluster']+ "` !")

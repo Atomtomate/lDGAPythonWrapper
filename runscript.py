@@ -59,9 +59,6 @@ def run_single(config, config_path):
 
     beta_str = config['parameters']['beta']
     U_str = config['parameters']['U']
-    if config['parameters']['U'] != 3.0:
-        print("skipping U= " + str(config['parameters']['U']))
-        return
     print("Running for beta=",beta_str,", U=",U_str)
     # ========================================================================
     # =                            Setup                                     =
@@ -136,13 +133,13 @@ def run_single(config, config_path):
                 os.mkdir(subRunDir_ED)
 
             # ---------------------- copy/edit -------------------------------
-            prev_id = copy_and_edit_dmft(subCodeDir, subRunDir_ED, config)
+            cp_cmd, prev_id = copy_and_edit_dmft(subCodeDir, subRunDir_ED, config)
 
             # --------------------- compile/run ------------------------------
             if not run_bash(compile_command, cwd=subRunDir_ED,
                            verbose=config['general']['verbose']):
                 raise Exception("Compilation Failed")
-            jobid_ed = run_ed_dmft(subRunDir_ED, config, prev_id)
+            jobid_ed = run_ed_dmft(subRunDir_ED, config, cp_cmd, prev_id)
             if not jobid_ed:
                 raise Exception("Job submit failed")
             if os.path.isfile(dmft_logfile):
@@ -484,7 +481,9 @@ if __name__ == "__main__":
             config = read_preprocess_config(arg_str)
             run_single(config, arg_str)
         elif os.path.isdir(arg_str):
-            for fn in os.listdir(arg_str):
+            files = os.listdir(arg_str)
+            files.sort()
+            for fn in files:
                 if fn.startswith("config_"):
                     fp = os.path.abspath(os.path.join(arg_str, fn))
                     config = read_preprocess_config(fp)

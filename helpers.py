@@ -193,7 +193,7 @@ def copy_and_edit_dmft(subCodeDir, subRunDir, config):
         else:
             old_andpar = None
         if old_andpar == None  or not os.path.exists(old_andpar):
-            raise ValueError("hubb.andpar not found at given location: " + str(old_andpar))
+            raise ValueError("Warning, both 'custom_init_andpar_file' and 'start_from' set. Ignoring 'start_from'!")
     if "custom_init_andpar_file" in config["general"] and "start_from" in config["general"]:
         print("Warning, both 'custom_init_andpar_file' and 'start_from' set. Ignoring 'start_from'!")
     if "custom_init_andpar_file" in config["general"] and len(config["general"]["start_from"]) > 1:
@@ -201,15 +201,15 @@ def copy_and_edit_dmft(subCodeDir, subRunDir, config):
         if not os.path.exists(old_andpar):
             raise ValueError("hubb.andpar not found at given location: " + str(old_andpar))
 
-
+    cp_cmd = ""
     if old_andpar:
         source_file_path = os.path.abspath(old_andpar)
         target_file_path = os.path.abspath(os.path.join(subRunDir,
                                                         "hubb.andpar"))
-        if not config["general"]["custom_init_andpar_vals_only"]:
-            print("copying hubb.andpar but not checking for consistency!!")
-            shutil.copyfile(source_file_path, target_file_path)
-        else:
+        print("adding copying command for  hubb.andpar")
+        cp_cmd = "cp " + source_file_path + " " + target_file_path + "\n"
+        if config["general"]["custom_init_andpar_vals_only"]:
+            raise ValueError("custom_init_andpar_vals_only not working for now!")
             with open(source_file_path, 'r') as f:
                 andpar_string = f.read()
             start_eps = andpar_string.find("Eps(k)") + 7
@@ -222,10 +222,7 @@ def copy_and_edit_dmft(subCodeDir, subRunDir, config):
     for fn in files_list:
         fp = os.path.abspath(os.path.join(subRunDir, fn))
         with open(fp, 'w') as f:
-            if fn == "hubb.andpar" and old_andpar:
-                f.write(globals()[fn.replace(".", "_")](config, eps_str,
-                                                        tpar_str))
-            else:
+            if not (fn == "hubb.andpar" and old_andpar):
                 f.write(globals()[fn.replace(".", "_")](config))
 
     for src_file in src_files:
@@ -233,7 +230,7 @@ def copy_and_edit_dmft(subCodeDir, subRunDir, config):
         target_file_path = os.path.abspath(os.path.join(subRunDir,
                                                         src_file))
         shutil.copyfile(source_file_path, target_file_path)
-    return prev_id
+    return cp_cmd,prev_id
 
 
 def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
@@ -414,16 +411,18 @@ def copy_and_edit_lDGA_kConv(subRunDir, dataDir, config):
 # ============================================================================
 # =                           run functions                                  =
 # ============================================================================
-def run_ed_dmft(cwd, config, prev_jobid=None):
+def run_ed_dmft(cwd, config, cp_cmd, prev_jobid=None):
     fp = cwd + "/" + "ed_dmft_run.sh"
+    cmd = cp_cmd
     if 'old3d' in config['ED'] and config['ED']['old3d']:
-        cmd = "./run.x > run.out 2> run.err\n"
+        cmd += "./run.x > run.out 2> run.err\n"
         procs = 1
     else:
-        cmd = "mpirun ./run.x > run.out 2> run.err\n"
+        cmd += "mpirun ./run.x > run.out 2> run.err\n"
         procs = 36
     cmd += "module add anaconda3\n"
     cmd += "eval \"$(conda shell.bash hook)\"\n"
+    cmd += "conda activate " + config['general']['custom_conda_env'] + "\n"
     cmd += "python checks.py \n"
     cmd += "python checks.py >> run.out \n"
     cslurm = config['general']['custom_slurm_lines']
@@ -467,7 +466,7 @@ def run_ed_vertex(cwd, config, ed_jobid=None):
     cmd+= "echo \"Checks Successful\" >> run.out;\n"
     cmd+= "else\necho \"Checks unsuccessful\" >> run.out;\nfi;\n"
     cmd+= "echo \"--- end checks ---- \" >> run.out\n"
-    cmd+= "mpifort ver_tpri_run.f90 -o run.x -llapack " + config['general']['CFLAGS']+"\n"
+    cmd+= "mpiifort ver_tpri_run.f90 -o run.x -llapack " + config['general']['CFLAGS']+"\n"
     cmd+= "mpirun -np " + str(procs) + " ./run.x > run.out 2> run.err\n"
     cslurm = config['general']['custom_slurm_lines']
     if not ed_jobid:
