@@ -59,6 +59,9 @@ def run_single(config, config_path):
 
     beta_str = config['parameters']['beta']
     U_str = config['parameters']['U']
+    if config['parameters']['U'] != 3.0:
+        print("skipping U= " + str(config['parameters']['U']))
+        return
     print("Running for beta=",beta_str,", U=",U_str)
     # ========================================================================
     # =                            Setup                                     =

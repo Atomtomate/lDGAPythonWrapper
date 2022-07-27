@@ -41,6 +41,7 @@ if __name__ == "__main__":
         lines = f.readlines()
     hubb_res = check_andpar_result(config, lines)
     print("Anderson Parameter Checks:\n")
+    #print(" sum_k V^2_k = ", np.sum())
     print("No bath site cancel eps: ", hubb_res[0], "\n")
     print("No bath site cancel V: ", hubb_res[1], "\n")
     print("No small onsite e: ", hubb_res[2], "\n")

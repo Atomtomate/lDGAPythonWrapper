@@ -774,7 +774,7 @@ def run_lDGA_kConv(cwd, dataDir, codeDir, config, jobid=None):
     outf = os.path.abspath(dataDir)
     runf = os.path.abspath(os.path.join(codeDir, "run_kConv.jl"))
     cmd = "julia --check-bounds=no --project=" + os.path.abspath(codeDir) + " " + runf + " " + lDGA_config_file + " " + \
-          outf + " " + str(procs) +  " > run_kConv.out 2> run_kConv.err"
+          outf + " > run_kConv.out 2> run_kConv.err"
     print("jLDGA cmd: ", cmd)
     #" -p " + str(procs) +
     cslurm = config['general']['custom_slurm_lines']
