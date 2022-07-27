@@ -27,7 +27,9 @@ def get_submit_cmd(config, dependency_id = None):
         if not dependency_id is None:
             res += "-hold_jid "+str(jid_str)+" "
     elif config['general']['cluster'].lower() == "berlin": 
-        res = "sbatch "+str(jid_str)+" "
+        res = "sbatch "
+        if len(jid_str) > 0:
+            res += "--dependency=afterok:"+str(jid_str)+" "
     else:
         raise ValueError("Unkown cluster `" +config['general']['cluster']+ "` !")
     return res
@@ -46,6 +48,8 @@ job_name = {5}
     now = datetime.now()
     timestamp = now.strftime("%Y-%m-%dT%H:%M:%S")
     status = ""
+    run_time = ""
+    job_name = ""
 
     if config['general']['cluster'].lower() == "berlin":
         job_cmd = "sacct -j " + str(jobid) + " --format=User,JobID,Jobname,"\
@@ -80,7 +84,6 @@ job_name = {5}
             t = stdout[stdout.find("job_name:"):]
             tt = t[:t.find("\n")]
             status = "RUNNING"
-            run_time = "???"
             job_name = tt.split(":")[1].strip()
         else:
             job_cmd = "qacct -j " + str(jobid)

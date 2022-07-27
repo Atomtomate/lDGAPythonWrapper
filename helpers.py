@@ -192,7 +192,7 @@ def copy_and_edit_dmft(subCodeDir, subRunDir, config):
             old_andpar = os.path.abspath(p2)
         else:
             old_andpar = None
-        if not os.path.exists(old_andpar):
+        if old_andpar == None  or not os.path.exists(old_andpar):
             raise ValueError("hubb.andpar not found at given location: " + str(old_andpar))
     if "custom_init_andpar_file" in config["general"] and "start_from" in config["general"]:
         print("Warning, both 'custom_init_andpar_file' and 'start_from' set. Ignoring 'start_from'!")
