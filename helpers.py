@@ -181,6 +181,8 @@ def copy_and_edit_dmft(subCodeDir, subRunDir, config):
 
     prev_id = None
     old_andpar = None
+    p1 = ""
+    p2 = ""
     if "start_from" in config["general"] and len(config["general"]["start_from"]) > 1:
         p1 = os.path.join(config["general"]["start_from"], "data/hubb.andpar")
         p2 = os.path.join(config["general"]["start_from"], "ed_dmft/hubb.andpar")
@@ -207,7 +209,7 @@ def copy_and_edit_dmft(subCodeDir, subRunDir, config):
         target_file_path = os.path.abspath(os.path.join(subRunDir,
                                                         "hubb.andpar"))
         print("adding copying command for  hubb.andpar")
-        cp_cmd = "cp " + source_file_path + " " + target_file_path + "\n"
+        cp_cmd = "cp " + p1 + " " + target_file_path + " || " + " cp "  + p2 + " " + target_file_path + " \n"
         if config["general"]["custom_init_andpar_vals_only"]:
             raise ValueError("custom_init_andpar_vals_only not working for now!")
             with open(source_file_path, 'r') as f:
