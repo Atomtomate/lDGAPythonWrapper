@@ -210,6 +210,8 @@ def copy_and_edit_dmft(subCodeDir, subRunDir, config):
                                                         "hubb.andpar"))
         print("adding copying command for  hubb.andpar")
         cp_cmd = "cp " + p1 + " " + target_file_path + " || " + " cp "  + p2 + " " + target_file_path + " \n"
+        cp_cmd += "sed -ie '$d' " + target_file_path +"\n"
+        cp_cmd += "echo \"" + str(config['parameters']['mu']) + "\" >> " + target_file_path + "\n"
         if config["general"]["custom_init_andpar_vals_only"]:
             raise ValueError("custom_init_andpar_vals_only not working for now!")
             with open(source_file_path, 'r') as f:
