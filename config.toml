@@ -1,9 +1,9 @@
 [general]
-runDir = "/afs/physnet.uni-hamburg.de/users/th1_ro/jstobbe/lDGA/test_runs/b{beta}_U{U}"     # Directory for calculations, {beta} and {U} will be replaced by the values set in [parameters] 
-codeDir = "/afs/physnet.uni-hamburg.de/users/th1_ro/jstobbe/lDGA/codes"                                # Directory for ED Codes
+runDir = "/scratch/projects/hhp00048/PD_test/out_of_hf_b{beta}_U{U}_n1.0"     # Directory for calculations, {beta} and {U} will be replaced by the values set in [parameters] 
+codeDir = "/scratch/projects/hhp00048/codes"                                # Directory for ED Codes
 CFLAGS = " -O3 "                                                       # Compilation flags for ifort, mpif90
 verbose = false                                                             # Print additional information during compilations
-cluster = "Hamburg"                                                          # This can only be set to berlin for now. Placeholder for PhysNet/local options
+cluster = "berlin"                                                          # This can only be set to berlin for now. Placeholder for PhysNet/local options
 custom_slurm_lines = ""                                                     # Custom line in slurm start script, e.g. -A hhp00048
 custom_init_andpar_file = ""                                                # Path to anderson parameter file to start calculation with. Otherwise eps(i) = 0.1*i is used
 start_from = ""                                                             # ALTERNATIVE to custom_init_andpar_file! Setting this to a prvious folder containing a jobid, also checks for completion of dmft
@@ -16,18 +16,18 @@ restart_after_success = false                                               # tr
 [parameters]
 lattice = "3Dsc-0.2041241452319315"                                         # 3Dsc-[t], 2Dsc-[t], FCC-[t], TODO: link to docu for kgrid strings
 beta = 1.0
-U = 3.3
-mu = "HF"
+U = 2.0
+mu = 1.0
 
 [ED]
 skip = false
 old3d = true
 ns = 5
-symm = true
+symm = false
 iterations = 80
 ksteps = 100
 Iwmax = 32768
-Iwmaxreal = 32768
+Iwmaxreal = 5
 gwcalc = false
 nmpara = 30
 w_min = -12.0       # unwichtig
@@ -36,9 +36,9 @@ deltino = 0.01      # unwichtig
 imaxmu = 0          # unwichtig        
 deltamu = 0.0       # unwichtig
 conv_param = "1.d-13"
-Traw = "1.d-9"
-small = "1.d-10"
-approx = "1.d-10"
+Traw = "1.d-10"
+small = "1.d-11"
+approx = "1.d-11"
 # thresholds for anderson parameters checks
 square_sum_diff = 1.0      # maximal allowed value for sum_k (eps^2_k - tpar^2_k)
 bathsite_cancel_eps = 0.01 # minimal allowed value for |eps_k - eps_l| 
@@ -51,8 +51,8 @@ check_behavior = "break"   # possible options: ignore (continue on check fail), 
 skip = false
 # freqList can be either a path to a frequency list or
 # "F1:F2,B1:B2" for N1 to N2 (integer) fermionic and B1 to B2 bosonic.
-freqList = "/afs/physnet.uni-hamburg.de/users/th1_ro/jstobbe/lDGA/grids/b150_f150_s1"
-nprocs = 1024
+freqList = "/scratch/projects/hhp00048/grids/b20_f20_s1"
+nprocs = 960
 
 [Susc]
 skip = false

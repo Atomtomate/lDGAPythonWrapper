@@ -196,24 +196,25 @@ def copy_and_edit_dmft(subCodeDir, subRunDir, config):
             old_andpar = None
         if old_andpar == None  or not os.path.exists(old_andpar):
             raise ValueError("Warning, both 'custom_init_andpar_file' and 'start_from' set. Ignoring 'start_from'!")
-    if "custom_init_andpar_file" in config["general"] and "start_from" in config["general"]:
-        print("Warning, both 'custom_init_andpar_file' and 'start_from' set. Ignoring 'start_from'!")
-    if "custom_init_andpar_file" in config["general"] and len(config["general"]["start_from"]) > 1:
+    if "custom_init_andpar_file" in config["general"]:
+        if "start_from" in config["general"]:
+            print("Warning, both 'custom_init_andpar_file' and 'start_from' set. Ignoring 'start_from'!")
         old_andpar = config["general"]["custom_init_andpar_file"]
         if not os.path.exists(old_andpar):
             raise ValueError("hubb.andpar not found at given location: " + str(old_andpar))
+        p1 = config["general"]["custom_init_andpar_file"]
 
     cp_cmd = ""
     if old_andpar:
         source_file_path = os.path.abspath(old_andpar)
         target_file_path = os.path.abspath(os.path.join(subRunDir,
                                                         "hubb.andpar"))
-        print("adding copying command for  hubb.andpar")
+        print("adding copying command for hubb.andpar")
+        print(p1)
         cp_cmd = "cp " + p1 + " " + target_file_path + " || " + " cp "  + p2 + " " + target_file_path + " \n"
         cp_cmd += "sed -ie '$d' " + target_file_path +"\n"
         cp_cmd += "echo \"" + str(config['parameters']['mu']) + "\" >> " + target_file_path + "\n"
         if config["general"]["custom_init_andpar_vals_only"]:
-            raise ValueError("custom_init_andpar_vals_only not working for now!")
             with open(source_file_path, 'r') as f:
                 andpar_string = f.read()
             start_eps = andpar_string.find("Eps(k)") + 7
