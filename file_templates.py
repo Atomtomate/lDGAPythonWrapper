@@ -263,7 +263,7 @@ full_EoM_omega = true
         "nothing",
         config['lDGAJulia']['bosonic_sum_range'],
         dataDir,
-        os.path.abspath(config['Vertex']['freqList'][:-3] + "jld2")
+        os.path.abspath(config['Vertex']['freqList'][:-3] + ".jld2")
     )
     return out
 
