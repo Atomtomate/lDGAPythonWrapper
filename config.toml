@@ -1,12 +1,12 @@
 [general]
-runDir = "/scratch/projects/hhp00048/PD_test/out_of_hf_b{beta}_U{U}_n1.0"     # Directory for calculations, {beta} and {U} will be replaced by the values set in [parameters] 
+runDir = "/scratch/projects/hhp00048/PD_test/out_of_hf_tests/b{beta}_U{U}_mu0.57"     # Directory for calculations, {beta} and {U} will be replaced by the values set in [parameters] 
 codeDir = "/scratch/projects/hhp00048/codes"                                # Directory for ED Codes
 CFLAGS = " -O3 "                                                       # Compilation flags for ifort, mpif90
 verbose = false                                                             # Print additional information during compilations
 cluster = "berlin"                                                          # This can only be set to berlin for now. Placeholder for PhysNet/local options
 custom_slurm_lines = ""                                                     # Custom line in slurm start script, e.g. -A hhp00048
-custom_init_andpar_file = ""                                                # Path to anderson parameter file to start calculation with. Otherwise eps(i) = 0.1*i is used
-start_from = ""                                                             # ALTERNATIVE to custom_init_andpar_file! Setting this to a prvious folder containing a jobid, also checks for completion of dmft
+#custom_init_andpar_file = ""                                                # Path to anderson parameter file to start calculation with. Otherwise eps(i) = 0.1*i is used
+#start_from = ""                                                             # ALTERNATIVE to custom_init_andpar_file! Setting this to a prvious folder containing a jobid, also checks for completion of dmft
 custom_init_andpar_vals_only = true                                         # If true only values are copied, otherwise the file is copied 1:1
 custom_module_load = "module restore ed"                                    # Module restore command. This will restore needed modules such as ifort. See installation instructions
 custom_conda_env = "p3"                                                     # Anaconda restore command. See installation instructions
@@ -15,9 +15,9 @@ restart_after_success = false                                               # tr
 
 [parameters]
 lattice = "3Dsc-0.2041241452319315"                                         # 3Dsc-[t], 2Dsc-[t], FCC-[t], TODO: link to docu for kgrid strings
-beta = 1.0
-U = 2.0
-mu = 1.0
+beta = 10.0
+U = 1.1
+mu = 0.57
 
 [ED]
 skip = false
@@ -48,14 +48,14 @@ check_behavior = "break"   # possible options: ignore (continue on check fail), 
 
 
 [Vertex]
-skip = false
+skip = true
 # freqList can be either a path to a frequency list or
 # "F1:F2,B1:B2" for N1 to N2 (integer) fermionic and B1 to B2 bosonic.
 freqList = "/scratch/projects/hhp00048/grids/b20_f20_s1"
 nprocs = 960
 
 [Susc]
-skip = false
+skip = true
 nBoseFreq = 10000
 
 [Trilex]
@@ -64,7 +64,7 @@ nFermiFreq = 41
 nBoseFreq = 40
 
 [Postprocess]
-skip = false
+skip = true
 keep_only_data = false
 data_bakup = "cp"
 output_format = "tar,text"
@@ -109,4 +109,4 @@ usable_prct_reduction = 0.10
 delete_calc = false     # WARNING: this will delete all logfiles and intermediate results such as F and chi
 
 [run_kConv]
-skip = false        # run k-grid convergence and write out order parameter at each iteration. This can take a very long time! 
+skip = true        # run k-grid convergence and write out order parameter at each iteration. This can take a very long time! 

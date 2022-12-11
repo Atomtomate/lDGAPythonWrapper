@@ -118,8 +118,8 @@ def run_single(config, config_path):
         compile_command = "gfortran -O3 ver_tprime.f -o run.x -llapack"
     else:
         subCodeDir = os.path.join(config['general']['codeDir'], "ED_codes/ED_dmft")
-        compile_command = "mpifort " + ' '.join(src_files) + \
-                          " -o run.x -llapack -lblas " + \
+        compile_command = "mpiifort " + ' '.join(src_files) + \
+                          " -o run.x -llapack " + \
                           config['general']['CFLAGS']
     jobid_ed = None
 
@@ -193,7 +193,7 @@ def run_single(config, config_path):
     subCodeDir = os.path.join(config['general']['codeDir'],
                               "ED_codes/ED_physical_suscpetibility")
     compile_command = "gfortran calc_chi_asymptotics_gfortran.f90 -o run.x "\
-                      "-llapack -lblas " + config['general']['CFLAGS']
+                      "-llapack " + config['general']['CFLAGS']
     subRunDir_susc = os.path.join(runDir, "ed_susc")
     jobid_susc = None
     cont = True

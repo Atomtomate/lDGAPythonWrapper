@@ -423,7 +423,7 @@ def run_ed_dmft(cwd, config, cp_cmd, prev_jobid=None):
         procs = 1
     else:
         cmd += "mpirun ./run.x > run.out 2> run.err\n"
-        procs = 36
+        procs = (config['ED']['ns']+1)**2
     cmd += "module add anaconda3\n"
     cmd += "eval \"$(conda shell.bash hook)\"\n"
     cmd += "conda activate " + config['general']['custom_conda_env'] + "\n"
@@ -850,7 +850,7 @@ def dmft_log(fn, jobid, loc, config):
 
 def build_collect_data(target_dir, dmft_dir, vertex_dir, susc_dir, trilex_dir,
                        mode):
-    dmft_files = ["hubb.dat", "hubb.andpar", "g0m", "g0mand", "gm_wim"]
+    dmft_files = ["hubb.dat", "hubb.andpar", "g0m", "g0mand", "gm_wim", "densimp.dat", "zpart.dat"]
     susc_files = ["chi_asympt"]
     vertex_files = ["2_part_gf_red"]
     trilex_dirs = ["tripamp_omega", "trip_omega", "trilex_omega"]

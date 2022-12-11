@@ -263,16 +263,21 @@ full_EoM_omega = true
         "nothing",
         config['lDGAJulia']['bosonic_sum_range'],
         dataDir,
-        os.path.abspath(config['Vertex']['freqList'] + ".jld2")
+        os.path.abspath(config['Vertex']['freqList'] + "/freqList.jld2")
     )
     return out
 
 
 
 def tpri_dat(config, mode=None):
-    t = float(config['parameters']['lattice'].partition("-")[2])
-    t1 = 0.0
-    t2 = 0.0
+    params = config['parameters']['lattice'].split("-")[1:]
+    for i in range(len(params)):
+        if params[i] == "":
+            params[i+1] = "-" + params[i+1]
+    params = list(filter(lambda x: x != "", params))
+    t = float(params[0])
+    t1 = float(params[1]) if len(params) > 1  else 0.0
+    t2 = float(params[2]) if len(params) > 2 else 0.0
 
     return "      t="+str(t)+"d0\n      t1="+str(t1)+"d0\n      t2="+\
         str(t2)+"0d0"
