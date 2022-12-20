@@ -21,7 +21,8 @@ mu = 0.57
 
 [ED]
 skip = false
-old3d = true
+custom_dmft_directory = ""      #Set alternative file directory for the DMFT calculation. Leave empty to use the directory set in 'runDir'
+custom_compile_command = ""     #Set alternative compile command for the DMFT calculation. Leave empty to use the standard compile commands
 ns = 5
 symm = false
 iterations = 80
