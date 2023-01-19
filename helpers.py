@@ -186,17 +186,18 @@ def copy_and_edit_dmft(subCodeDir, subRunDir, config):
 
     prev_id = None
     old_andpar = None
-    p1 = ""
-    p2 = ""
     if "start_from" in config["general"] and len(config["general"]["start_from"]) > 1:
         p1 = os.path.join(config["general"]["start_from"], "data/hubb.andpar")
         p2 = os.path.join(config["general"]["start_from"], "ed_dmft/hubb.andpar")
+        p3 = os.path.join(config["general"]["start_from"], "w2dyn/hubb.andpar")
         jid_path = os.path.join(config["general"]["start_from"], "job_dmft.log")
         prev_id = get_id_log(jid_path)
         if os.path.exists(p1):
             old_andpar = os.path.abspath(p1)
         elif os.path.exists(p2):
             old_andpar = os.path.abspath(p2)
+        elif os.path.exists(p3):
+            old_andpar = os.path.abspath(p3)
         else:
             old_andpar = None
         if old_andpar == None  or not os.path.exists(old_andpar):
@@ -241,37 +242,28 @@ def copy_and_edit_dmft(subCodeDir, subRunDir, config):
         shutil.copyfile(source_file_path, target_file_path)
     return cp_cmd,prev_id
 
-def copy_andpar(sourceDirs, targetDir, config):
+def copy_andpar(runDir, targetDir):
     i = 0
-    for d in sourceDirs:
-        fp = os.path.join(targetDir, "get_andpar.sh")
-        with open(fp, 'w') as f:
-            f.write(bak_files_script(d, targetDir,
+    subDirs = ["data", "ed_dmft", "w2dyn"]
+    fp = os.path.join(targetDir, "get_andpar.sh")
+    with open(fp, 'w') as f:
+        for d in subDirs:
+            f.write(bak_files_script(os.path.join(runDir, d), targetDir,
                                      ["hubb.andpar"],
-                                     header=(True if i == 0 else False), 
+                                     header=(True if i == 0 else False),
                                      mode="cp"))
-        i += 1
+            i += 1
+    st = os.stat(fp)
+    os.chmod(fp, st.st_mode | stat.S_IEXEC)
 
 
 def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
-    files_dmft_list = ["hubb.andpar"]
     src_files_list = ["ver_tpri_run.f90"]
-    scripts = ["copy_dmft_files", "copy_data_files"]
     files_list = ["init.h"]
     for fn in files_list:
         fp = os.path.abspath(os.path.join(subRunDir, fn))
         with open(fp, 'w') as f:
             f.write(globals()[fn.replace(".", "_")](config, mode="Vertex"))
-
-    fp = os.path.join(subRunDir, "copy_dmft_files")
-    with open(fp, 'w') as f:
-        f.write(bak_files_script(subRunDir_ED, subRunDir,
-                                 files_dmft_list, header=True, mode="cp"))
-    fp = os.path.join(subRunDir, "copy_data_files")
-    with open(fp, 'w') as f:
-        f.write(bak_files_script(dataDir, subRunDir,
-                                 files_dmft_list, header=True, mode="cp"))
-
     freq_path = config['Vertex']['freqList']
     if freq_path.endswith("freqList.dat"):
         full_freq_dat = freq_path
@@ -309,51 +301,29 @@ def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
         source_file_path = os.path.abspath(os.path.join(subCodeDir, filename))
         target_file_path = os.path.abspath(os.path.join(subRunDir, filename))
         shutil.copyfile(source_file_path, target_file_path)
-    for filename in scripts:
-        target_file_path = os.path.abspath(os.path.join(subRunDir, filename))
-        st = os.stat(target_file_path)
-        os.chmod(target_file_path, st.st_mode | stat.S_IEXEC)
 
 
 def copy_and_edit_susc(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
-    files_dmft_list = ["hubb.andpar", "hubb.dat"]
     files_list = ["calc_chi_asymptotics_gfortran.f90"]
-    scripts = ["copy_dmft_files", "copy_data_files"]
+    fp = os.path.abspath(os.path.join(subRunDir, "freq_list.h"))
+    with open(fp, 'w') as f:
+        f.write(freq_list_h(config, 0, 0))
     fp = os.path.join(subRunDir, "init.h")
     with open(fp, 'w') as f:
         f.write(init_h(config))
-    fp = os.path.join(subRunDir, "copy_dmft_files")
-    with open(fp, 'w') as f:
-        f.write(bak_files_script(subRunDir_ED, subRunDir,
-                                 files_dmft_list, header=True, mode="cp"))
-    fp = os.path.join(subRunDir, "copy_data_files")
-    with open(fp, 'w') as f:
-        f.write(bak_files_script(dataDir, subRunDir,
-                                 files_dmft_list, header=True, mode="cp"))
-
     for filename in files_list:
         source_file_path = os.path.join(subCodeDir, filename)
         target_file_path = os.path.join(subRunDir, filename)
         shutil.copyfile(source_file_path, target_file_path)
-    for filename in scripts:
-        target_file_path = os.path.join(subRunDir, filename)
-        st = os.stat(target_file_path)
-        os.chmod(target_file_path, st.st_mode | stat.S_IEXEC)
-
 
 def copy_and_edit_trilex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
-    files_dmft_list = ["hubb.andpar", "hubb.dat", "gm_wim"]
+    files_dmft_list = ["gm_wim"]
     files_list = ["ver_twofreq_parallel.f", "idw.dat",
                   "tpri.dat"]
-    scripts = ["copy_dmft_files", "copy_data_files"]
+    fp = os.path.abspath(os.path.join(subRunDir, "freq_list.h"))
+    with open(fp, 'w') as f:
+        f.write(freq_list_h(config, 0, 0))
     fp = os.path.join(subRunDir, "init.h")
-    with open(fp, 'w') as f:
-        f.write(init_trilex_h(config))
-    fp = os.path.join(subRunDir, "copy_dmft_files")
-    with open(fp, 'w') as f:
-        f.write(bak_files_script(subRunDir_ED, subRunDir,
-                                 files_dmft_list, header=True, mode="cp"))
-    fp = os.path.join(subRunDir, "copy_data_files")
     with open(fp, 'w') as f:
         f.write(bak_files_script(dataDir, subRunDir,
                                  files_dmft_list, header=True, mode="cp"))
@@ -362,10 +332,6 @@ def copy_and_edit_trilex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
         source_file_path = os.path.join(subCodeDir, filename)
         target_file_path = os.path.join(subRunDir, filename)
         shutil.copyfile(source_file_path, target_file_path)
-    for filename in scripts:
-        target_file_path = os.path.join(subRunDir, filename)
-        st = os.stat(target_file_path)
-        os.chmod(target_file_path, st.st_mode | stat.S_IEXEC)
 
 
 def copy_and_edit_lDGA_f(subCodeDir, subRunDir, dataDir, config):
@@ -579,7 +545,7 @@ def run_ed_trilex(cwd, config, ed_jobid=None):
     return jobid
 
 
-def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,
+def run_postprocess(cwd, dataDir, subRunDir_w2dyn, subRunDir_ED, subRunDir_vert,
                     subRunDir_susc, subRunDir_trilex, config, jobids=None):
     jn = jobname(config, "PP")
     filename = "postprocess.sh"
@@ -612,7 +578,7 @@ def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,
                           " " + os.path.abspath(os.path.join(cwd, "copy_dmft_files")) +\
                           " " + os.path.abspath(os.path.join(cwd, "copy_data_files")) +\
                           " -r\n"
-    cp_script = build_collect_data(dataDir, subRunDir_ED, subRunDir_vert,
+    cp_script = build_collect_data(dataDir, subRunDir_w2dyn, subRunDir_ED, subRunDir_vert,
                                    subRunDir_susc, subRunDir_trilex,
                                    mode=config['Postprocess']['data_bakup'])
     cp_script_path = os.path.abspath(os.path.join(cwd, "copy_data.sh"))
@@ -866,7 +832,7 @@ def dmft_log(fn, jobid, loc, config):
     return continue_status
 
 
-def build_collect_data(target_dir, dmft_dir, vertex_dir, susc_dir, trilex_dir,
+def build_collect_data(target_dir, w2dyn_dir, dmft_dir, vertex_dir, susc_dir, trilex_dir,
                        mode):
     dmft_files = ["hubb.dat", "hubb.andpar", "g0m", "g0mand", "gm_wim", "densimp.dat", "zpart.dat"]
     susc_files = ["chi_asympt"]
@@ -874,6 +840,8 @@ def build_collect_data(target_dir, dmft_dir, vertex_dir, susc_dir, trilex_dir,
     trilex_dirs = ["tripamp_omega", "trip_omega", "trilex_omega"]
 
     copy_script_str = bak_files_script(dmft_dir, target_dir, dmft_files,
+                                       header=True, mode=mode)
+    copy_script_str = bak_files_script(w2dyn_dir, target_dir, dmft_files,
                                        header=True, mode=mode)
     copy_script_str += bak_files_script(susc_dir, target_dir, susc_files,
                                         header=False, mode=mode)

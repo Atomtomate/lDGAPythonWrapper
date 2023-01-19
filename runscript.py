@@ -6,7 +6,7 @@ import shutil
 from config import *
 from helpers import run_bash, check_env, query_yn, reset_dir, dmft_log, \
                     copy_and_edit_dmft, run_ed_dmft, copy_and_edit_vertex, \
-                    parse_freq_list, \
+                    parse_freq_list, copy_andpar,\
                     run_ed_vertex, copy_and_edit_susc, run_ed_susc, \
                     copy_and_edit_trilex, run_ed_trilex, run_postprocess,\
                     copy_and_edit_lDGA_j, run_lDGA_j, \
@@ -205,6 +205,7 @@ def run_single(config, config_path):
             # ------------------- copy/edit ----------------------------------
             copy_and_edit_vertex(subCodeDir, subRunDir_vert, subRunDir_ED,
                                  dataDir, config)
+            copy_andpar(runDir, subRunDir_vert)
 
             # ------------------ compile/run ---------------------------------
             jobid_vert = run_ed_vertex(subRunDir_vert, config, jobid_dmft)
@@ -245,6 +246,7 @@ def run_single(config, config_path):
             # ------------------- copy/edit ----------------------------------
             copy_and_edit_susc(subCodeDir, subRunDir_susc, subRunDir_ED,
                                dataDir, config)
+            copy_andpar(runDir, subRunDir_susc)
 
             # ------------------ compile/run ---------------------------------
             if not run_bash(compile_command, cwd=subRunDir_susc,
@@ -292,6 +294,7 @@ def run_single(config, config_path):
             # ------------------- copy/edit ----------------------------------
             copy_and_edit_trilex(subCodeDir, subRunDir_trilex, subRunDir_ED,
                                  dataDir, config)
+            copy_andpar(runDir, subRunDir_vert)
 
             # ------------------ compile/run ---------------------------------
             if not run_bash(compile_command, cwd=subRunDir_trilex,
@@ -325,7 +328,7 @@ def run_single(config, config_path):
         if cont:
             pp_logfile = os.path.join(runDir, "job_pp.log")
             # ---------------------- compile/run ---------------------------------
-            jobid_pp = run_postprocess(runDir, dataDir, subRunDir_ED,
+            jobid_pp = run_postprocess(runDir, dataDir, subRunDir_w2dyn, subRunDir_ED,
                                        subRunDir_vert, subRunDir_susc,
                                        subRunDir_trilex, config, jobids=[
                                         jobid_dmft, jobid_vert, jobid_susc,

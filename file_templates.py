@@ -51,8 +51,7 @@ export SLURM_CPU_BIND=none
 {5}
 '''
     if copy_from_ed:
-        out = out + "./copy_dmft_files \n"
-        out = out + "./copy_data_files || true \n"
+        out = out + "./get_andpar.sh || true\n"
     out = out + "{6}\n"
     out = out.format(timelimit, procs, queue, cl, jn, config['general']['custom_module_load'],
                      cmd)
@@ -87,8 +86,7 @@ def job_hamburg(config, procs, custom, cmd, queue="th1prio.q,infinix.q", copy_fr
 {5}
 '''
     if copy_from_ed:
-        out = out + "./copy_dmft_files \n"
-        out = out + "./copy_data_files || true \n"
+        out = out + "./get_andpar.sh || true\n"
     out = out + "{6}\n"
     out = out.format(timelimit, queue, procs, cl, jn, config['general']['custom_module_load'],cmd)
     if procs == 1:          # delete mpi requirement on single core calculations
