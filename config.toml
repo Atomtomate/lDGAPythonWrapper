@@ -14,10 +14,12 @@ auto_continue = true                                                        # TO
 restart_after_success = false                                               # true: will not restart already finished calculations, false: will override finished calculations
 
 [parameters]
-lattice = "3Dsc-0.2041241452319315"                                         # 3Dsc-[t], 2Dsc-[t], FCC-[t], TODO: link to docu for kgrid strings
+lattice = "3Dsc-0.2041241452319315"                                         # 3Dsc-[t], 2Dsc-[t], FCC-[t], 2dmag-[t], TODO: link to docu for kgrid strings
 beta = 10.0
 U = 1.1
 mu = 0.57
+p = 1
+L = 3
 
 [ED]
 skip = false
