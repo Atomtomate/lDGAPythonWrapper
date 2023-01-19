@@ -14,6 +14,11 @@ from file_templates import *
 # ============================================================================
 # =                         helper functions                                 =
 # ============================================================================
+def jobname(config, suffix):
+    jn = "b{:.1f}U{:.1f}U{:.1f}_{}".format(config['parameters']['beta'],
+                                      config['parameters']['U'],
+                                      config['parameters']['mu'], suffix)
+    return jn
 
 freq_pattern = re.compile(r'(-?\d+):(-?\d+)', re.M)
 def match_freq_str(freq_str):
@@ -455,8 +460,8 @@ def run_ed_dmft(cwd, config, cp_cmd, prev_jobid=None):
     if config['ED']['check_behavior'] != "break":
         cmd += "true"
     cslurm = config['general']['custom_slurm_lines']
-    jn = "b{:.1f}U{:.1f}_DMFT".format(config['parameters']['beta'],
-                                    config['parameters']['U'])
+    jn = jobname(config, "ED")
+
     with open(fp, 'w') as f:
         job_func = globals()["job_" + config['general']['cluster'].lower()]
         f.write(job_func(config, procs, cslurm, cmd, copy_from_ed=False, jobname=jn))
@@ -479,8 +484,7 @@ def run_ed_dmft(cwd, config, cp_cmd, prev_jobid=None):
 def run_ed_vertex(cwd, config, ed_jobid=None):
     filename = "ed_vertex_run.sh"
     fp = os.path.join(cwd, filename)
-    jn = "b{:.1f}U{:.1f}_VER".format(config['parameters']['beta'],
-                                    config['parameters']['U'])
+    jn = jobname(config, "VER")
     if config['general']['cluster'].lower() == "berlin":
         cores_per_node = 96
         procs = config['Vertex']['nprocs']
@@ -523,8 +527,7 @@ def run_ed_vertex(cwd, config, ed_jobid=None):
 
 def run_ed_susc(cwd, config, ed_jobid=None):
     filename = "ed_susc_run.sh"
-    jn = "SUSC_b{:.1f}U{:.1f}".format(config['parameters']['beta'],
-                                    config['parameters']['U'])
+    jn = jobname(config, "SUSC")
     fp = os.path.join(cwd, filename)
     cmd = "./run.x > run.out 2> run.err"
     cslurm = config['general']['custom_slurm_lines']
@@ -550,8 +553,7 @@ def run_ed_susc(cwd, config, ed_jobid=None):
 
 def run_ed_trilex(cwd, config, ed_jobid=None):
     filename = "ed_trilex_run.sh"
-    jn = "TRIL_b{:.1f}U{:.1f}".format(config['parameters']['beta'],
-                                    config['parameters']['U'])
+    jn = jobname(config, "TRI")
     cmd = "mpirun ./run.x > run.out 2> run.err"
     procs = 2*int(config['Trilex']['nBoseFreq']) + 1
     cslurm = config['general']['custom_slurm_lines']
@@ -579,8 +581,7 @@ def run_ed_trilex(cwd, config, ed_jobid=None):
 
 def run_postprocess(cwd, dataDir, subRunDir_ED, subRunDir_vert,
                     subRunDir_susc, subRunDir_trilex, config, jobids=None):
-    jn = "b{:.1f}U{:.1f}_PP".format(config['parameters']['beta'],
-                                    config['parameters']['U'])
+    jn = jobname(config, "PP")
     filename = "postprocess.sh"
     cslurm = config['general']['custom_slurm_lines']
     if not os.path.exists(dataDir):
@@ -683,8 +684,7 @@ def run_lDGA_f_makeklist(cwd, config, jobid=None):
 
 def run_lDGA_j(cwd, dataDir, codeDir, config, jobid=None):
     filename = "lDGA_j.sh"
-    jn = "b{:.1f}U{:.1f}_lDGA".format(config['parameters']['beta'],
-                                    config['parameters']['U'])
+    jn = jobname(config, "lDGA")
     fp = os.path.join(cwd, filename)
     procs = config["lDGAJulia"]["nprocs"]
     lDGA_config_file = os.path.abspath(os.path.join(cwd, "config.toml"))
@@ -796,8 +796,7 @@ def run_w2dyn(cwd, config, prev_jobid=None):
         cmd = w2dyn_submit(config, cwd, it)
         #TODO: break on bad anderson fits
         cslurm = config['general']['custom_slurm_lines']
-        jn = "b{:.1f}U{:.1f}mu{:.1f}_w2dyn".format(config['parameters']['beta'],
-                                        config['parameters']['U'], config['parameters']['mu'])
+        jn = jobname(config, "W2DYN")
         with open(fp, 'w') as f:
             job_func = globals()["job_" + config['general']['cluster'].lower()]
             f.write(job_func(config, config['w2dyn']['N_procs'][it], cslurm, cmd, copy_from_ed=False, jobname=jn))
