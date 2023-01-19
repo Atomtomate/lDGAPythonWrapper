@@ -101,7 +101,7 @@ job_name = {5}
                     status = "COMPLETED"
                 else:
                     status = "FAILED"
-            else: 
+            else:
                 #print("Warning:  qacct and qstat failed! job_id: " + str(jobid))
                 status = "qacct not accessible"
                 run_time = "qacct not accessible"

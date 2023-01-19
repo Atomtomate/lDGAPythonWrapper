@@ -9,9 +9,9 @@ from helpers import run_bash, check_env, query_yn, reset_dir, dmft_log, \
                     parse_freq_list, \
                     run_ed_vertex, copy_and_edit_susc, run_ed_susc, \
                     copy_and_edit_trilex, run_ed_trilex, run_postprocess,\
-                    copy_and_edit_lDGA_j, run_lDGA_j, read_preprocess_config,\
-                    copy_and_edit_lDGA_kConv, run_lDGA_kConv,\
-                    grid_pattern
+                    copy_and_edit_lDGA_j, run_lDGA_j, \
+                    copy_and_edit_w2dyn, run_w2dyn,\
+                    read_preprocess_config, grid_pattern
 
 # TODO: obtain compiler and modify clean_script etc
 # TODO: IMPORTANT! shift compilation task to job itself (include in jobfile)
@@ -121,12 +121,12 @@ def run_single(config, config_path):
         compile_command = "mpiifort " + ' '.join(src_files) + \
                           " -o run.x -llapack " + \
                           config['general']['CFLAGS']
-    jobid_ed = None
+    jobid_dmft = None
 
     if not config['ED']['skip']:
         # ------------------------ save job info -----------------------------
         dmft_logfile = os.path.join(runDir, "job_dmft.log")
-        cont = dmft_log(dmft_logfile, jobid_ed, subRunDir_ED, config)
+        cont = dmft_log(dmft_logfile, jobid_dmft, subRunDir_ED, config)
         if cont:
             # ---------------------- create dir ------------------------------
             if not os.path.exists(subRunDir_ED):
@@ -139,14 +139,44 @@ def run_single(config, config_path):
             if not run_bash(compile_command, cwd=subRunDir_ED,
                            verbose=config['general']['verbose']):
                 raise Exception("Compilation Failed")
-            jobid_ed = run_ed_dmft(subRunDir_ED, config, cp_cmd, prev_id)
-            if not jobid_ed:
+            jobid_dmft = run_ed_dmft(subRunDir_ED, config, cp_cmd, prev_id)
+            if not jobid_dmft:
                 raise Exception("Job submit failed")
             if os.path.isfile(dmft_logfile):
                 os.remove(dmft_logfile)
-            _ = dmft_log(dmft_logfile, jobid_ed, subRunDir_ED, config)
+            _ = dmft_log(dmft_logfile, jobid_dmft, subRunDir_ED, config)
         else:
             print("Skipping dmft computation, due to completed or active job. "
+                  "This behavor can be changed in the config.")
+
+    # ========================================================================
+    # =                          DMFT W2Dyn                                  =
+    # ========================================================================
+
+    # ------------------------- definitions ----------------------------------
+    if 'w2dyn' in config and config['w2dyn']['skip'] == False:
+        subCodeDir = os.path.abspath(config['w2dyn']['runfile'])
+        subRunDir_w2dyn = os.path.join(runDir, "w2dyn")
+        jobids_w2dyn = None
+        if not os.path.exists(subRunDir_w2dyn):
+            os.mkdir(subRunDir_w2dyn)
+        # ----------------- save job info --------------------------------
+        w2dyn_logfile = os.path.join(runDir, "job_w2dyn.log")
+        cont = dmft_log(w2dyn_logfile, jobids_w2dyn, subRunDir_w2dyn, config)
+        if cont:
+            # ------------------- copy/edit ------------------------------
+            copy_and_edit_w2dyn(subRunDir_w2dyn, dataDir, config)
+            jobids_w2dyn = run_w2dyn(subRunDir_w2dyn, config)
+            if not jobids_w2dyn:
+                raise Exception("Job submit failed")
+            # ----------------- save job info --------------------------------
+            jobid_dmft = jobids_w2dyn[-1]
+            w2dyn = os.path.join(runDir, "job_w2dyn.log")
+            if os.path.isfile(w2dyn_logfile):
+                os.remove(w2dyn_logfile)
+            _ = dmft_log(w2dyn_logfile, jobid_dmft, subRunDir_w2dyn, config)
+        else:
+            print("Skipping fortran DMFT (w2dyn) computation, due to completed or active job. "
                   "This behavor can be changed in the config.")
 
     # ========================================================================
@@ -172,7 +202,7 @@ def run_single(config, config_path):
                                  dataDir, config)
 
             # ------------------ compile/run ---------------------------------
-            jobid_vert = run_ed_vertex(subRunDir_vert, config,jobid_ed)
+            jobid_vert = run_ed_vertex(subRunDir_vert, config, jobid_dmft)
             if not jobid_vert:
                 raise Exception("Job submit failed")
 
@@ -215,7 +245,7 @@ def run_single(config, config_path):
             if not run_bash(compile_command, cwd=subRunDir_susc,
                            verbose=config['general']['verbose']):
                 raise Exception("Compilation Failed")
-            jobid_susc = run_ed_susc(subRunDir_susc, config, jobid_ed)
+            jobid_susc = run_ed_susc(subRunDir_susc, config, jobid_dmft)
             if not jobid_susc:
                 raise Exception("Job submit failed")
 
@@ -262,7 +292,7 @@ def run_single(config, config_path):
             if not run_bash(compile_command, cwd=subRunDir_trilex,
                            verbose=config['general']['verbose']):
                 raise Exception("Compilation Failed")
-            jobid_trilex = run_ed_trilex(subRunDir_trilex, config, jobid_ed)
+            jobid_trilex = run_ed_trilex(subRunDir_trilex, config, jobid_dmft)
             if not jobid_trilex:
                 raise Exception("Job submit failed")
 
@@ -293,7 +323,7 @@ def run_single(config, config_path):
             jobid_pp = run_postprocess(runDir, dataDir, subRunDir_ED,
                                        subRunDir_vert, subRunDir_susc,
                                        subRunDir_trilex, config, jobids=[
-                                        jobid_ed, jobid_vert, jobid_susc,
+                                        jobid_dmft, jobid_vert, jobid_susc,
                                         jobid_trilex])
             if not jobid_pp:
                 raise Exception("Postprocessing job submit failed")
@@ -342,43 +372,6 @@ def run_single(config, config_path):
                   "This behavor can be changed in the config.")
 
     # ========================================================================
-    # =                          lDGA kConv                                  =
-    # ========================================================================
-
-    # ------------------------- definitions ----------------------------------
-    subCodeDir = os.path.join(config['general']['codeDir'], "LadderDGA.jl")
-    subRunDir_lDGA_kConv = os.path.join(runDir, "lDGA_julia")
-    jobid_lDGA_kConv = None
-
-    if not config['run_kConv']['skip']:
-        # ------------------ create dirs ---------------------------------
-        if not os.path.exists(subRunDir_lDGA_kConv):
-            os.mkdir(subRunDir_lDGA_kConv)
-
-        # ----------------- save job info --------------------------------
-        lDGA_logfile = os.path.join(runDir, "job_lDGA_kConv.log")
-        cont = dmft_log(lDGA_logfile, jobid_lDGA_kConv, subRunDir_lDGA_kConv, config)
-        if cont:
-            # ------------------- copy/edit ------------------------------
-            copy_and_edit_lDGA_kConv(subRunDir_lDGA_kConv, dataDir, config)
-
-            # ------------------ compile/run -----------------------------
-            jobid_lDGA_kConv = run_lDGA_kConv(subRunDir_lDGA_kConv, dataDir, subCodeDir,
-                                             config, jobid_pp)
-            if not jobid_lDGA_kConv:
-                raise Exception("Job submit failed")
-
-            # ----------------- save job info ----------------------------
-            lDGA_logfile = os.path.join(runDir, "job_lDGA_kConv.log")
-            if os.path.isfile(lDGA_logfile):
-                os.remove(lDGA_logfile)
-            _ = dmft_log(lDGA_logfile, jobid_lDGA_kConv,
-                         subRunDir_lDGA_kConv, config)
-        else:
-            print("Skipping Julia lDGA computation, due to completed or active job."
-                  "This behavor can be changed in the config.")
-
-    # ========================================================================
     # =                        lDGA Fortran                                  =
     # ========================================================================
 
@@ -409,10 +402,6 @@ def run_single(config, config_path):
             if not run_bash(compile_command_kl, cwd=subRunDir_lDGA_f,
                            verbose=config['general']['verbose']):
                 raise Exception("Compilation Failed")
-            #jobid_lDGA_f_makeklist = run_lDGA_f_makeklist(subRunDir_lDGA_f,
-            #                                              config)
-            #if not jobid_lDGA_f_makeklist:
-            #    raise Exception("Job submit failed")
 
             # ------------------ compile/run ---------------------------------
             if not run_bash(compile_command, cwd=subRunDir_lDGA_f,
@@ -432,45 +421,6 @@ def run_single(config, config_path):
                   "This behavor can be changed in the config.")
 
 
-    # ========================================================================
-    # =                          DMFT W2Dyn                                  =
-    # ========================================================================
-
-    # ------------------------- definitions ----------------------------------
-    #if 'w2dyn' in config.keys().lower():
-    #    subCodeDir = os.path.join(config['general']['codeDir'], "LadderDGA.jl")
-    #    subRunDir_lDGA_j = os.path.join(runDir, "lDGA_julia")
-    #    jobid_lDGA_j = None
-#
-#        if not config['lDGAJulia']['skip']:
-  #          # ------------------ create dirs ---------------------------------
-  #          if not os.path.exists(subRunDir_lDGA_j):
-  #              os.mkdir(subRunDir_lDGA_j)
-#
-#            # ----------------- save job info --------------------------------
-#            lDGA_logfile = os.path.join(runDir, "job_lDGA_j.log")
-  #          cont = dmft_log(lDGA_logfile, jobid_lDGA_j, subRunDir_lDGA_j, config)
-  #          if cont:
-  #              # ------------------- copy/edit ------------------------------
-  #              copy_and_edit_lDGA_j(subRunDir_lDGA_j, dataDir, config)
-#
-#                # ------------------ compile/run -----------------------------
-  #              jobid_lDGA_j = run_lDGA_j(subRunDir_lDGA_j, dataDir, subCodeDir,
-  #                                               config, jobid_pp)
-  #              if not jobid_lDGA_j:
-  #                  raise Exception("Job submit failed")
-#
-#                # ----------------- save job info ----------------------------
-  #              lDGA_logfile = os.path.join(runDir, "job_lDGA_j.log")
-  #              if os.path.isfile(lDGA_logfile):
-  #                  os.remove(lDGA_logfile)
-  #              _ = dmft_log(lDGA_logfile, jobid_lDGA_j,
-  #                           subRunDir_lDGA_j, config)
-  #          else:
-  #              print("Skipping Julia lDGA computation, due to completed or active job."
-  #                    "This behavor can be changed in the config.")
-#
-
 if __name__ == "__main__":
     if len(sys.argv) == 1:
         config = read_preprocess_config("config.toml")
@@ -484,10 +434,10 @@ if __name__ == "__main__":
             files = os.listdir(arg_str)
             files.sort()
             for fn in files:
-                if fn.startswith("config_"):
+                if fn.endswith(".toml"):
                     fp = os.path.abspath(os.path.join(arg_str, fn))
                     config = read_preprocess_config(fp)
                     run_single(config, fp)
         else:
             raise RuntimeError("Argument provided is not a valid config or "
-                               "directory of configs starting with config_.")
+                               "directory of configs.")

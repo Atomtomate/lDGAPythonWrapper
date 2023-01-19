@@ -205,65 +205,35 @@ c Should the summation over the bosonic frequency in the charge-/spin-channel be
 #TODO: some fixed parameters
 def lDGA_julia(config, dataDir):
     out = """[Model]
-U    = {0}
-mu   = {1}
-beta = {2}
-nden = 1.0
-kGrid = \"{3}\"
+kGrid = \"{0}\"
 
 [Simulation]
-Nk = {4}
-chi_asympt_method = "{5}"
-chi_asympt_shell = {6}
-fermionic_tail_correction = "{7}"                # "Richardson" # Nothing, Richardson, Shanks
-bosonic_tail_correction = "{8}"      # nothing (normal sum), Richardson, Shanks, coeffs (known tail coefficients, this should be the default)
-force_full_bosonic_chi = {9}           # compute all omega frequencies for chi and trilex
-chi_unusable_fill_value = "{10}"        # can be "0", "chi_lambda" or "chi". sets either 0, lambda corrected or non lambda corrected     values outside usable omega range
-rhs  = "{11}"                           # native (fixed for tc, error_comp for naive), fixed (n/2 (1 - n/2) - sum(chi_ch)), error_comp (chi    _loc_ch + chi_loc_sp - chi_ch)
-fermionic_tail_coeffs = {12}
-bosonic_tail_coeffs = {13}
-usable_prct_reduction = {14}
-omega_smoothing = "{15}"             # nothing, range, full. Smoothes data after nu, nu' sums. Set range to only     use smoothing in order to find the usable range (default)
-bosonic_sum_range = "{16}"
+Nk = {1}
+chi_asympt_method = "{2}"
+chi_asympt_shell = {3}
+usable_prct_reduction = {4}
+omega_smoothing = "{5}"             # nothing, range, full. Smoothes data after nu, nu' sums. Set range to only     use smoothing in order to find the usable range (default)
 
 [Environment]
-inputDataType = "jld2"      # jld2, text, parquet, TODO: implement hdf5
-writeFortran = false
-inputDir = "{17}"
-freqFile = "{18}"
+inputDir = "{6}"
 inputVars = "ED_out.jld2"
-asymptVars = "vars_asympt_sums.jld"
-cast_to_real = false             # TODO: not implemented. cast all arrays with vanishing imaginary part to real
 loglevel = "debug"        # error, warn, info, debug
 logfile = "lDGA.log"
 
 [legacy]
 
 [Debug]
-read_bubble = false
 full_EoM_omega = true
 
 """
     out = out.format(
-        config['parameters']['U'],
-        config['parameters']['mu'],
-        config['parameters']['beta'],
         config['parameters']['lattice'],
         config['lDGAJulia']['Nk'],
         config['lDGAJulia']['chi_asympt_method'],
         config['lDGAJulia']['chi_asympt_shell'],
-        config['lDGAJulia']['tail_correction'],
-        str(config['lDGAJulia']['bosonic_tail_correction']).lower(),
-        str(config['lDGAJulia']['force_full_bosonic_chi']).lower(),
-        config['lDGAJulia']['chi_unusable_fill_value'],
-        config['lDGAJulia']['rhs'],
-        config['lDGAJulia']['fermionic_tail_coeffs'],
-        config['lDGAJulia']['bosonic_tail_coeffs'],
         config['lDGAJulia']['usable_prct_reduction'],
         "nothing",
-        config['lDGAJulia']['bosonic_sum_range'],
-        dataDir,
-        os.path.abspath(config['Vertex']['freqList'] + "/freqList.jld2")
+        dataDir
     )
     return out
 
@@ -439,10 +409,30 @@ Eps(k)
     )
     return out
 
-def w2dyn_submit(config):
+def w2dyn_submit(config, runDir, it):
     out = '''
+export I_MPI_PIN_RESPECT_CPUSET=off
+export I_MPI_DEBUG=6
 eval "$(conda shell.bash hook)"
-conda activate p3
+conda activate w2dyn
 
-mpirun -np 96 /scratch/projects/hhp00048/w2dyn/bin/DMFT_original.py
 '''
+    fit_str = "julia {0} DMFT_{1}.hdf5 {2} {3} {4} hubb_{1}.andpar >> run.out 2>> run.err\n"
+    fit_str = fit_str.format(os.path.abspath(os.path.join(config['general']['codeDir'],"scripts/LadderDGA_utils/fitAndersonParams.jl")),
+                             it,config['parameters']['beta'],config['parameters']['U'],config['parameters']['mu'])
+    if it == len(config['w2dyn']['N_DMFT'])-1:
+        fit_str += "cp hubb_"+str(it)+".andpar hubb.andpar\n"
+    if it == 0:
+        hk_script = os.path.abspath(os.path.join(config['general']['codeDir'],'Dispersions.jl/scripts/w2dyn_2D_kgrid.jl'))
+        hk_loc = os.path.abspath(os.path.join(runDir, "ham.hk"))
+        out += "julia " + hk_script + " " + config['parameters']['lattice'] + " " + str(config['w2dyn']['Nk']) + " " + hk_loc + " >> run.out 2>> run.err\n"
+    out += "mpirun -np "+str(config['w2dyn']['N_procs'][it])+" "+\
+            config['w2dyn']['runfile']+" Par_"+str(it)+".in \n"
+    out += "mv current_run*.hdf5 DMFT_"+str(it)+".hdf5\n"
+    if it < len(config['w2dyn']['N_DMFT'])-1:
+        ncorr_path = os.path.abspath(os.path.join(config['general']['codeDir'],"scripts/LadderDGA_utils/ncorr.jl"))
+        hdf5_path = os.path.abspath(os.path.join(runDir, "DMFT_"+str(it)+".hdf5"))
+        out += "c=$(julia " + ncorr_path + " " + hdf5_path + ")\n"
+        out += 'echo "NCorr = $c" >> Par_'+str(it+1)+'.in\n'
+    out += fit_str
+    return out

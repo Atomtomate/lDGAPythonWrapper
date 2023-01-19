@@ -236,6 +236,17 @@ def copy_and_edit_dmft(subCodeDir, subRunDir, config):
         shutil.copyfile(source_file_path, target_file_path)
     return cp_cmd,prev_id
 
+def copy_andpar(sourceDirs, targetDir, config):
+    i = 0
+    for d in sourceDirs:
+        fp = os.path.join(targetDir, "get_andpar.sh")
+        with open(fp, 'w') as f:
+            f.write(bak_files_script(d, targetDir,
+                                     ["hubb.andpar"],
+                                     header=(True if i == 0 else False), 
+                                     mode="cp"))
+        i += 1
+
 
 def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
     files_dmft_list = ["hubb.andpar"]
@@ -401,15 +412,27 @@ def copy_and_edit_lDGA_f(subCodeDir, subRunDir, dataDir, config):
     with open(q_sum_path, 'w') as f:
         f.write(q_sum)
 
-
 def copy_and_edit_lDGA_j(subRunDir, dataDir, config):
     lDGA_in = lDGA_julia(config, os.path.abspath(dataDir))
     lDGA_in_path = os.path.abspath(os.path.join(subRunDir, "config.toml"))
     with open(lDGA_in_path, 'w') as f:
         f.write(lDGA_in)
 
-def copy_and_edit_lDGA_kConv(subRunDir, dataDir, config):
-    copy_and_edit_lDGA_j(subRunDir, dataDir, config)
+def copy_and_edit_w2dyn(subRunDir, dataDir, config):
+    params_template = os.path.abspath(config['w2dyn']['parameters_template'])
+    for it in range(len(config['w2dyn']['N_DMFT'])):
+        readold_str = "" if it == 0 else "readold = -1\nfileold = DMFT_"+str(it-1)+".hdf5\n"
+        ncorr_str = "\nNCorr = " + str(config['w2dyn']['NCorr_init']) if it == 0 else ""
+        with open(params_template, "r") as f:
+            ff = f.read()
+            ff = ff.format("ham.hk", config['parameters']['beta'],\
+                      config['parameters']['mu'], readold_str, config['w2dyn']['N_DMFT'][it],\
+                      config['parameters']['U'], config['w2dyn']['Nmeas'][it])
+            ff += ncorr_str
+        file_name = os.path.abspath(os.path.join(subRunDir, "Par_"+str(it)+".in"))
+        with open(file_name, 'w') as f:
+            f.write(ff)
+        file_name = os.path.abspath(os.path.join(subRunDir, "run.sh"))
 
 
 # ============================================================================
@@ -429,6 +452,8 @@ def run_ed_dmft(cwd, config, cp_cmd, prev_jobid=None):
     cmd += "conda activate " + config['general']['custom_conda_env'] + "\n"
     cmd += "python checks.py \n"
     cmd += "python checks.py >> run.out \n"
+    if config['ED']['check_behavior'] != "break":
+        cmd += "true"
     cslurm = config['general']['custom_slurm_lines']
     jn = "b{:.1f}U{:.1f}_DMFT".format(config['parameters']['beta'],
                                     config['parameters']['U'])
@@ -665,7 +690,11 @@ def run_lDGA_j(cwd, dataDir, codeDir, config, jobid=None):
     lDGA_config_file = os.path.abspath(os.path.join(cwd, "config.toml"))
 
     outf = os.path.abspath(dataDir)
-    runf = os.path.abspath(os.path.join(codeDir,"run_batch.jl"))
+    if "run_script" in config["lDGAJulia"]:
+        runf = os.path.abspath(config["lDGAJulia"]["run_script"])
+    else:
+        runf = os.path.abspath(os.path.join(codeDir,"run_batch.jl"))
+        
     cc_dbg = ""
     if "sysimage" in config["lDGAJulia"] and os.path.exists(config["lDGAJulia"]["sysimage"]):
         jobfile = ""
@@ -677,44 +706,6 @@ def run_lDGA_j(cwd, dataDir, codeDir, config, jobid=None):
     cmd = "julia " +jobfile+ " --check-bounds=no --project=" + os.path.abspath(codeDir) + " " + runf + " " + lDGA_config_file + " " + \
           outf + " " + str(procs) +  " > run.out 2> run.err"
     cmd = cc_dbg + cmd
-    print("jLDGA cmd: ", cmd)
-    #" -p " + str(procs) +
-    cslurm = config['general']['custom_slurm_lines']
-    if not jobid:
-        run_cmd = "sbatch " + filename
-    else:
-        run_cmd = "sbatch" + " --dependency=afterok:"+jobid + " " + filename
-    print("running: " + run_cmd)
-    with open(fp, 'w') as f:
-        job_func = globals()["job_" + config['general']['cluster'].lower()]
-        f.write(job_func(config, procs, cslurm, cmd, copy_from_ed=False,
-                         queue="standard96", custom_lines=False,
-                         jobname=jn, timelimit="00:40:00"))
-    process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
-    if not (process.returncode == 0):
-        print("Julia lDGA submit did not work as expected:")
-        print(process.stdout.decode("utf-8"))
-        print(process.stderr.decode("utf-8"))
-        return False
-    else:
-        res = process.stdout.decode("utf-8")
-        jobid = re.findall(r'job \d+', res)[-1].split()[1]
-    return jobid
-
-
-#TODO: remove code replication
-def run_lDGA_kConv(cwd, dataDir, codeDir, config, jobid=None):
-    filename = "lDGA_kConv.sh"
-    jn = "kConv_b{:.1f}U{:.1f}".format(config['parameters']['beta'],
-                                    config['parameters']['U'])
-    fp = os.path.join(cwd, filename)
-    procs = 20  #TODO: remove fixed nprocs
-    lDGA_config_file = os.path.abspath(os.path.join(cwd, "config.toml"))
-
-    outf = os.path.abspath(dataDir)
-    runf = os.path.abspath(os.path.join(codeDir, "run_kConv.jl"))
-    cmd = "julia --check-bounds=no --project=" + os.path.abspath(codeDir) + " " + runf + " " + lDGA_config_file + " " + \
-          outf + " > run_kConv.out 2> run_kConv.err"
     print("jLDGA cmd: ", cmd)
     #" -p " + str(procs) +
     cslurm = config['general']['custom_slurm_lines']
@@ -796,6 +787,34 @@ def run_results_pp(runDir, dataDir, subRunDir_ED, subRunDir_vert,
         res = process.stdout.decode("utf-8")
         jobid = re.findall(r'job \d+', res)[-1].split()[1]
     return jobid
+
+def run_w2dyn(cwd, config, prev_jobid=None):
+    jobids = []
+    for it in range(len(config['w2dyn']['N_DMFT'])):
+        filename = "w2dyn_it"+str(it)+".sh"
+        fp = os.path.join(cwd,filename)
+        cmd = w2dyn_submit(config, cwd, it)
+        #TODO: break on bad anderson fits
+        cslurm = config['general']['custom_slurm_lines']
+        jn = "b{:.1f}U{:.1f}mu{:.1f}_w2dyn".format(config['parameters']['beta'],
+                                        config['parameters']['U'], config['parameters']['mu'])
+        with open(fp, 'w') as f:
+            job_func = globals()["job_" + config['general']['cluster'].lower()]
+            f.write(job_func(config, config['w2dyn']['N_procs'][it], cslurm, cmd, copy_from_ed=False, jobname=jn))
+        run_cmd = get_submit_cmd(config, dependency_id = prev_jobid) + " ./" + filename
+        process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
+
+        print("running: " + run_cmd)
+        if not (process.returncode == 0):
+            print("ED submit did not work as expected:")
+            print(process.stdout.decode("utf-8"))
+            print(process.stderr.decode("utf-8"))
+            return False
+        else:
+            res = process.stdout.decode("utf-8")
+            prev_jobid = re.findall(r'job \d+', res)[-1].split()[1]
+        jobids.append(prev_jobid)
+    return jobids
 
 
 # ============================================================================

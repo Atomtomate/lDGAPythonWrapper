@@ -1,5 +1,5 @@
 [general]
-runDir = "/scratch/projects/hhp00048/PD_test/out_of_hf_tests/b{beta}_U{U}_mu0.57"     # Directory for calculations, {beta} and {U} will be replaced by the values set in [parameters] 
+runDir = "/home/hhpmleus/ED_fortran/QMC_andpar/n0.75/ED_vertex/ED_vertex_example2" #"/scratch/projects/hhp00048/PD_test/out_of_hf_tests/b{beta}_U{U}_mu0.57"     # Directory for calculations, {beta} and {U} will be replaced by the values set in [parameters] 
 codeDir = "/scratch/projects/hhp00048/codes"                                # Directory for ED Codes
 CFLAGS = " -O3 "                                                       # Compilation flags for ifort, mpif90
 verbose = false                                                             # Print additional information during compilations
@@ -21,7 +21,7 @@ mu = 0.57
 
 [ED]
 skip = false
-old3d = true
+old3d = false
 ns = 5
 symm = false
 iterations = 80
@@ -46,12 +46,22 @@ bathsite_cancel_V = 0.01   # minimal allowed value for |V_l|
 large_eps = 10             # maximal factor c for |eps_k| = c * T
 check_behavior = "break"   # possible options: ignore (continue on check fail), warn (warn in run.err), break (fail job)
 
+[w2dyn]
+skip = true
+parameters_template = "/scratch/projects/hhp00048/lDGA/2D_cuprates_doped_2/w2dyn/Parameters_template.in"
+runfile = "/scratch/projects/hhp00048/w2dyn/bin/DMFT.py"
+N_DMFT = [20, 12, 8]
+N_procs = [192, 192, 384]
+Nmeas  = [1e6, 1e7, 4e7]
+NCorr_init = 50
+Nk = 100
+
 
 [Vertex]
-skip = true
+skip = false
 # freqList can be either a path to a frequency list or
 # "F1:F2,B1:B2" for N1 to N2 (integer) fermionic and B1 to B2 bosonic.
-freqList = "/scratch/projects/hhp00048/grids/b20_f20_s1"
+freqList = "/scratch/projects/hhp00048/grids/b10_f10_s1"
 nprocs = 960
 
 [Susc]
@@ -84,29 +94,12 @@ kInt = "FFT" # possible values are naive, gl-n (n being the order of the Gauss L
 skip = true
 
 [lDGAJulia]
-skip = true
+skip = false
 nprocs = 96
 sysimage = "/scratch/projects/hhp00048/codes/TestRuns_LadderDGA.jl/LadderDGA_Precompile.so"
 outfile   = "lDGA_out"
 Nk        = [10]   # IMPORTANT: in Fortran this is Nk x Nk and generated bei make_klist. TODO: adaptiv mesh
-chi_asympt_method = "direct_approx2"            # direct/direct_approx2/sc/nothing, see BSE_SC module for more
+chi_asympt_method = "direct"            # direct/direct_approx2/sc/nothing, see BSE_SC module for more
 chi_asympt_shell = 20 
-tail_correction = "nothing"             #"Richardson" # Nothing, Richardson, Shanks
-lambda_correction = "sp"                # nothing, sp, sp_ch
-bosonic_sum_range = "common"                  # common (intersection of individual ranges), individual (max range in each channel; fortran def    ault), full (all frequencies), fixed:N:M (always sum from N to (including) M, indexing starts at 0)
-force_full_bosonic_chi = true           # compute all omega frequencies for chi and trilex
-chi_unusable_fill_value = "chi_lambda"  # can be "0", "chi_lambda" or "chi". sets either 0, lambda corrected or non lambda corrected values outside usable omega range
-chi_only = false                        # Should only chis_omega and chich_omega be calculated?
-rhs  = "native"                         # TODO: implement possible modes: native (fixed for tc, error_comp for naive), 
-                          #                                 fixed (n/2 (1 - n/2) - sum(chi_ch)), 
-                          #                                 error_comp (chi_loc_ch + chi_loc_sp - chi_ch)
-fermionic_tail_coeffs = [0,1,2,3,4]
-bosonic_tail_coeffs = [0,1,2,3,4]
-bosonic_tail_correction = "coeffs"
-usable_prct_reduction = 0.10
-
-[lDGAPost]
-delete_calc = false     # WARNING: this will delete all logfiles and intermediate results such as F and chi
-
-[run_kConv]
-skip = true        # run k-grid convergence and write out order parameter at each iteration. This can take a very long time! 
+usable_prct_reduction = 0.00
+run_script = "/scratch/projects/hhp00048/codes/LadderDGA.jl/run_sc.jl"
