@@ -9,7 +9,8 @@ lattice_f90 = {
       "3dsc": 1,
       "fcc":  2,
       "2dsc": 3,
-      "bethe": 4
+      "bethe": 4,
+      "2dmag": 5
 }
 
 def to_fortran_bool(val):
@@ -271,12 +272,24 @@ def init_h(config, mode=None):
     out += "      real, parameter :: Traw={10}\n"
     out += "      real, parameter :: small={11}\n"
     out += "      real, parameter :: approx={12}\n"
-    out = out.format(nmax,ns,(ns+1)**2,to_fortran_bool(config['ED']['symm']),\
+    if (lattice_int == 5):
+        out += "      integer, parameter :: p={13}\n"
+        out += "      integer, parameter :: L={14}\n"
+        out = out.format(nmax,ns,(ns+1)**2,to_fortran_bool(config['ED']['symm']),\
+                     config['ED']['ksteps'], config['ED']['Iwmax'],\
+                     config['ED']['Iwmaxreal'],lattice_int,\
+                     to_fortran_bool(config['ED']['gwcalc']),\
+                     config['ED']['nmpara'],config['ED']['Traw'],\
+                     config['ED']['small'],config['ED']['approx'],
+                     config['parameters']['p'],config['parameters']['L'])
+    else:
+        out = out.format(nmax,ns,(ns+1)**2,to_fortran_bool(config['ED']['symm']),\
                      config['ED']['ksteps'], config['ED']['Iwmax'],\
                      config['ED']['Iwmaxreal'],lattice_int,\
                      to_fortran_bool(config['ED']['gwcalc']),\
                      config['ED']['nmpara'],config['ED']['Traw'],\
                      config['ED']['small'],config['ED']['approx'])
+
     out = out.format(nmax, ns)
     return out
 
