@@ -216,7 +216,12 @@ def copy_and_edit_dmft(subCodeDir, subRunDir, config):
         target_file_path = os.path.abspath(os.path.join(subRunDir,
                                                         "hubb.andpar"))
         print("adding copying command from " + str(p1) + " for hubb.andpar")
-        cp_cmd = "cp " + p1 + " " + target_file_path + " || " + " cp "  + p2 + " " + target_file_path + " \n"
+        cp_cmd = "cp " + p1 + " " + target_file_path
+        if 'p2' in locals():
+            cp_cmd += " || " + " cp "  + p2 + " " + target_file_path + \
+                 " || " + " cp "  + p3 + " " + target_file_path 
+        cp_cmd += " \n"
+                
         cp_cmd += "sed -ie '$d' " + target_file_path +"\n"
         cp_cmd += "echo \"" + str(config['parameters']['mu']) + "\" >> " + target_file_path + "\n"
         if config["general"]["custom_init_andpar_vals_only"]:
