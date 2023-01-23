@@ -3,6 +3,7 @@ import os
 import re
 import numpy as np
 import shutil
+from copy import deepcopy
 from config import *
 from helpers import run_bash, check_env, query_yn, reset_dir, dmft_log, \
                     copy_and_edit_dmft, run_ed_dmft, copy_and_edit_vertex, \
@@ -106,60 +107,13 @@ def run_single(config, config_path):
         shutil.copyfile(config_path, config_path_target)
 
     # ========================================================================
-    # =                             DMFT                                     =
-    # ========================================================================
-
-    # -------------------------- definitions ---------------------------------
-    subRunDir_ED = os.path.join(runDir, "ed_dmft")
-    src_files = ["aux_routines.f90", "lattice_routines.f90",
-                 "ed_dmft_parallel_frequencies.f90"]
-    if 'custom_dmft_directory' in config['ED'] and config['ED']['custom_dmft_directory'] != '':
-        subCodeDir = os.path.join(config['general']['codeDir'], config['ED']['custom_dmft_directory'])
-        if 'custom_compile_command' in config['ED'] and config['ED']['custom_compile_command'] != '':
-            compile_command = config['ED']['custom_compile_command']
-        else:
-            compile_command = "mpiifort " + ' '.join(src_files) + \
-                          " -o run.x -llapack " + \
-                          config['general']['CFLAGS']
-    else:
-        subCodeDir = os.path.join(config['general']['codeDir'], "ED_codes/ED_dmft")
-        compile_command = "mpiifort " + ' '.join(src_files) + \
-                          " -o run.x -llapack " + \
-                          config['general']['CFLAGS']
-    jobid_dmft = None
-
-    if not config['ED']['skip']:
-        # ------------------------ save job info -----------------------------
-        dmft_logfile = os.path.join(runDir, "job_dmft.log")
-        cont = dmft_log(dmft_logfile, jobid_dmft, subRunDir_ED, config)
-        if cont:
-            # ---------------------- create dir ------------------------------
-            if not os.path.exists(subRunDir_ED):
-                os.mkdir(subRunDir_ED)
-
-            # ---------------------- copy/edit -------------------------------
-            cp_cmd, prev_id = copy_and_edit_dmft(subCodeDir, subRunDir_ED, config)
-
-            # --------------------- compile/run ------------------------------
-            if not run_bash(compile_command, cwd=subRunDir_ED,
-                           verbose=config['general']['verbose']):
-                raise Exception("Compilation Failed")
-            jobid_dmft = run_ed_dmft(subRunDir_ED, config, cp_cmd, prev_id)
-            if not jobid_dmft:
-                raise Exception("Job submit failed")
-            if os.path.isfile(dmft_logfile):
-                os.remove(dmft_logfile)
-            _ = dmft_log(dmft_logfile, jobid_dmft, subRunDir_ED, config)
-        else:
-            print("Skipping dmft computation, due to completed or active job. "
-                  "This behavor can be changed in the config.")
-
-    # ========================================================================
     # =                          DMFT W2Dyn                                  =
     # ========================================================================
 
     # ------------------------- definitions ----------------------------------
-    if 'w2dyn' in config and config['w2dyn']['skip'] == False:
+    run_w2dyn_check = 'w2dyn' in config and config['w2dyn']['skip'] == False
+    jobid_w2dyn = None
+    if run_w2dyn_check:
         subCodeDir = os.path.abspath(config['w2dyn']['runfile'])
         subRunDir_w2dyn = os.path.join(runDir, "w2dyn")
         jobids_w2dyn = None
@@ -175,14 +129,75 @@ def run_single(config, config_path):
             if not jobids_w2dyn:
                 raise Exception("Job submit failed")
             # ----------------- save job info --------------------------------
-            jobid_dmft = jobids_w2dyn[-1]
+            jobid_w2dyn = jobids_w2dyn[-1]
             w2dyn = os.path.join(runDir, "job_w2dyn.log")
             if os.path.isfile(w2dyn_logfile):
                 os.remove(w2dyn_logfile)
-            _ = dmft_log(w2dyn_logfile, jobid_dmft, subRunDir_w2dyn, config)
+            _ = dmft_log(w2dyn_logfile, jobid_w2dyn, subRunDir_w2dyn, config)
         else:
             print("Skipping fortran DMFT (w2dyn) computation, due to completed or active job. "
                   "This behavor can be changed in the config.")
+
+
+    # ========================================================================
+    # =                             DMFT                                     =
+    # ========================================================================
+
+    # -------------------------- definitions ---------------------------------
+    subRunDir_ED = os.path.join(runDir, "ed_dmft")
+    src_files = ["aux_routines.f90", "lattice_routines.f90",
+                 "ed_dmft_parallel_frequencies.f90"]
+    if (not run_w2dyn_check) and ('custom_dmft_directory' in config['ED'] and config['ED']['custom_dmft_directory'] != ''):
+        subCodeDir = os.path.join(config['general']['codeDir'], config['ED']['custom_dmft_directory'])
+        if 'custom_compile_command' in config['ED'] and config['ED']['custom_compile_command'] != '':
+            compile_command = config['ED']['custom_compile_command']
+        else:
+            compile_command = "mpiifort " + ' '.join(src_files) + \
+                          " -o run.x -llapack " + \
+                          config['general']['CFLAGS']
+    else:
+        subCodeDir = os.path.join(config['general']['codeDir'], "ED_codes/ED_dmft")
+        compile_command = "mpiifort " + ' '.join(src_files) + \
+                          " -o run.x -llapack " + \
+                          config['general']['CFLAGS']
+    jobid_dmft = None
+
+    if run_w2dyn_check:
+        config_bak = deepcopy(config)
+        config['general']['custom_init_andpar_file'] = os.path.join(subRunDir_w2dyn, "hubb.andpar")
+        config['general']['custom_init_andpar_vals_only'] = False
+        config['ED']['iterations'] = 0
+
+    if not config['ED']['skip'] or run_w2dyn_check:
+        # ------------------------ save job info -----------------------------
+        dmft_logfile = os.path.join(runDir, "job_dmft.log")
+        cont = dmft_log(dmft_logfile, jobid_dmft, subRunDir_ED, config)
+        if cont or run_w2dyn_check:
+            # ---------------------- create dir ------------------------------
+            if not os.path.exists(subRunDir_ED):
+                os.mkdir(subRunDir_ED)
+
+            # ---------------------- copy/edit -------------------------------
+            cp_cmd, prev_id = copy_and_edit_dmft(subCodeDir, subRunDir_ED, config)
+            if run_w2dyn_check:
+                copy_andpar(runDir, subRunDir_ED)
+
+            # --------------------- compile/run ------------------------------
+            if not run_bash(compile_command, cwd=subRunDir_ED,
+                           verbose=config['general']['verbose']):
+                raise Exception("Compilation Failed")
+            jobid_dmft = run_ed_dmft(subRunDir_ED, config, cp_cmd, jobid_w2dyn)
+            if not jobid_dmft:
+                raise Exception("Job submit failed")
+            if os.path.isfile(dmft_logfile):
+                os.remove(dmft_logfile)
+            _ = dmft_log(dmft_logfile, jobid_dmft, subRunDir_ED, config)
+        else:
+            print("Skipping dmft computation, due to completed or active job. "
+                  "This behavor can be changed in the config.")
+
+    if run_w2dyn_check:
+        config = config_bak
 
     # ========================================================================
     # =                           ED Vertex                                  =

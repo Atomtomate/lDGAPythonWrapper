@@ -186,7 +186,7 @@ def copy_and_edit_dmft(subCodeDir, subRunDir, config):
 
     prev_id = None
     old_andpar = None
-    if "start_from" in config["general"] and len(config["general"]["start_from"]) > 1:
+    if "start_from" in config["general"] and config['general']['custom_init_andpar_vals_only'] and len(config["general"]["start_from"]) > 1:
         p1 = os.path.join(config["general"]["start_from"], "data/hubb.andpar")
         p2 = os.path.join(config["general"]["start_from"], "ed_dmft/hubb.andpar")
         p3 = os.path.join(config["general"]["start_from"], "w2dyn/hubb.andpar")
@@ -204,10 +204,10 @@ def copy_and_edit_dmft(subCodeDir, subRunDir, config):
             raise ValueError("Warning, both 'custom_init_andpar_file' and 'start_from' set. Ignoring 'start_from'!")
     if "custom_init_andpar_file" in config["general"]:
         if "start_from" in config["general"]:
-            print("Warning, both 'custom_init_andpar_file' and 'start_from' set. Ignoring 'start_from'!")
+            print("WARNING: both 'custom_init_andpar_file' and 'start_from' set. Ignoring 'start_from'!")
         old_andpar = config["general"]["custom_init_andpar_file"]
         if not os.path.exists(old_andpar):
-            raise ValueError("hubb.andpar not found at given location: " + str(old_andpar))
+            print("WARNING: hubb.andpar not found at given location: " + str(old_andpar))
         p1 = config["general"]["custom_init_andpar_file"]
 
     cp_cmd = ""
@@ -219,12 +219,11 @@ def copy_and_edit_dmft(subCodeDir, subRunDir, config):
         cp_cmd = "cp " + p1 + " " + target_file_path
         if 'p2' in locals():
             cp_cmd += " || " + " cp "  + p2 + " " + target_file_path + \
-                 " || " + " cp "  + p3 + " " + target_file_path 
+                 " || " + " cp "  + p3 + " " + target_file_path
         cp_cmd += " \n"
-                
-        cp_cmd += "sed -ie '$d' " + target_file_path +"\n"
-        cp_cmd += "echo \"" + str(config['parameters']['mu']) + "\" >> " + target_file_path + "\n"
-        if config["general"]["custom_init_andpar_vals_only"]:
+        if 'custom_init_andpar_vals_only' in config['general'] and config['general']['custom_init_andpar_vals_only']:
+            cp_cmd += "sed -ie '$d' " + target_file_path +"\n"
+            cp_cmd += "echo \"" + str(config['parameters']['mu']) + "\" >> " + target_file_path + "\n"
             with open(source_file_path, 'r') as f:
                 andpar_string = f.read()
             start_eps = andpar_string.find("Eps(k)") + 7
@@ -435,7 +434,7 @@ def run_ed_dmft(cwd, config, cp_cmd, prev_jobid=None):
 
     with open(fp, 'w') as f:
         job_func = globals()["job_" + config['general']['cluster'].lower()]
-        f.write(job_func(config, procs, cslurm, cmd, copy_from_ed=False, jobname=jn))
+        f.write(job_func(config, procs, cslurm, cmd, copy_from_ed=prev_jobid is not None, jobname=jn))
     filename = "./ed_dmft_run.sh"
     run_cmd = get_submit_cmd(config, dependency_id = prev_jobid) + " " + filename
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
@@ -845,8 +844,6 @@ def build_collect_data(target_dir, w2dyn_dir, dmft_dir, vertex_dir, susc_dir, tr
     trilex_dirs = ["tripamp_omega", "trip_omega", "trilex_omega"]
 
     copy_script_str = bak_files_script(dmft_dir, target_dir, dmft_files,
-                                       header=True, mode=mode)
-    copy_script_str = bak_files_script(w2dyn_dir, target_dir, dmft_files,
                                        header=True, mode=mode)
     copy_script_str += bak_files_script(susc_dir, target_dir, susc_files,
                                         header=False, mode=mode)
