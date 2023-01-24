@@ -1,0 +1,39 @@
+[General]
+DOS 		= ReadIn
+NAt 		= 1
+HkFile      = {0}
+beta		= {1}
+mu		    = {2}
+{3} # Readold/fileold
+DMFTsteps	= {4}
+magnetism	= para
+FileNamePrefix  = current_run
+
+mixing 		        = 0.2 #-> 0.2 wird von der alten Iteration verwendet.
+mixing_strategy     = diis
+mixing_diis_history = 5
+mixing_diis_period  = 1
+
+FTType          = none #-> Ergebnis wird durch Legendre Polynome dargestellt. Siehe: NLegMax und MeasSusz weiter unten.
+
+[Atoms]
+[[1]]
+Hamiltonian	= Density
+Nd		= 1
+Udd 		= {5} #-> Hubbard U
+QuantumNumbers = Nt Szt Azt
+
+[QMC]
+Eigenbasis      = 1
+
+Nwarmups 	= 1e7
+Nmeas 		= {6}
+
+Ntau       	= 2000   	# # of points in tau  ->  Nur für Ausgabe wichtig!
+Niw        	= 2000   	# # of matsubara freq.
+Nftau        = 2000
+NLegMax     	= 1     	# Max number of Legendre Polys
+NLegOrder   	= 1     	# order used 
+NLookup_nfft = 10000000
+
+MeasGiw = 1  # -> G(i\omega) wird gemessen.
