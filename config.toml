@@ -19,6 +19,7 @@ beta = 10.0
 U = 1.1
 mu = 0.57
 nfill = 1.0
+fixdens = false
 p = 1
 L = 3
 
