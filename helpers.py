@@ -82,7 +82,11 @@ def read_preprocess_config(config_string):
     config['general']['codeDir'] = os.path.abspath(os.path.expanduser(
                                    config['general']['codeDir']))
     if str(config['parameters']['mu']).lower() == "hf":
-        config['parameters']['mu'] = config['parameters']['U']/2.0
+        lattice_type = config['parameters']['lattice'].partition("-")[0].lower()
+        if lattice_type == "2dsc" or lattice_type == "3dsc" or lattice_type == "2dmag" or lattice_type == "bcc":
+            config['parameters']['mu'] = config['parameters']['U']/2.0
+        else:
+            config['parameters']['nfill'] = 1.0
     check_config_consistency(config)
     return config
 
