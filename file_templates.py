@@ -338,7 +338,7 @@ c beta, w_min, w_max, deltino
 c ns,imaxmu,deltamu, # iterations, conv.param.
 {4}, 0, 0.d0, {5},  {6}
 c ifix(0,1), <n>,   inew, iauto
-{7}  , {8},   1,    1,
+{7}  , {8}d0,   1,    1,
 c  th0 , iexp (insignificant)
 1.d-4, 1
 c nmin, nmax
@@ -348,17 +348,16 @@ c lambda, w0, nph
 1
     '''
     # TODO: use float(val.replace('e', 'd'))
-    if not config['parameters']['fixdens'] or not ('nfill' in config['parameters']):
-        ifix = 0
-        config['parameters']['nfill'] = 1.0
+    if config['parameters']['fixdens']:
+        ifix = 1
     else:
-        ifix = 1 
+        ifix = 0 
     out = out.format( config['parameters']['U'],
         config['parameters']['beta'], config['ED']['w_min'],
         config['ED']['w_max'], #config['ED']['conv_param'],
         config['ED']['ns'], #TODO: important params?
-        config['ED']['iterations'], config['ED']['conv_param'],ifix,
-        config['parameters']['nfill']
+        config['ED']['iterations'], config['ED']['conv_param'],
+        ifix, config['parameters']['nfill']
     )
     return out
 
