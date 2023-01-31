@@ -81,14 +81,14 @@ def read_preprocess_config(config_string):
     config = toml.loads(config_in)
     config['general']['codeDir'] = os.path.abspath(os.path.expanduser(
                                    config['general']['codeDir']))
+    if not 'mu' in config['parameters']:
+        config['parameters']['mu'] = config['parameters']['U']/2.0
     if str(config['parameters']['mu']).lower() == "hf":
         lattice_type = config['parameters']['lattice'].partition("-")[0].lower()
         if lattice_type == "2dsc" or lattice_type == "3dsc" or lattice_type == "2dmag" or lattice_type == "bcc":
             config['parameters']['mu'] = config['parameters']['U']/2.0
         else:
             config['parameters']['nfill'] = 1.0
-    if not 'mu' in config['parameters']:
-        config['parameters']['mu'] = config['parameters']['U']/2.0
     if not 'nfill' in config['parameters']:
         config['parameters']['nfill'] = 1.0
     if not 'fixdens' in config['parameters']:   
