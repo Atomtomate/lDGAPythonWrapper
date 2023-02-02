@@ -81,12 +81,23 @@ def read_preprocess_config(config_string):
     config = toml.loads(config_in)
     config['general']['codeDir'] = os.path.abspath(os.path.expanduser(
                                    config['general']['codeDir']))
-    if str(config['parameters']['mu']).lower() == "hf":
+    if not 'mu' in config['parameters']:
         config['parameters']['mu'] = config['parameters']['U']/2.0
     if 'w2dyn' in config and 'NBath' not in config['w2dyn']:
         config['w2dyn']['NBath'] = 4
     if 'w2dyn' in config and 'NFreqFit' not in config['w2dyn']:
         config['w2dyn']['NFreqFit'] = 200
+    if str(config['parameters']['mu']).lower() == "hf":
+        lattice_type = config['parameters']['lattice'].partition("-")[0].lower()
+        if lattice_type == "2dsc" or lattice_type == "3dsc" or lattice_type == "2dmag" or lattice_type == "bcc":
+            config['parameters']['mu'] = config['parameters']['U']/2.0
+        else:
+            print("WARNING: hf for mu not tested properly!")
+            config['parameters']['nfill'] = 1.0
+    if not 'nfill' in config['parameters']:
+        config['parameters']['nfill'] = 1.0
+    if not 'fixdens' in config['parameters']:
+        config['parameters']['fixdens'] = False
     check_config_consistency(config)
     return config
 
@@ -399,6 +410,10 @@ def copy_and_edit_lDGA_j(subRunDir, dataDir, config):
 
 def copy_and_edit_w2dyn(subRunDir, dataDir, config):
     params_template = os.path.abspath(config['w2dyn']['parameters_template'])
+    if config['parameters']['fixdens']:
+        epsn_line = "EPSN   = 0.0001"
+    else:
+        epsn_line = ""
     for it in range(len(config['w2dyn']['N_DMFT'])):
         readold_str = "" if it == 0 else "readold = -1\nfileold = DMFT_"+str(it-1)+".hdf5\n"
         ncorr_str = "\nNCorr = " + str(config['w2dyn']['NCorr_init']) if it == 0 else ""
@@ -406,7 +421,8 @@ def copy_and_edit_w2dyn(subRunDir, dataDir, config):
             ff = f.read()
             ff = ff.format("ham.hk", config['parameters']['beta'],\
                       config['parameters']['mu'], readold_str, config['w2dyn']['N_DMFT'][it],\
-                      config['parameters']['U'], config['w2dyn']['Nmeas'][it])
+                      config['parameters']['U'], config['w2dyn']['Nmeas'][it],\
+                      config['parameters']['nfill'],epsn_line)
             ff += ncorr_str
         file_name = os.path.abspath(os.path.join(subRunDir, "Par_"+str(it)+".in"))
         with open(file_name, 'w') as f:

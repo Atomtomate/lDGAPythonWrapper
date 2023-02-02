@@ -6,7 +6,7 @@ def check_config_consistency(config):
     mu = config['parameters']['mu']
     U = config['parameters']['U']
     if not isclose(mu, U / 2.0):
-        print("Not Calculating at half filling! mu = {0} and U = {1} Make sure"
+        print("Not Calculating at half filling on a bipartite lattice! mu = {0} and U/2 = {1} Make sure"
               " that bath is not forced to be symmetric.".format(
                   mu, U / 2.0
               ))
