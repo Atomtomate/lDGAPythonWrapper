@@ -413,9 +413,9 @@ eval "$(conda shell.bash hook)"
 conda activate w2dyn
 
 '''
-    fit_str = "julia {0} DMFT_{1}.hdf5 {2} {3} {4} hubb_{1}.andpar >> run.out 2>> run.err\n"
-    fit_str = fit_str.format(os.path.abspath(os.path.join(config['general']['codeDir'],"scripts/LadderDGA_utils/fitAndersonParams.jl")),
-                             it,config['parameters']['beta'],config['parameters']['U'],config['parameters']['mu'])
+    fit_str = "julia {0} DMFT_{1}.hdf5 {2} {3} hubb_{1}.andpar >> run.out 2>> run.err\n"
+    fit_str = fit_str.format(os.path.abspath(os.path.join(config['general']['codeDir'],"scripts/LadderDGA_utils/fitW2dyn.jl ")),
+                             it,config['w2dyn']['NBath'],config['w2dyn']['NFreqFit'])
     if it == len(config['w2dyn']['N_DMFT'])-1:
         fit_str += "cp hubb_"+str(it)+".andpar hubb.andpar\n"
     if it == 0:

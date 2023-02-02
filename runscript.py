@@ -112,10 +112,10 @@ def run_single(config, config_path):
 
     # ------------------------- definitions ----------------------------------
     run_w2dyn_check = 'w2dyn' in config and config['w2dyn']['skip'] == False
+    subRunDir_w2dyn = os.path.join(runDir, "w2dyn")
     jobid_w2dyn = None
     if run_w2dyn_check:
         subCodeDir = os.path.abspath(config['w2dyn']['runfile'])
-        subRunDir_w2dyn = os.path.join(runDir, "w2dyn")
         jobids_w2dyn = None
         if not os.path.exists(subRunDir_w2dyn):
             os.mkdir(subRunDir_w2dyn)
@@ -144,6 +144,9 @@ def run_single(config, config_path):
     # ========================================================================
 
     # -------------------------- definitions ---------------------------------
+    if 'postprocess' in config['w2dyn']:
+        run_w2dyn_check = run_w2dyn_check or config['w2dyn']['postprocess']
+    print("dbg: ", run_w2dyn_check)
     subRunDir_ED = os.path.join(runDir, "ed_dmft")
     src_files = ["aux_routines.f90", "lattice_routines.f90",
                  "ed_dmft_parallel_frequencies.f90"]

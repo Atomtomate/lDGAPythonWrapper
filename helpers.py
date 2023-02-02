@@ -83,6 +83,10 @@ def read_preprocess_config(config_string):
                                    config['general']['codeDir']))
     if str(config['parameters']['mu']).lower() == "hf":
         config['parameters']['mu'] = config['parameters']['U']/2.0
+    if 'w2dyn' in config and 'NBath' not in config['w2dyn']:
+        config['w2dyn']['NBath'] = 4
+    if 'w2dyn' in config and 'NFreqFit' not in config['w2dyn']:
+        config['w2dyn']['NFreqFit'] = 200
     check_config_consistency(config)
     return config
 

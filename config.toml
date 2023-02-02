@@ -51,6 +51,7 @@ check_behavior = "break"   # possible options: ignore (continue on check fail), 
 
 [w2dyn]
 skip = true
+postprocess = false     # forces ed postprocessing (gm_wim)
 parameters_template = "/scratch/projects/hhp00048/lDGA/2D_cuprates_doped_2/w2dyn/Parameters_template.in"
 runfile = "/scratch/projects/hhp00048/w2dyn/bin/DMFT.py"
 N_DMFT = [20, 12, 8]
@@ -58,6 +59,8 @@ N_procs = [192, 192, 384]
 Nmeas  = [1e6, 1e7, 4e7]
 NCorr_init = 50
 Nk = 100
+NBath = 4
+NFreqFit = 200
 
 
 [Vertex]
