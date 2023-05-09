@@ -144,12 +144,14 @@ def run_single(config, config_path):
     # ========================================================================
 
     # -------------------------- definitions ---------------------------------
-    if 'postprocess' in config['w2dyn']:
+    if 'w2dyn' in config and 'postprocess' in config['w2dyn']:
         run_w2dyn_check = run_w2dyn_check or config['w2dyn']['postprocess']
-    print("dbg: ", run_w2dyn_check)
     subRunDir_ED = os.path.join(runDir, "ed_dmft")
     src_files = ["aux_routines.f90", "lattice_routines.f90",
                  "ed_dmft_parallel_frequencies.f90"]
+    subCodeDir = ""
+    run_julia = 'code_type' in config['ED'] and config['ED']['code_type'] == "julia"
+
     if (not run_w2dyn_check) and ('custom_dmft_directory' in config['ED'] and config['ED']['custom_dmft_directory'] != ''):
         subCodeDir = os.path.join(config['general']['codeDir'], config['ED']['custom_dmft_directory'])
         if 'custom_compile_command' in config['ED'] and config['ED']['custom_compile_command'] != '':
@@ -186,9 +188,10 @@ def run_single(config, config_path):
                 copy_andpar(runDir, subRunDir_ED)
 
             # --------------------- compile/run ------------------------------
-            if not run_bash(compile_command, cwd=subRunDir_ED,
-                           verbose=config['general']['verbose']):
-                raise Exception("Compilation Failed")
+            if not run_julia:
+                if not run_bash(compile_command, cwd=subRunDir_ED,
+                               verbose=config['general']['verbose']):
+                    raise Exception("Compilation Failed")
             jobid_dmft = run_ed_dmft(subRunDir_ED, config, cp_cmd, jobid_w2dyn)
             if not jobid_dmft:
                 raise Exception("Job submit failed")

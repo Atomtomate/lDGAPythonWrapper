@@ -8,6 +8,7 @@ import stat
 from math import isclose, ceil
 from config import *
 from file_templates import *
+from string import Template
 # flake8:  noqa: F405
 
 # TODO: refactor replicated code
@@ -187,79 +188,79 @@ def check_env(config):
 # =                          copy functions                                  =
 # ============================================================================
 def copy_and_edit_dmft(subCodeDir, subRunDir, config):
-    files_list = ["tpri.dat", "init.h", "hubb.dat", "hubb.andpar"]
-    if 'old3d' in config['ED'] and config['ED']['old3d']:
-        src_files = ["ver_tprime.f"]
-    else:
-        src_files = ["aux_routines.f90", "lattice_routines.f90",
-                     "ed_dmft_parallel_frequencies.f90"]
+    prev_id = None
+    old_andpar = None
+    cp_cmd = ""
     checks_py_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                    "checks.py")
     checks_py_target = os.path.abspath(os.path.join(subRunDir, "checks.py"))
     shutil.copyfile(checks_py_path, checks_py_target)
-
-
-    prev_id = None
-    old_andpar = None
-    if "start_from" in config["general"] and config['general']['custom_init_andpar_vals_only'] and len(config["general"]["start_from"]) > 1:
-        p1 = os.path.join(config["general"]["start_from"], "data/hubb.andpar")
-        p2 = os.path.join(config["general"]["start_from"], "ed_dmft/hubb.andpar")
-        p3 = os.path.join(config["general"]["start_from"], "w2dyn/hubb.andpar")
-        jid_path = os.path.join(config["general"]["start_from"], "job_dmft.log")
-        prev_id = get_id_log(jid_path)
-        if os.path.exists(p1):
-            old_andpar = os.path.abspath(p1)
-        elif os.path.exists(p2):
-            old_andpar = os.path.abspath(p2)
-        elif os.path.exists(p3):
-            old_andpar = os.path.abspath(p3)
+    if not ('code_type' in config['ED'] and config['ED']['code_type'] == 'julia'):
+        files_list = ["tpri.dat", "init.h", "hubb.dat", "hubb.andpar"]
+        if 'old3d' in config['ED'] and config['ED']['old3d']:
+            src_files = ["ver_tprime.f"]
         else:
-            old_andpar = None
-        if old_andpar == None  or not os.path.exists(old_andpar):
-            raise ValueError("Warning, both 'custom_init_andpar_file' and 'start_from' set. Ignoring 'start_from'!")
-    if "custom_init_andpar_file" in config["general"]:
-        if "start_from" in config["general"]:
-            print("WARNING: both 'custom_init_andpar_file' and 'start_from' set. Ignoring 'start_from'!")
-        old_andpar = config["general"]["custom_init_andpar_file"]
-        if not os.path.exists(old_andpar):
-            print("WARNING: hubb.andpar not found at given location: " + str(old_andpar))
-        p1 = config["general"]["custom_init_andpar_file"]
+            src_files = ["aux_routines.f90", "lattice_routines.f90",
+                         "ed_dmft_parallel_frequencies.f90"]
 
-    cp_cmd = ""
-    if old_andpar:
-        source_file_path = os.path.abspath(old_andpar)
-        target_file_path = os.path.abspath(os.path.join(subRunDir,
-                                                        "hubb.andpar"))
-        print("adding copying command from " + str(p1) + " for hubb.andpar")
-        cp_cmd = "cp " + p1 + " " + target_file_path
-        if 'p2' in locals():
-            cp_cmd += " || " + " cp "  + p2 + " " + target_file_path + \
-                 " || " + " cp "  + p3 + " " + target_file_path
-        cp_cmd += " \n"
-        if 'custom_init_andpar_vals_only' in config['general'] and config['general']['custom_init_andpar_vals_only']:
-            cp_cmd += "sed -ie '$d' " + target_file_path +"\n"
-            cp_cmd += "echo \"" + str(config['parameters']['mu']) + "\" >> " + target_file_path + "\n"
-            with open(source_file_path, 'r') as f:
-                andpar_string = f.read()
-            start_eps = andpar_string.find("Eps(k)") + 7
-            start_tpar = andpar_string.find("tpar(k)") + 8
-            eps_str = andpar_string[start_eps:(start_tpar-9)]
-            andpar_lines = andpar_string[start_tpar:].splitlines()
-            tpar_str = "\n".join(andpar_lines[:len(eps_str.splitlines())])
-            tpar_str += "\n"
+        if "start_from" in config["general"] and config['general']['custom_init_andpar_vals_only'] and len(config["general"]["start_from"]) > 1:
+            p1 = os.path.join(config["general"]["start_from"], "data/hubb.andpar")
+            p2 = os.path.join(config["general"]["start_from"], "ed_dmft/hubb.andpar")
+            p3 = os.path.join(config["general"]["start_from"], "w2dyn/hubb.andpar")
+            jid_path = os.path.join(config["general"]["start_from"], "job_dmft.log")
+            prev_id = get_id_log(jid_path)
+            if os.path.exists(p1):
+                old_andpar = os.path.abspath(p1)
+            elif os.path.exists(p2):
+                old_andpar = os.path.abspath(p2)
+            elif os.path.exists(p3):
+                old_andpar = os.path.abspath(p3)
+            else:
+                old_andpar = None
+            if old_andpar == None  or not os.path.exists(old_andpar):
+                raise ValueError("Warning, both 'custom_init_andpar_file' and 'start_from' set. Ignoring 'start_from'!")
+        if "custom_init_andpar_file" in config["general"]:
+            if "start_from" in config["general"]:
+                print("WARNING: both 'custom_init_andpar_file' and 'start_from' set. Ignoring 'start_from'!")
+            old_andpar = config["general"]["custom_init_andpar_file"]
+            if not os.path.exists(old_andpar):
+                print("WARNING: hubb.andpar not found at given location: " + str(old_andpar))
+            p1 = config["general"]["custom_init_andpar_file"]
 
-    for fn in files_list:
-        fp = os.path.abspath(os.path.join(subRunDir, fn))
-        with open(fp, 'w') as f:
-            if not (fn == "hubb.andpar" and old_andpar):
-                f.write(globals()[fn.replace(".", "_")](config))
+        if old_andpar:
+            source_file_path = os.path.abspath(old_andpar)
+            target_file_path = os.path.abspath(os.path.join(subRunDir,
+                                                            "hubb.andpar"))
+            print("adding copying command from " + str(p1) + " for hubb.andpar")
+            cp_cmd = "cp " + p1 + " " + target_file_path
+            if 'p2' in locals():
+                cp_cmd += " || " + " cp "  + p2 + " " + target_file_path + \
+                     " || " + " cp "  + p3 + " " + target_file_path
+            cp_cmd += " \n"
+            if 'custom_init_andpar_vals_only' in config['general'] and config['general']['custom_init_andpar_vals_only']:
+                cp_cmd += "sed -ie '$d' " + target_file_path +"\n"
+                cp_cmd += "echo \"" + str(config['parameters']['mu']) + "\" >> " + target_file_path + "\n"
+                with open(source_file_path, 'r') as f:
+                    andpar_string = f.read()
+                start_eps = andpar_string.find("Eps(k)") + 7
+                start_tpar = andpar_string.find("tpar(k)") + 8
+                eps_str = andpar_string[start_eps:(start_tpar-9)]
+                andpar_lines = andpar_string[start_tpar:].splitlines()
+                tpar_str = "\n".join(andpar_lines[:len(eps_str.splitlines())])
+                tpar_str += "\n"
 
-    for src_file in src_files:
-        source_file_path = os.path.abspath(os.path.join(subCodeDir, src_file))
-        target_file_path = os.path.abspath(os.path.join(subRunDir,
-                                                        src_file))
-        shutil.copyfile(source_file_path, target_file_path)
-    return cp_cmd,prev_id
+        for fn in files_list:
+            fp = os.path.abspath(os.path.join(subRunDir, fn))
+            with open(fp, 'w') as f:
+                if not (fn == "hubb.andpar" and old_andpar):
+                    f.write(globals()[fn.replace(".", "_")](config))
+
+        for src_file in src_files:
+            source_file_path = os.path.abspath(os.path.join(subCodeDir, src_file))
+            target_file_path = os.path.abspath(os.path.join(subRunDir,
+                                                            src_file))
+            shutil.copyfile(source_file_path, target_file_path)
+    return cp_cmd, prev_id
 
 def copy_andpar(runDir, targetDir):
     i = 0
@@ -436,9 +437,19 @@ def copy_and_edit_w2dyn(subRunDir, dataDir, config):
 def run_ed_dmft(cwd, config, cp_cmd, prev_jobid=None):
     fp = cwd + "/" + "ed_dmft_run.sh"
     cmd = cp_cmd
+    procs = 1
     if 'old3d' in config['ED'] and config['ED']['old3d']:
         cmd += "./run.x > run.out 2> run.err\n"
-        procs = 1
+    elif 'code_type' in config['ED'] and config['ED']['code_type'] == 'julia':
+        cmd_tmp = Template("julia -O3 --check-bounds=no " + os.path.join(config['general']['codeDir'],
+                  "jED.jl/scripts/fortran_compat.jl") + " $U $beta $mu $NB $KG $path\n")
+        cmd_tmp = cmd_tmp.substitute(U=config['parameters']['U'],
+                                     beta=config['parameters']['beta'],
+                                     mu=config['parameters']['mu'],
+                                     NB=config['ED']['ns']-1,
+                                     KG=config['parameters']['lattice'],
+                                     path=os.path.join(config['general']['runDir'], "ed_dmft"))
+        cmd += cmd_tmp
     else:
         cmd += "mpirun ./run.x > run.out 2> run.err\n"
         procs = (config['ED']['ns']+1)**2

@@ -10,7 +10,9 @@ lattice_f90 = {
       "fcc":  2,
       "2dsc": 3,
       "bethe": 4,
-      "2dmag": 5
+      "2dmag": 5,
+      "p6m": 6,
+      "bcc": 7
 }
 
 def to_fortran_bool(val):

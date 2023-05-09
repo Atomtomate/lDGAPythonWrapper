@@ -1,5 +1,5 @@
 [general]
-runDir = "/home/hhpmleus/ED_fortran/QMC_andpar/n0.75/ED_vertex/ED_vertex_example2" #"/scratch/projects/hhp00048/PD_test/out_of_hf_tests/b{beta}_U{U}_mu0.57"     # Directory for calculations, {beta} and {U} will be replaced by the values set in [parameters] 
+runDir = "/scratch/projects/hhp00048/tmp" #"/scratch/projects/hhp00048/PD_test/out_of_hf_tests/b{beta}_U{U}_mu0.57"     # Directory for calculations, {beta} and {U} will be replaced by the values set in [parameters] 
 codeDir = "/scratch/projects/hhp00048/codes"                                # Directory for ED Codes
 CFLAGS = " -O3 "                                                       # Compilation flags for ifort, mpif90
 verbose = false                                                             # Print additional information during compilations
@@ -25,9 +25,10 @@ L = 3
 
 [ED]
 skip = false
+code_type = "julia"             # WARING: change IWMAX to reasonable values according to codes!!!
 custom_dmft_directory = ""      #Set alternative file directory for the DMFT calculation. Leave empty to use the directory set in 'runDir'
 custom_compile_command = ""     #Set alternative compile command for the DMFT calculation. Leave empty to use the standard compile commands
-ns = 5
+ns = 3
 symm = false
 iterations = 80
 ksteps = 100
@@ -61,7 +62,7 @@ N_procs = [192, 192, 384]
 Nmeas  = [1e6, 1e7, 4e7]
 NCorr_init = 50
 Nk = 100
-NBath = 4
+NBath = 2
 NFreqFit = 200
 
 
@@ -69,8 +70,8 @@ NFreqFit = 200
 skip = false
 # freqList can be either a path to a frequency list or
 # "F1:F2,B1:B2" for N1 to N2 (integer) fermionic and B1 to B2 bosonic.
-freqList = "/scratch/projects/hhp00048/grids/b10_f10_s1"
-nprocs = 960
+freqList = "/scratch/projects/hhp00048/grids/NOHF_b2_f2_s1"
+nprocs = 96
 
 [Susc]
 skip = true
