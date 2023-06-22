@@ -87,7 +87,7 @@ def read_preprocess_config(config_string):
     if 'w2dyn' in config and 'NBath' not in config['w2dyn']:
         config['w2dyn']['NBath'] = 4
     if 'w2dyn' in config and 'NFreqFit' not in config['w2dyn']:
-        config['w2dyn']['NFreqFit'] = 200
+        config['w2dyn']['NFreqFit'] = 40
     if str(config['parameters']['mu']).lower() == "hf":
         lattice_type = config['parameters']['lattice'].partition("-")[0].lower()
         if lattice_type == "2dsc" or lattice_type == "3dsc" or lattice_type == "2dmag" or lattice_type == "bcc":
@@ -876,6 +876,8 @@ def build_collect_data(target_dir, w2dyn_dir, dmft_dir, vertex_dir, susc_dir, tr
 
     copy_script_str = bak_files_script(dmft_dir, target_dir, dmft_files,
                                        header=True, mode=mode)
+    copy_script_str += bak_files_script(w2dyn_dir, target_dir, ["hubb.andpar"],
+                                       header=False, mode=mode)
     copy_script_str += bak_files_script(susc_dir, target_dir, susc_files,
                                         header=False, mode=mode)
     copy_script_str += bak_files_script(vertex_dir, target_dir, vertex_files,

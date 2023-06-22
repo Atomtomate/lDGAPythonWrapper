@@ -144,15 +144,13 @@ def run_single(config, config_path):
     # ========================================================================
 
     # -------------------------- definitions ---------------------------------
-    if 'w2dyn' in config and 'postprocess' in config['w2dyn']:
-        run_w2dyn_check = run_w2dyn_check or config['w2dyn']['postprocess']
     subRunDir_ED = os.path.join(runDir, "ed_dmft")
     src_files = ["aux_routines.f90", "lattice_routines.f90",
                  "ed_dmft_parallel_frequencies.f90"]
     subCodeDir = ""
     run_julia = 'code_type' in config['ED'] and config['ED']['code_type'] == "julia"
 
-    if (not run_w2dyn_check) and ('custom_dmft_directory' in config['ED'] and config['ED']['custom_dmft_directory'] != ''):
+    if 'custom_dmft_directory' in config['ED'] and config['ED']['custom_dmft_directory'] != '':
         subCodeDir = os.path.join(config['general']['codeDir'], config['ED']['custom_dmft_directory'])
         if 'custom_compile_command' in config['ED'] and config['ED']['custom_compile_command'] != '':
             compile_command = config['ED']['custom_compile_command']
@@ -167,25 +165,17 @@ def run_single(config, config_path):
                           config['general']['CFLAGS']
     jobid_dmft = None
 
-    if run_w2dyn_check:
-        config_bak = deepcopy(config)
-        config['general']['custom_init_andpar_file'] = os.path.join(subRunDir_w2dyn, "hubb.andpar")
-        config['general']['custom_init_andpar_vals_only'] = False
-        config['ED']['iterations'] = 0
-
-    if not config['ED']['skip'] or run_w2dyn_check:
+    if 'ED' in config and not config['ED']['skip']:
         # ------------------------ save job info -----------------------------
         dmft_logfile = os.path.join(runDir, "job_dmft.log")
         cont = dmft_log(dmft_logfile, jobid_dmft, subRunDir_ED, config)
-        if cont or run_w2dyn_check:
+        if cont:
             # ---------------------- create dir ------------------------------
             if not os.path.exists(subRunDir_ED):
                 os.mkdir(subRunDir_ED)
 
             # ---------------------- copy/edit -------------------------------
             cp_cmd, prev_id = copy_and_edit_dmft(subCodeDir, subRunDir_ED, config)
-            if run_w2dyn_check:
-                copy_andpar(runDir, subRunDir_ED)
 
             # --------------------- compile/run ------------------------------
             if not run_julia:
@@ -201,9 +191,6 @@ def run_single(config, config_path):
         else:
             print("Skipping dmft computation, due to completed or active job. "
                   "This behavor can be changed in the config.")
-
-    if run_w2dyn_check:
-        config = config_bak
 
     # ========================================================================
     # =                           ED Vertex                                  =
@@ -352,8 +339,8 @@ def run_single(config, config_path):
             jobid_pp = run_postprocess(runDir, dataDir, subRunDir_w2dyn, subRunDir_ED,
                                        subRunDir_vert, subRunDir_susc,
                                        subRunDir_trilex, config, jobids=[
-                                        jobid_dmft, jobid_vert, jobid_susc,
-                                        jobid_trilex])
+                                       jobid_dmft, jobid_vert, jobid_susc,
+                                       jobid_w2dyn, jobid_trilex])
             if not jobid_pp:
                 raise Exception("Postprocessing job submit failed")
             # ----------------- save job info --------------------------------
