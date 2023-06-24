@@ -216,7 +216,7 @@ def run_single(config, config_path):
             copy_andpar(runDir, subRunDir_vert)
 
             # ------------------ compile/run ---------------------------------
-            jobid_vert = run_ed_vertex(subRunDir_vert, config, jobid_dmft)
+            jobid_vert = run_ed_vertex(subRunDir_vert, config, jobid_w2dyn)
             if not jobid_vert:
                 raise Exception("Job submit failed")
 
@@ -260,7 +260,7 @@ def run_single(config, config_path):
             if not run_bash(compile_command, cwd=subRunDir_susc,
                            verbose=config['general']['verbose']):
                 raise Exception("Compilation Failed")
-            jobid_susc = run_ed_susc(subRunDir_susc, config, jobid_dmft)
+            jobid_susc = run_ed_susc(subRunDir_susc, config, jobid_w2dyn)
             if not jobid_susc:
                 raise Exception("Job submit failed")
 
