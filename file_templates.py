@@ -108,7 +108,7 @@ def bak_files_script(source_dir, target_dir, files_list, header=False,
         out = out[:-1] + "} "
     else:
         out += "/" + files_list[0] + " "
-    out += os.path.abspath(target_dir)+"\n"
+    out += os.path.abspath(target_dir)+" || true\n"
     return out
 
 
