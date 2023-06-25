@@ -432,7 +432,7 @@ conda activate w2dyn
     out += "mpirun -np "+str(config['w2dyn']['N_procs'][it])+" "+\
             config['w2dyn']['runfile']+" Par_"+str(it)+".in \n"
     out += "mv current_run*.hdf5 DMFT_"+str(it)+".hdf5\n"
-    if it < len(config['w2dyn']['N_DMFT'])-1:
+    if it < len(config['w2dyn']['N_DMFT']):
         ncorr_path = os.path.abspath(os.path.join(config['general']['codeDir'],"scripts/LadderDGA_utils/ncorr.jl"))
         hdf5_path = os.path.abspath(os.path.join(runDir, "DMFT_"+str(it)+".hdf5"))
         out += "c=$(julia " + ncorr_path + " " + hdf5_path + ")\n"
