@@ -12,7 +12,8 @@ lattice_f90 = {
       "bethe": 4,
       "2dmag": 5,
       "p6m": 6,
-      "bcc": 7
+      "bcc": 7,
+      "4dsc": 1
 }
 
 def to_fortran_bool(val):
@@ -417,9 +418,9 @@ def w2dyn_submit(config, runDir, it):
 export I_MPI_PIN_RESPECT_CPUSET=off
 export I_MPI_DEBUG=6
 eval "$(conda shell.bash hook)"
-conda activate w2dyn
+conda activate {0}
 
-'''
+'''.format(config['w2dyn']['conda_env'])
     fit_str = "julia {0} DMFT_{1}.hdf5 {2} {3} hubb_{1}.andpar >> run.out 2>> run.err\n"
     fit_str = fit_str.format(os.path.abspath(os.path.join(config['general']['codeDir'],"scripts/LadderDGA_utils/fitW2dyn.jl ")),
                              it,config['w2dyn']['NBath'],config['w2dyn']['NFreqFit'])

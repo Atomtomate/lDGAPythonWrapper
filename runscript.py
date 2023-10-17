@@ -302,7 +302,7 @@ def run_single(config, config_path):
             # ------------------- copy/edit ----------------------------------
             copy_and_edit_trilex(subCodeDir, subRunDir_trilex, subRunDir_ED,
                                  dataDir, config)
-            copy_andpar(runDir, subRunDir_vert)
+            copy_andpar(runDir, subRunDir_trilex)
 
             # ------------------ compile/run ---------------------------------
             if not run_bash(compile_command, cwd=subRunDir_trilex,
@@ -372,17 +372,18 @@ def run_single(config, config_path):
             copy_and_edit_lDGA_j(subRunDir_lDGA_j, dataDir, config)
 
             # ------------------ compile/run -----------------------------
-            jobid_lDGA_j = run_lDGA_j(subRunDir_lDGA_j, dataDir, subCodeDir,
-                                             config, jobid_pp)
-            if not jobid_lDGA_j:
-                raise Exception("Job submit failed")
+            if not ('config_only' in config['lDGAJulia'] and config['lDGAJulia']['config_only']):
+                jobid_lDGA_j = run_lDGA_j(subRunDir_lDGA_j, dataDir, subCodeDir,
+                                                 config, jobid_pp)
+                if not jobid_lDGA_j:
+                    raise Exception("Job submit failed")
 
-            # ----------------- save job info ----------------------------
-            lDGA_logfile = os.path.join(runDir, "job_lDGA_j.log")
-            if os.path.isfile(lDGA_logfile):
-                os.remove(lDGA_logfile)
-            _ = dmft_log(lDGA_logfile, jobid_lDGA_j,
-                         subRunDir_lDGA_j, config)
+                # ----------------- save job info ----------------------------
+                lDGA_logfile = os.path.join(runDir, "job_lDGA_j.log")
+                if os.path.isfile(lDGA_logfile):
+                    os.remove(lDGA_logfile)
+                _ = dmft_log(lDGA_logfile, jobid_lDGA_j,
+                             subRunDir_lDGA_j, config)
         else:
             print("Skipping Julia lDGA computation, due to completed or active job."
                   "This behavor can be changed in the config.")
