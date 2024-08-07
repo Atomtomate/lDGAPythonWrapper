@@ -596,7 +596,7 @@ def run_postprocess(cwd, dataDir, subRunDir_w2dyn, subRunDir_ED, subRunDir_vert,
         freq_path = os.path.dirname(freq_path)
     freq_path = os.path.abspath(freq_path)
     cmd= "julia " + os.path.join(config['general']['codeDir'], "lDGAPostprocessing/expand_vertex.jl") + \
-          " "  + freq_path + " " + dataDir + " " + str(config['parameters']['beta']) + "\n"
+          " "  + freq_path + " " + dataDir + " " + "\n"
 
     full_remove_script = "rm " + os.path.abspath(subRunDir_ED) + " " + \
                          os.path.abspath(subRunDir_vert) +\
