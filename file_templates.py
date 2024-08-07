@@ -29,7 +29,7 @@ def postprocessing_berlin(content, custom, config, jobname=""):
     out = '''#!/bin/bash
 #SBATCH -t 01:00:00
 #SBATCH --ntasks=1
-#SBATCH -p standard96
+#SBATCH -p cpu-clx
 #SBATCH --requeue
 {0}
 {1}
@@ -39,7 +39,7 @@ export SLURM_CPU_BIND=none
     out += content
     return out
 
-def job_berlin(config, procs, custom, cmd, queue="standard96", copy_from_ed=True,
+def job_berlin(config, procs, custom, cmd, queue="cpu-clx", copy_from_ed=True,
                custom_lines=True, jobname="", timelimit="12:00:00"):
     jn = "#SBATCH -J " + jobname + "\n" if len(jobname) else ""
     cl = "#SBATCH " + custom + "\n" if len(custom) else ""
@@ -245,19 +245,19 @@ def init_h(config, mode=None):
     lattice_str = config['parameters']['lattice'].partition("-")[0].lower()
     lattice_int = lattice_f90[lattice_str]
 
-    out =  "      integer, parameter :: nmax = {0}\n"
-    out += "      integer, parameter :: ns={1}\n"
-    out += "      integer, parameter :: prozessoren={2}\n"
+    out =  "      integer(id), parameter :: nmax = {0}\n"
+    out += "      integer(id), parameter :: ns={1}\n"
+    out += "      integer(id), parameter :: prozessoren={2}\n"
     out += "      logical, parameter :: symm={3}\n"
-    out += "      integer, parameter :: ksteps={4}\n"
-    out += "      integer, parameter :: Iwmax={5}\n"
-    out += "      integer, parameter :: Iwmaxreal={6}\n"
-    out += "      integer, parameter :: lattice_type={7}\n"
+    out += "      integer(id), parameter :: ksteps={4}\n"
+    out += "      integer(id), parameter :: Iwmax={5}\n"
+    out += "      integer(id), parameter :: Iwmaxreal={6}\n"
+    out += "      integer(id), parameter :: lattice_type={7}\n"
     out += "      logical, parameter :: gwcalc={8}\n"
-    out += "      integer, parameter :: nmpara={9}\n"
-    out += "      real, parameter :: Traw={10}\n"
-    out += "      real, parameter :: small={11}\n"
-    out += "      real, parameter :: approx={12}\n"
+    out += "      integer(id), parameter :: nmpara={9}\n"
+    out += "      real(dp), parameter :: Traw={10}\n"
+    out += "      real(dp), parameter :: small={11}\n"
+    out += "      real(dp), parameter :: approx={12}\n"
     if (lattice_int == 5):
         out += "      integer, parameter :: p={13}\n"
         out += "      integer, parameter :: L={14}\n"

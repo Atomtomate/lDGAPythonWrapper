@@ -718,7 +718,7 @@ def run_lDGA_j(cwd, dataDir, codeDir, config, jobid=None):
     with open(fp, 'w') as f:
         job_func = globals()["job_" + config['general']['cluster'].lower()]
         f.write(job_func(config, procs, cslurm, cmd, copy_from_ed=False,
-                         queue="standard96", custom_lines=False,
+                         queue="cpu-clx", custom_lines=False,
                          jobname=jn, timelimit="12:00:00"))
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
     if not (process.returncode == 0):

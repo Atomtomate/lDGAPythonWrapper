@@ -16,7 +16,7 @@ restart_after_success = false                                               # tr
 [parameters]
 lattice = "3Dsc-0.2041241452319315"                                         # 3Dsc-[t], 2Dsc-[t], FCC-[t], 2dmag-[t], TODO: link to docu for kgrid strings
 beta = 10.0
-U = 1.1
+U = 1.0
 mu = 0.57
 nfill = 1.0
 fixdens = false
@@ -55,6 +55,7 @@ check_behavior = "break"   # possible options: ignore (continue on check fail), 
 [w2dyn]
 skip = true
 postprocess = false     # forces ed postprocessing (gm_wim)
+conda_env = "p3"
 parameters_template = "/scratch/projects/hhp00048/lDGA/2D_cuprates_doped_2/w2dyn/Parameters_template.in"
 runfile = "/scratch/projects/hhp00048/w2dyn/bin/DMFT.py"
 N_DMFT = [20, 12, 8]
@@ -70,7 +71,7 @@ NFreqFit = 200
 skip = false
 # freqList can be either a path to a frequency list or
 # "F1:F2,B1:B2" for N1 to N2 (integer) fermionic and B1 to B2 bosonic.
-freqList = "/scratch/projects/hhp00048/grids/NOHF_b2_f2_s1"
+freqList = "/scratch/projects/hhp00048/grids/full_b2_f2_s0"
 nprocs = 96
 
 [Susc]
