@@ -162,10 +162,6 @@ def check_env(config):
         import os                       # noqa: F401
         import sys                      # noqa: F401
         import shutil                   # noqa: F401
-        import pandas as pd             # noqa: F401
-        import pandas.io.common         # noqa: F401
-        import pyarrow as pa            # noqa: F401
-        import pyarrow.parquet as pq    # noqa: F401
         import tarfile                  # noqa: F401
         from scipy.special import comb  # noqa: F401
     except ImportError:
@@ -438,21 +434,32 @@ def run_ed_dmft(cwd, config, cp_cmd, prev_jobid=None):
     fp = cwd + "/" + "ed_dmft_run.sh"
     cmd = cp_cmd
     procs = 1
-    if 'old3d' in config['ED'] and config['ED']['old3d']:
-        cmd += "./run.x > run.out 2> run.err\n"
-    elif 'code_type' in config['ED'] and config['ED']['code_type'] == 'julia':
+    if 'fixed_andpars' in config['general']:
         cmd_tmp = Template("julia -O3 --check-bounds=no " + os.path.join(config['general']['codeDir'],
-                  "jED.jl/scripts/fortran_compat.jl") + " $U $beta $mu $NB $KG $path\n")
+                  "jED.jl/scripts/fortran_compat_fixed.jl") + " $U $beta $mu $path $andpars\n")
+        andpar_str = ' '.join(map(lambda n: '%.8f'%n, config['general']['fixed_andpars']))
         cmd_tmp = cmd_tmp.substitute(U=config['parameters']['U'],
                                      beta=config['parameters']['beta'],
                                      mu=config['parameters']['mu'],
-                                     NB=config['ED']['ns']-1,
-                                     KG=config['parameters']['lattice'],
-                                     path=os.path.join(config['general']['runDir'], "ed_dmft"))
+                                     path=os.path.join(config['general']['runDir'], "ed_dmft"),
+                                     andpars=andpar_str)
         cmd += cmd_tmp
     else:
-        cmd += "mpirun ./run.x > run.out 2> run.err\n"
-        procs = (config['ED']['ns']+1)**2
+        if 'old3d' in config['ED'] and config['ED']['old3d']:
+            cmd += "./run.x > run.out 2> run.err\n"
+        elif 'code_type' in config['ED'] and config['ED']['code_type'] == 'julia':
+            cmd_tmp = Template("julia -O3 --check-bounds=no " + os.path.join(config['general']['codeDir'],
+                      "jED.jl/scripts/fortran_compat.jl") + " $U $beta $mu $NB $KG $path\n")
+            cmd_tmp = cmd_tmp.substitute(U=config['parameters']['U'],
+                                         beta=config['parameters']['beta'],
+                                         mu=config['parameters']['mu'],
+                                         NB=config['ED']['ns']-1,
+                                         KG=config['parameters']['lattice'],
+                                         path=os.path.join(config['general']['runDir'], "ed_dmft"))
+            cmd += cmd_tmp
+        else:
+            cmd += "mpirun ./run.x > run.out 2> run.err\n"
+            procs = (config['ED']['ns']+1)**2
     cmd += "module add anaconda3\n"
     cmd += "eval \"$(conda shell.bash hook)\"\n"
     cmd += "conda activate " + config['general']['custom_conda_env'] + "\n"
@@ -704,6 +711,7 @@ def run_lDGA_j(cwd, dataDir, codeDir, config, jobid=None):
         jobfile = ""
         print("Warning: no sysimage for julia process found. Execute create_sysimage.jl and point lDGA/sysimage setting to resulting .so file")
 
+    print("DBG")
     cmd = "julia " +jobfile+ " --check-bounds=no --project=" + os.path.abspath(codeDir) + " " + runf + " " + lDGA_config_file + " " + \
           outf + " " + str(procs) +  " > run.out 2> run.err"
     cmd = cc_dbg + cmd
