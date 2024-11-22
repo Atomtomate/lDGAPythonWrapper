@@ -146,7 +146,7 @@ def freq_list_h(config, nFreq, max_freq, mode=None):
     out = "      real(dp), parameter :: beta="+str(config['parameters']['beta'])+"\n"
     out += "      real(dp), parameter :: uhub="+str(config['parameters']['U'])+"\n"
     out += "      real(dp), parameter :: hmag="+str(0.0)+"\n"
-    out += "      real(dp), parameter :: xmu="+str(config['parameters']['mu'])+"\n"
+    #out += "      real(dp), parameter :: xmu="+str(config['parameters']['mu'])+"\n"
     out += "      integer(id), parameter :: nFreq = "+str(nFreq) + "\n"
     out += "      integer(id), parameter :: maxFreq = "+str(max_freq) + "\n"
     return out

@@ -438,6 +438,8 @@ def run_ed_dmft(cwd, config, cp_cmd, prev_jobid=None):
         cmd_tmp = Template("julia -O3 --check-bounds=no " + os.path.join(config['general']['codeDir'],
                   "jED.jl/scripts/fortran_compat_fixed.jl") + " $U $beta $mu $path $andpars\n")
         andpar_str = ' '.join(map(lambda n: '%.8f'%n, config['general']['fixed_andpars']))
+        ns = round(len(config['general']['fixed_andpars'])/2) + 1
+        config['ED']['ns'] = ns
         cmd_tmp = cmd_tmp.substitute(U=config['parameters']['U'],
                                      beta=config['parameters']['beta'],
                                      mu=config['parameters']['mu'],
@@ -449,13 +451,14 @@ def run_ed_dmft(cwd, config, cp_cmd, prev_jobid=None):
             cmd += "./run.x > run.out 2> run.err\n"
         elif 'code_type' in config['ED'] and config['ED']['code_type'] == 'julia':
             cmd_tmp = Template("julia -O3 --check-bounds=no " + os.path.join(config['general']['codeDir'],
-                      "jED.jl/scripts/fortran_compat.jl") + " $U $beta $mu $NB $KG $path\n")
+                      "jED.jl/scripts/fortran_compat.jl") + " $U $beta $mu $NB $KG $path $opt\n")
             cmd_tmp = cmd_tmp.substitute(U=config['parameters']['U'],
                                          beta=config['parameters']['beta'],
                                          mu=config['parameters']['mu'],
                                          NB=config['ED']['ns']-1,
                                          KG=config['parameters']['lattice'],
-                                         path=os.path.join(config['general']['runDir'], "ed_dmft"))
+                                         path=os.path.join(config['general']['runDir'], "ed_dmft"),
+                                         opt=config["ED"]["optimizer"])
             cmd += cmd_tmp
         else:
             cmd += "mpirun ./run.x > run.out 2> run.err\n"

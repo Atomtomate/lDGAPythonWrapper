@@ -26,7 +26,8 @@ L = 3
 
 [ED]
 skip = false
-code_type = "julia"             # WARING: change IWMAX to reasonable values according to codes!!!
+code_type = "julia"
+optimizer = "cGD"               # cGD or BFSG for now, check fortran_compat.jl for details
 custom_dmft_directory = ""      #Set alternative file directory for the DMFT calculation. Leave empty to use the directory set in 'runDir'
 custom_compile_command = ""     #Set alternative compile command for the DMFT calculation. Leave empty to use the standard compile commands
 ns = 3

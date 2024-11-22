@@ -165,7 +165,7 @@ def run_single(config, config_path):
                           config['general']['CFLAGS']
     jobid_dmft = None
 
-    if 'ED' in config and not config['ED']['skip']:
+    if ('ED' in config and not config['ED']['skip']) or 'fixed_andpars' in config['general']:
         # ------------------------ save job info -----------------------------
         dmft_logfile = os.path.join(runDir, "job_dmft.log")
         cont = dmft_log(dmft_logfile, jobid_dmft, subRunDir_ED, config)
