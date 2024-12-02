@@ -198,7 +198,7 @@ def run_single(config, config_path):
 
     # ------------------------- definitions ----------------------------------
     subRunDir_vert = runDir + "/ed_vertex"
-    subCodeDir = config['general']['codeDir'] + "/ED_codes/ED_vertex"
+    subCodeDir = config['general']['codeDir'] + "/ED_codes/ED_vertex_static"
     jobid_vert = None
 
     if not config['Vertex']['skip']:

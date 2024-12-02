@@ -191,6 +191,7 @@ def copy_and_edit_dmft(subCodeDir, subRunDir, config):
                                    "checks.py")
     checks_py_target = os.path.abspath(os.path.join(subRunDir, "checks.py"))
     shutil.copyfile(checks_py_path, checks_py_target)
+
     if not ('code_type' in config['ED'] and config['ED']['code_type'] == 'julia'):
         files_list = ["tpri.dat", "init.h", "hubb.dat", "hubb.andpar"]
         if 'old3d' in config['ED'] and config['ED']['old3d']:
@@ -312,6 +313,11 @@ def copy_and_edit_vertex(subCodeDir, subRunDir, subRunDir_ED, dataDir, config):
                                    "checks.py")
     checks_py_target = os.path.abspath(os.path.join(subRunDir, "checks.py"))
     shutil.copyfile(checks_py_path, checks_py_target)
+
+    init_py_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                   "create_init.py")
+    init_py_target = os.path.abspath(os.path.join(subRunDir, "create_init.py"))
+    shutil.copyfile(init_py_path, init_py_target)
 
     for filename in src_files_list:
         source_file_path = os.path.abspath(os.path.join(subCodeDir, filename))
@@ -451,23 +457,23 @@ def run_ed_dmft(cwd, config, cp_cmd, prev_jobid=None):
             cmd += "./run.x > run.out 2> run.err\n"
         elif 'code_type' in config['ED'] and config['ED']['code_type'] == 'julia':
             cmd_tmp = Template("julia -O3 --check-bounds=no " + os.path.join(config['general']['codeDir'],
-                      "jED.jl/scripts/fortran_compat.jl") + " $U $beta $mu $NB $KG $path $opt\n")
+                      "jED.jl/scripts/fortran_compat_flex.jl") + " $U $beta $mu $NB $KG $path $opt $cf\n")
             cmd_tmp = cmd_tmp.substitute(U=config['parameters']['U'],
                                          beta=config['parameters']['beta'],
                                          mu=config['parameters']['mu'],
                                          NB=config['ED']['ns']-1,
                                          KG=config['parameters']['lattice'],
                                          path=os.path.join(config['general']['runDir'], "ed_dmft"),
-                                         opt=config["ED"]["optimizer"])
+                                         opt=config['ED']["optimizer"],
+                                         cf = config['ED']['cost_function'])
             cmd += cmd_tmp
         else:
             cmd += "mpirun ./run.x > run.out 2> run.err\n"
             procs = (config['ED']['ns']+1)**2
-    cmd += "module add anaconda3\n"
+    cmd += "\nmodule add anaconda3\n"
     cmd += "eval \"$(conda shell.bash hook)\"\n"
     cmd += "conda activate " + config['general']['custom_conda_env'] + "\n"
-    cmd += "python checks.py \n"
-    cmd += "python checks.py >> run.out \n"
+    cmd += "python checks.py >> run.out"
     if config['ED']['check_behavior'] != "break":
         cmd += "true"
     cslurm = config['general']['custom_slurm_lines']
@@ -510,6 +516,7 @@ def run_ed_vertex(cwd, config, ed_jobid=None):
     cmd+= "echo \"Checks Successful\" >> run.out;\n"
     cmd+= "else\necho \"Checks unsuccessful\" >> run.out;\nfi;\n"
     cmd+= "echo \"--- end checks ---- \" >> run.out\n"
+    cmd += "python create_init.py\n"
     cmd+= "mpiifort ver_tpri_run.f90 -o run.x -llapack " + config['general']['CFLAGS']+"\n"
     cmd+= "mpirun -np " + str(procs) + " ./run.x > run.out 2> run.err\n"
     cslurm = config['general']['custom_slurm_lines']
@@ -607,6 +614,8 @@ def run_postprocess(cwd, dataDir, subRunDir_w2dyn, subRunDir_ED, subRunDir_vert,
     freq_path = os.path.abspath(freq_path)
     cmd= "julia " + os.path.join(config['general']['codeDir'], "lDGAPostprocessing/expand_vertex.jl") + \
           " "  + freq_path + " " + dataDir + " " + "\n"
+    cmd+= "julia " + os.path.join(config['general']['codeDir'], "VertexPostprocessing.jl/scripts/expand_vertex.jl") + \
+          " "  + freq_path + " " + dataDir + " " + "false" "\n"
 
     full_remove_script = "rm " + os.path.abspath(subRunDir_ED) + " " + \
                          os.path.abspath(subRunDir_vert) +\
@@ -729,8 +738,8 @@ def run_lDGA_j(cwd, dataDir, codeDir, config, jobid=None):
     with open(fp, 'w') as f:
         job_func = globals()["job_" + config['general']['cluster'].lower()]
         f.write(job_func(config, procs, cslurm, cmd, copy_from_ed=False,
-                         queue="cpu-clx", custom_lines=False,
-                         jobname=jn, timelimit="12:00:00"))
+                         queue=config['general']['queue'], custom_lines=False,
+                         jobname=jn))
     process = subprocess.run(run_cmd, cwd=cwd, shell=True, capture_output=True)
     if not (process.returncode == 0):
         print("Julia lDGA submit did not work as expected:")

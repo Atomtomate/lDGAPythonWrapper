@@ -13,6 +13,8 @@ custom_module_load = "module restore ed"                                    # Mo
 custom_conda_env = "p3"                                                     # Anaconda restore command. See installation instructions
 auto_continue = true                                                        # TODO: remove
 restart_after_success = false                                               # true: will not restart already finished calculations, false: will override finished calculations
+queue = "cpu-clx"
+global_time_limit = "12:00:00"
 
 [parameters]
 lattice = "3Dsc-0.2041241452319315"                                         # 3Dsc-[t], 2Dsc-[t], FCC-[t], 2dmag-[t], TODO: link to docu for kgrid strings

@@ -29,18 +29,18 @@ def postprocessing_berlin(content, custom, config, jobname=""):
     out = '''#!/bin/bash
 #SBATCH -t 01:00:00
 #SBATCH --ntasks=1
-#SBATCH -p cpu-clx
+#SBATCH -p {0}
 #SBATCH --requeue
-{0}
 {1}
 {2}
+{3}
 export SLURM_CPU_BIND=none
-'''.format(jn, cl, config['general']['custom_module_load'])
+'''.format(config['general']['queue'],jn, cl, config['general']['custom_module_load'])
     out += content
     return out
 
 def job_berlin(config, procs, custom, cmd, queue="cpu-clx", copy_from_ed=True,
-               custom_lines=True, jobname="", timelimit="12:00:00"):
+               custom_lines=True, jobname=""):
     jn = "#SBATCH -J " + jobname + "\n" if len(jobname) else ""
     cl = "#SBATCH " + custom + "\n" if len(custom) else ""
     out = '''#!/bin/bash
@@ -57,7 +57,7 @@ export SLURM_CPU_BIND=none
     if copy_from_ed:
         out = out + "./get_andpar.sh || true\n"
     out = out + "{6}\n"
-    out = out.format(timelimit, procs, queue, cl, jn, config['general']['custom_module_load'],
+    out = out.format(config['general']['global_time_limit'], procs, config['general']['queue'], cl, jn, config['general']['custom_module_load'],
                      cmd)
     return out
 
@@ -76,7 +76,7 @@ def postprocessing_hamburg(content, custom, config, jobname=""):
     return out
 
 def job_hamburg(config, procs, custom, cmd, queue="th1prio.q,infinix.q", copy_from_ed=True,
-               custom_lines=True, jobname="", timelimit="12:00:00"):
+               custom_lines=True, jobname=""):
     jn = "#$ -N " + jobname + "\n" if len(jobname) else ""
     cl = "#$ " + custom + "\n" if len(custom) else ""
     out = '''#!/bin/bash
@@ -92,7 +92,7 @@ def job_hamburg(config, procs, custom, cmd, queue="th1prio.q,infinix.q", copy_fr
     if copy_from_ed:
         out = out + "./get_andpar.sh || true\n"
     out = out + "{6}\n"
-    out = out.format(timelimit, queue, procs, cl, jn, config['general']['custom_module_load'],cmd)
+    out = out.format(config['general']['global_time_limit'], queue, procs, cl, jn, config['general']['custom_module_load'],cmd)
     if procs == 1:          # delete mpi requirement on single core calculations
         out = "\n".join(np.array(out.split("\n"))[[0,1,2,3] + list(range(5,len(out.split("\n"))))])
     return out
