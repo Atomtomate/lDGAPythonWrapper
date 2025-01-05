@@ -470,8 +470,8 @@ def run_ed_dmft(cwd, config, cp_cmd, prev_jobid=None):
         else:
             cmd += "mpirun ./run.x > run.out 2> run.err\n"
             procs = (config['ED']['ns']+1)**2
-    cmd += "\nmodule add anaconda3\n"
-    cmd += "eval \"$(conda shell.bash hook)\"\n"
+    # cmd += "\nmodule add anaconda3\n"
+    # cmd += "eval \"$(conda shell.bash hook)\"\n"
     cmd += "conda activate " + config['general']['custom_conda_env'] + "\n"
     cmd += "python checks.py >> run.out"
     if config['ED']['check_behavior'] != "break":

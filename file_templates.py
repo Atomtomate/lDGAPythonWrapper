@@ -432,7 +432,8 @@ conda activate {0}
         out += "julia " + hk_script + " " + config['parameters']['lattice'] + " " + str(config['w2dyn']['Nk']) + " " + hk_loc + " >> run.out 2>> run.err\n"
     out += "mpirun -np "+str(config['w2dyn']['N_procs'][it])+" "+\
             config['w2dyn']['runfile']+" Par_"+str(it)+".in \n"
-    out += "mv current_run*.hdf5 DMFT_"+str(it)+".hdf5\n"
+    out += "NEWEST=$( ls -t current_run*.hdf5 | head -1 ) "
+    out += "mv \"$NEWEST\" DMFT_"+str(it)+".hdf5\n"
     if it < len(config['w2dyn']['N_DMFT']):
         ncorr_path = os.path.abspath(os.path.join(config['general']['codeDir'],"scripts/LadderDGA_utils/ncorr.jl"))
         hdf5_path = os.path.abspath(os.path.join(runDir, "DMFT_"+str(it)+".hdf5"))
