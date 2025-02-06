@@ -421,7 +421,7 @@ eval "$(conda shell.bash hook)"
 conda activate {0}
 
 '''.format(config['w2dyn']['conda_env'])
-    fit_str = "julia {0} DMFT_{1}.hdf5 {2} {3} hubb_{1}.andpar >> run.out 2>> run.err\n"
+    fit_str = "julia {0} DMFT_{1}.hdf5 {2} {3} hubb_{1}.andpar\n"
     fit_str = fit_str.format(os.path.abspath(os.path.join(config['general']['codeDir'],"scripts/LadderDGA_utils/fitW2dyn.jl ")),
                              it,config['w2dyn']['NBath'],config['w2dyn']['NFreqFit'])
     if it == len(config['w2dyn']['N_DMFT'])-1:
@@ -429,10 +429,10 @@ conda activate {0}
     if it == 0:
         hk_script = os.path.abspath(os.path.join(config['general']['codeDir'],'Dispersions.jl/scripts/w2dyn_2D_kgrid.jl'))
         hk_loc = os.path.abspath(os.path.join(runDir, "ham.hk"))
-        out += "julia " + hk_script + " " + config['parameters']['lattice'] + " " + str(config['w2dyn']['Nk']) + " " + hk_loc + " >> run.out 2>> run.err\n"
+        out += "julia " + hk_script + " " + config['parameters']['lattice'] + " " + str(config['w2dyn']['Nk']) + " " + hk_loc + "\n"
     out += "mpirun -np "+str(config['w2dyn']['N_procs'][it])+" "+\
             config['w2dyn']['runfile']+" Par_"+str(it)+".in \n"
-    out += "NEWEST=$( ls -t current_run*.hdf5 | head -1 ) "
+    out += "NEWEST=$( ls -t current_run*.hdf5 | head -1 ) \n"
     out += "mv \"$NEWEST\" DMFT_"+str(it)+".hdf5\n"
     if it < len(config['w2dyn']['N_DMFT']):
         ncorr_path = os.path.abspath(os.path.join(config['general']['codeDir'],"scripts/LadderDGA_utils/ncorr.jl"))

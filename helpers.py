@@ -454,7 +454,7 @@ def run_ed_dmft(cwd, config, cp_cmd, prev_jobid=None):
         cmd += cmd_tmp
     else:
         if 'old3d' in config['ED'] and config['ED']['old3d']:
-            cmd += "./run.x > run.out 2> run.err\n"
+            cmd += "./run.x\n"
         elif 'code_type' in config['ED'] and config['ED']['code_type'] == 'julia':
             cmd_tmp = Template("julia -O3 --check-bounds=no " + os.path.join(config['general']['codeDir'],
                       "jED.jl/scripts/fortran_compat_flex.jl") + " $U $beta $mu $NB $KG $path $opt $cf\n")
@@ -468,12 +468,12 @@ def run_ed_dmft(cwd, config, cp_cmd, prev_jobid=None):
                                          cf = config['ED']['cost_function'])
             cmd += cmd_tmp
         else:
-            cmd += "mpirun ./run.x > run.out 2> run.err\n"
+            cmd += "mpirun ./run.x\n"
             procs = (config['ED']['ns']+1)**2
     # cmd += "\nmodule add anaconda3\n"
     # cmd += "eval \"$(conda shell.bash hook)\"\n"
     cmd += "conda activate " + config['general']['custom_conda_env'] + "\n"
-    cmd += "python checks.py >> run.out"
+    cmd += "python checks.py\n"
     if config['ED']['check_behavior'] != "break":
         cmd += "true"
     cslurm = config['general']['custom_slurm_lines']
@@ -509,16 +509,16 @@ def run_ed_vertex(cwd, config, ed_jobid=None):
     else:
         print("WARNING: unrecognized cluster configuration!")
         procs = config['Vertex']['nprocs']
-    cmd = "echo \"--- start checks ---- \" > run.out\n"
-    cmd+= "~/.conda/envs/p3/bin/python checks.py >> run.out\n"
+    cmd = "echo \"--- start checks ---- \"\n"
+    cmd+= "~/.conda/envs/p3/bin/python checks.py\n"
     cmd+= "res=$?\n"
     cmd+= "if [ \"$res\" -eq \"1\" ]; then\n"
-    cmd+= "echo \"Checks Successful\" >> run.out;\n"
-    cmd+= "else\necho \"Checks unsuccessful\" >> run.out;\nfi;\n"
-    cmd+= "echo \"--- end checks ---- \" >> run.out\n"
+    cmd+= "echo \"Checks Successful\"\n"
+    cmd+= "else\necho \"Checks unsuccessful\"\nfi;\n"
+    cmd+= "echo \"--- end checks ---- \"\n"
     cmd += "python create_init.py\n"
     cmd+= "mpiifort ver_tpri_run.f90 -o run.x -llapack " + config['general']['CFLAGS']+"\n"
-    cmd+= "mpirun -np " + str(procs) + " ./run.x > run.out 2> run.err\n"
+    cmd+= "mpirun -np " + str(procs) + " ./run.x\n"
     cslurm = config['general']['custom_slurm_lines']
     if not ed_jobid:
         run_cmd = config['general']['submit_str'] + filename
@@ -547,7 +547,7 @@ def run_ed_susc(cwd, config, ed_jobid=None):
     filename = "ed_susc_run.sh"
     jn = jobname(config, "SUSC")
     fp = os.path.join(cwd, filename)
-    cmd = "./run.x > run.out 2> run.err"
+    cmd = "./run.x\n"
     cslurm = config['general']['custom_slurm_lines']
     if not ed_jobid:
         run_cmd = "sbatch " + filename
@@ -572,7 +572,7 @@ def run_ed_susc(cwd, config, ed_jobid=None):
 def run_ed_trilex(cwd, config, ed_jobid=None):
     filename = "ed_trilex_run.sh"
     jn = jobname(config, "TRI")
-    cmd = "mpirun ./run.x > run.out 2> run.err"
+    cmd = "mpirun ./run.x\n"
     procs = 2*int(config['Trilex']['nBoseFreq']) + 1
     cslurm = config['general']['custom_slurm_lines']
     if not ed_jobid:
