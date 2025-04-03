@@ -413,7 +413,7 @@ Eps(k)
     )
     return out
 
-def w2dyn_submit(config, runDir, it):
+def w2dyn_submit_berlin(config, runDir, it):
     out = '''
 export I_MPI_PIN_RESPECT_CPUSET=off
 export I_MPI_DEBUG=6
@@ -427,7 +427,7 @@ conda activate {0}
     if it == len(config['w2dyn']['N_DMFT'])-1:
         fit_str += "cp hubb_"+str(it)+".andpar hubb.andpar\n"
     if it == 0:
-        hk_script = os.path.abspath(os.path.join(config['general']['codeDir'],'Dispersions.jl/scripts/w2dyn_2D_kgrid.jl'))
+        hk_script = os.path.abspath(os.path.join(config['general']['codeDir'],'Dispersions.jl/scripts/w2dyn_kgrid.jl'))
         hk_loc = os.path.abspath(os.path.join(runDir, "ham.hk"))
         out += "julia " + hk_script + " " + config['parameters']['lattice'] + " " + str(config['w2dyn']['Nk']) + " " + hk_loc + "\n"
     out += "mpirun -np "+str(config['w2dyn']['N_procs'][it])+" "+\

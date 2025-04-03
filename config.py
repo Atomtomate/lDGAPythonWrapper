@@ -8,7 +8,7 @@ from datetime import datetime
 # TODO: implement config class as wrapper around config.toml.
 #       this class should provide all cluster and config dependent strings
 
-queue_system = {"hamburg": "slurm", "berlin": "sge"}
+queue_system = {"hamburg": "sge", "berlin": "slurm", "berlingenoa": "slurm"}
 qacct_failed = re.compile(r'failed(\s+)(.*)')
 qacct_exit_stat = re.compile(r'exit_status(\s+)(.*)')
 
@@ -26,7 +26,7 @@ def get_submit_cmd(config, dependency_id = None):
         res = "qsub "
         if not dependency_id is None:
             res += "-hold_jid "+str(jid_str)+" "
-    elif config['general']['cluster'].lower() == "berlin": 
+    elif config['general']['cluster'].lower() == "berlin" or config['general']['cluster'].lower() == "berlingenoa":
         res = "sbatch "
         if isinstance(jid_str,int) or len(jid_str) > 0:
             res += "--dependency=afterok:"+str(jid_str)+" "
@@ -51,7 +51,7 @@ job_name = {5}
     run_time = ""
     job_name = ""
 
-    if config['general']['cluster'].lower() == "berlin":
+    if config['general']['cluster'].lower() == "berlin"  or config['general']['cluster'].lower() == "berlingenoa":
         job_cmd = "sacct -j " + str(jobid) + " --format=User,JobID,Jobname,"\
               "partition,state,elapsed,nnodes,ncpus,nodelist"
         process = subprocess.run(job_cmd, shell=True, capture_output=True)

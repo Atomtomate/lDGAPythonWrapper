@@ -65,7 +65,7 @@ def run_single(config, config_path):
     # =                            Setup                                     =
     # ========================================================================
     # ------------------------ read input file -------------------------------
-    if config['general']['cluster'].lower() == "berlin":
+    if config['general']['cluster'].lower() == "berlin" or config['general']['cluster'].lower() == "berlingenoa":
         # exec(open('/usr/share/Modules/init/python.py').read())
         # module('load', 'modulefile', 'modulefile', '...'))
         # TODO: complete check for correctly loaded modules

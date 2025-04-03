@@ -8,6 +8,7 @@ import stat
 from math import isclose, ceil
 from config import *
 from file_templates import *
+from file_templates_b_genoa import *
 from string import Template
 # flake8:  noqa: F405
 
@@ -502,22 +503,31 @@ def run_ed_vertex(cwd, config, ed_jobid=None):
     filename = "ed_vertex_run.sh"
     fp = os.path.join(cwd, filename)
     jn = jobname(config, "VER")
-    if config['general']['cluster'].lower() == "berlin":
-        cores_per_node = 96
-        procs = config['Vertex']['nprocs']
-        nodes = ceil(procs/cores_per_node)
-    else:
-        print("WARNING: unrecognized cluster configuration!")
-        procs = config['Vertex']['nprocs']
     cmd = "echo \"--- start checks ---- \"\n"
-    cmd+= "~/.conda/envs/p3/bin/python checks.py\n"
+    cores_per_node =  config['general']['cores_per_node'] if 'cores_per_node' in config['general'] else 96
+    procs = config['Vertex']['nprocs']
+    nodes = ceil(procs/cores_per_node)
+    if config['general']['cluster'].lower() == "berlin":
+        cmd+= "~/.conda/envs/"+str(config["general"]["custom_conda_env"])+"/bin/python checks.py\n"
+    elif config['general']['cluster'].lower() == "berlingenoa":
+        cmd+= "python checks.py\n"
+    else:
+        print("WARNING: unrecognized cluster configuration! Defaulting to `python` cmd.")
+        cmd+= "python checks.py\n"
     cmd+= "res=$?\n"
     cmd+= "if [ \"$res\" -eq \"1\" ]; then\n"
     cmd+= "echo \"Checks Successful\"\n"
     cmd+= "else\necho \"Checks unsuccessful\"\nfi;\n"
     cmd+= "echo \"--- end checks ---- \"\n"
     cmd += "python create_init.py\n"
-    cmd+= "mpiifort ver_tpri_run.f90 -o run.x -llapack " + config['general']['CFLAGS']+"\n"
+    if config['general']['cluster'].lower() == "berlin":
+        cmd+= "mpiifort ver_tpri_run.f90 -o run.x -llapack " + config['general']['CFLAGS']+"\n"
+    elif config['general']['cluster'].lower() == "berlingenoa":
+        cmd+= "mpifort ver_tpri_run.f90 -o run.x -llapack " + config['general']['CFLAGS']+"\n"
+    else:
+        print("WARNING: unrecognized cluster configuration! Defaulting to mpifort")
+        cmd+= "mpifort ver_tpri_run.f90 -o run.x -llapack " + config['general']['CFLAGS']+"\n"
+
     cmd+= "mpirun -np " + str(procs) + " ./run.x\n"
     cslurm = config['general']['custom_slurm_lines']
     if not ed_jobid:
@@ -648,7 +658,7 @@ def run_postprocess(cwd, dataDir, subRunDir_w2dyn, subRunDir_ED, subRunDir_vert,
     content = str(cp_script_path) + "\n"
     outf_lst = config['Postprocess']['output_format'].split(',')
     conda_env = config['general']['custom_conda_env']
-    if conda_env:
+    if conda_env and not config["general"]["cluster"].lower() == "berlingenoa":
         content += "eval \"$(conda shell.bash hook)\"\n"
         content += "conda activate " + conda_env + "\n"
     content += "python storage_io.py " + data_path + " " +\
@@ -814,7 +824,8 @@ def run_w2dyn(cwd, config, prev_jobid=None):
     for it in range(len(config['w2dyn']['N_DMFT'])):
         filename = "w2dyn_it"+str(it)+".sh"
         fp = os.path.join(cwd,filename)
-        cmd = w2dyn_submit(config, cwd, it)
+        w2dyn_func = globals()["w2dyn_submit_" + config['general']['cluster'].lower()]
+        cmd = w2dyn_func(config, cwd, it)
         #TODO: break on bad anderson fits
         cslurm = config['general']['custom_slurm_lines']
         jn = jobname(config, "W2DYN")
